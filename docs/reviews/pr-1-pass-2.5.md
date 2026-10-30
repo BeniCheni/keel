@@ -14,7 +14,7 @@ Review verdict on the content itself: mergeable. No open High, no new finding ab
 - The six-pass review procedure as a skill, with its PR comment, executive brief, Pass 0 and Pass 1.5 templates, and a pointer copy for Codex and Cursor.
 - Specs for S00 (repo tooling: `pnpm verify`, PII tripwire, zero-network boundary, determinism check, copy lint, import boundary, CI) and S01 (terms schema 0.1 and strict loader), both revised after the plan challenge.
 - README, DISCLAIMER, SECURITY, CHANGELOG, `.gitignore`, the docs index, and the Pass 0 (retroactive) and Pass 1.5 records for this PR.
-- What it still declines to claim: no product code, no tests, no CI, and no runtime check of any kind has run. Nothing here is green; everything runnable is N/A until S00 lands.
+- What it still declines to claim: no product code, no tests, no CI, and no product runtime check has run. Product runtime checks are N/A until S00 lands; the static checks below were run.
 
 ## What the passes found
 
@@ -77,7 +77,7 @@ None. No figure in this PR comes from a model or an assumption.
 
 ## Risks and accepted costs
 
-- Nothing runnable exists. Both specs are reviewed as plans; every acceptance criterion, mutation floor and CI behaviour is a promise for the S00 and S01 builds, not a checked result.
+- No product runtime exists. Both specs are reviewed as plans; every acceptance criterion, mutation floor and CI behaviour is a promise for the S00 and S01 builds, not a checked result.
 - The tripwire is a heuristic backstop by design. The owner's private-list check and human review cover names and private facts; no clean scan here is proof of absence.
 - The zero-network boundary is authoritative only in the Linux CI namespace; macOS cells get the weaker in-process layer.
 - Pass 0 was written after Pass 1 and sealed nothing; Pass 1 read the claims straight from the PR body.
@@ -118,9 +118,9 @@ Answered by Beni on 2026-10-30 in chat: 1 yes, 2 yes, 3 yes.
 2. Does the authorship record above stand as the Pass 1.5 extension for `454eaad` and `97ac4dc`, closing the Low? (yes/no)
 3. Merge PR #1 at `97ac4dc`? (yes/no)
 
-## Handoff block
+## Historical handoff block (PR #1 already merged)
 
-Run from the main working copy, on `main`, after `git fetch`. The base is `origin/main` = `262f119` now; if it has moved by merge time the tree check below fails and, on the bootstrap path, there is no `verify` to run on the squash commit: stop and report.
+The block below records the pre-merge handoff for PR #1; do not re-run its merge command. At that handoff, the base was `origin/main` = `262f119`. The instruction was to run from the main working copy on `main` after `git fetch`, and to stop if the base moved: on the bootstrap path there was no `verify` to run on the squash commit. The completed merge and post-merge checks are recorded in "Beni's decision" above.
 
 ```bash
 gh pr merge 1 --repo BeniCheni/keel --squash --match-head-commit 97ac4dc83016f7e5a1d09d66a669e7818ed2da5e --subject "docs: scaffold rules, review skill and S00/S01 specs" --body "$(printf '%s\n' 'Reviewed head: 97ac4dc83016f7e5a1d09d66a669e7818ed2da5e. Shadow-mode gate verdict: would escalate (sensitive paths; bootstrap path). Merged by Beni.' '' 'Co-authored-by: Claude <noreply@anthropic.com>' 'Co-authored-by: Codex <noreply@openai.com>')"

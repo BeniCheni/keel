@@ -31,7 +31,7 @@ Allowed: the diff is docs outside sensitive paths, and this is not a release or 
 
 1. Does every figure in `docs/reviews/pr-1-pass-2.5.md` carry its command, and do the ones that can be re-run from the repo reproduce (diff shortstat and file inventory at `97ac4dc`, copy scan, `git check-ignore`, `git diff --check`, the authorship record from `git log --format='%h %an' 262f119..97ac4dc`, and the S01 summaries derived from the spec's status table)?
 2. Does the "Beni's decision" row match what GitHub recorded for PR #1 (`gh pr view 1 --json mergeCommit,mergedAt,state`), and does the squash commit's tree equal the reviewed head's tree?
-3. Does the brief misreport any check as green? Every runnable check must read N/A on the bootstrap path.
+3. Does the brief misreport any check as green? Unavailable product runtime checks must read N/A with their reasons on the bootstrap path; runnable static checks report their actual results.
 4. Does any file, commit message or PR text carry personal data? The brief names only the owner, agent noreply identities and synthetic fixture names from the spec.
 
 ## Sealed appendix: builder claims to verify independently
