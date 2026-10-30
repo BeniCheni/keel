@@ -96,7 +96,7 @@ function findAccounts(text) {
       while (i < text.length && /[A-Za-z0-9]/.test(text[i])) i += 1;
       const token = text.slice(start, i);
       const digits = token.replace(/\D/g, "").length;
-      if (start < windowEnd && token.length >= 6 && token.length <= 12 && digits >= 4) {
+      if (token.length >= 6 && token.length <= 12 && digits >= 4) {
         hits.push(start);
       }
     }
