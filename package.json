@@ -1,0 +1,29 @@
+{
+  "name": "keel",
+  "private": true,
+  "version": "0.0.0",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@10.28.2",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "verify": "node tools/verify/run.mjs",
+    "verify:typecheck": "node tools/verify/one.mjs typecheck",
+    "verify:tests": "node tools/verify/one.mjs tests",
+    "verify:tooling": "node tools/verify/one.mjs tooling",
+    "verify:tripwire": "node tools/verify/one.mjs tripwire",
+    "verify:network": "node tools/verify/one.mjs network",
+    "verify:determinism": "node tools/verify/one.mjs determinism",
+    "verify:copy": "node tools/verify/one.mjs copy",
+    "verify:boundaries": "node tools/verify/one.mjs boundaries",
+    "test:tooling": "vitest run --config tools/vitest.config.mjs",
+    "test:ci-evidence": "node tools/ci/ci-evidence.mjs",
+    "fixtures:regen": "node tools/fixtures/regen.mjs",
+    "fixtures:trees": "node tools/fixtures/trees.mjs"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "vitest": "5.0.5"
+  }
+}
