@@ -23,7 +23,7 @@ Every number below comes from a command run in this session. A number taken from
 | --- | --- | --- |
 | Install | `pnpm install --frozen-lockfile` | |
 | Verify | `pnpm verify` (Node floor and current) | |
-| Determinism | `pnpm fixtures:regen && trees="$(pnpm -s fixtures:trees)" && status="$(git status --porcelain --untracked-files=all -- $trees)" && test -z "$status"` | |
+| Determinism | `pnpm fixtures:regen && sh -c 'keel_generated_trees="$(pnpm -s fixtures:trees)" && keel_generated_status="$(printf "%s\n" "$keel_generated_trees" \| while IFS= read -r keel_generated_tree; do git status --porcelain --untracked-files=all -- "$keel_generated_tree" \|\| exit; done)" && test -z "$keel_generated_status"'` | |
 | Zero network | | |
 | Mutations | | |
 | Pass M | `python3 tools/reference/payoff.py fixtures/golden/` | |
