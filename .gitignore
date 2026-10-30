@@ -6,7 +6,7 @@ coverage/
 *.tsbuildinfo
 
 # local-only by rule (AGENTS.md hard rules 1 and 11)
-design/
+/design/
 .keel-data/
 /terms/
 *.sqlite

@@ -1,6 +1,6 @@
 # Review (Pass <1 or 2>): <one-sentence verdict>
 
-Verdict: <mergeable | mergeable after fixes | not mergeable>. A High finding without a fix commit makes the verdict "not mergeable".
+Verdict: <mergeable | mergeable after fixes | not mergeable>. An open High makes the verdict "not mergeable". A High in tracked files closes with a fix commit and a test that fails without it; a High outside tracked files closes with a recorded remediation check plus Beni's confirmation.
 
 - Head SHA reviewed: `<sha>`; post-fix SHA: `<sha or none>`; date: <YYYY-MM-DD, America/New_York>
 - Seat: <Claude Code | Codex>, model <name and effort>, fallback used: <no | yes, why>

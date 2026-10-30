@@ -10,7 +10,7 @@ Usage: `/keel-pr-review <PR number or branch> [--pass 1|2|2.5] [--no-merge]`. Th
 
 `AGENTS.md` owns every rule this skill applies. If this file and `AGENTS.md` disagree, `AGENTS.md` wins and the disagreement is a finding.
 
-Seats: Pass 1 is Claude Code, unless a Claude session wrote any line of the PR, in which case Codex runs Pass 1. Pass 2 is Codex. Pass 2.5 is the PM in a fresh session. Passes 0 and 1.5 are PM briefs written outside this skill, using `pass-0-brief.md` and `pass-1.5-brief.md` in this folder.
+Seats: Pass 1 is Claude Code, unless a Claude session wrote any line of the PR, in which case Codex runs Pass 1. Pass 2 is Codex. Pass 2.5 is the PM in a fresh session. Every commit needs a cold read from a vendor that did not author it; follow the authorship record in the Pass 0 and 1.5 briefs and the rule in `AGENTS.md`. Never give the cold read of a commit your vendor wrote. If no eligible seat exists for a commit, stop and escalate. Passes 0 and 1.5 are PM briefs written outside this skill, using `pass-0-brief.md` and `pass-1.5-brief.md` in this folder.
 
 ## 0. Setup
 
@@ -29,6 +29,8 @@ Seats: Pass 1 is Claude Code, unless a Claude session wrote any line of the PR, 
 
 ## 2. Baseline
 
+Bootstrap path: before S00 merges there is no `package.json`, lockfile or workflow. Run static checks only, and state each skipped check (baseline, mutations, dynamic pass, Pass M) as N/A with its reason. Never report a skipped check as green.
+
 1. `pnpm install --frozen-lockfile`, then `pnpm verify`, on the Node floor and on the current LTS.
 2. Record real counts: tests run, passed, failed, files. Never copy counts from the PR body.
 3. A red baseline is the first finding (High).
@@ -38,10 +40,10 @@ Seats: Pass 1 is Claude Code, unless a Claude session wrote any line of the PR, 
 Always:
 
 - **Honesty.** No value without evidence; no probability outside the Scenario screen; no honesty test weakened, skipped or deleted (`git diff origin/main...HEAD -- '*.honesty.test.ts'`).
-- **Privacy sweep.** Run the tripwire and report hit counts per pattern class. Never print a matched value. Check commit messages and the PR body too.
+- **Privacy sweep.** Run the tripwire and report hit counts per pattern class. Never print a matched value. Check commit messages and the PR body too. Any check against private terms reads its patterns from a file outside the repo, checks first that the file is readable, and exits nonzero on a failed scan. Never write the patterns into a command, comment or commit.
 - **Claims.** Every claim in the PR body has a command; run it. Absolute words are claims to test.
 - **Tests can fail.** For each tested claim, apply at least three mutations (flip a comparison, shift a boundary by one unit, drop a branch). Record which mutants die and whether they die for the right reason. A surviving mutant is a finding.
-- **Sensitive paths.** If touched, confirm the Fable pin was used or the fallback was declared.
+- **Sensitive paths.** If touched, confirm the Claude seats used the Fable pin or declared the fallback. Codex keeps its own pin.
 - **Dependencies.** Each new one has a justification and license in the PR body.
 - **Copy lint and disclaimer.** Banned words absent from product text; disclaimer present where required.
 - **Import boundary.** Nothing outside `packages/montecarlo` and the Scenario screen imports it.
@@ -58,7 +60,7 @@ By what the diff touches:
 ## 4. Dynamic pass
 
 1. Run the README quickstart in the fresh clone, including demo mode.
-2. Run the zero-network test and the determinism check (`pnpm fixtures:regen && git diff --exit-code`).
+2. Run the zero-network test and the determinism check (`pnpm fixtures:regen && test -z "$(git status --porcelain --untracked-files=all -- fixtures)"`). A bare `git diff --exit-code` misses staged and untracked outputs.
 3. For UI changes: the browser build at 360, 375, 390, ~1000 and 1440 px, light and dark, both densities; set the viewport before any screenshot; assert `document.documentElement.scrollWidth === window.innerWidth`.
 4. For alert changes: replay the synthetic histories and diff firings against the expected fixtures.
 5. Commands named here are defined by slice S00. If one is missing, that is a finding, not a reason to skip the check.
@@ -66,7 +68,7 @@ By what the diff touches:
 ## 5. Fix policy
 
 - Fix only what you reproduced and what is in the slice's scope.
-- Every behavioural fix ships with a test that fails without it.
+- Every behavioural fix ships with a test that fails without it. A High outside tracked files (PR body, comment, setting) closes with a recorded remediation check plus Beni's confirmation, as `AGENTS.md` Severity defines.
 - No new dependencies. Never weaken an assertion.
 - Commit as yourself, per commit. Push with `git fetch && git push origin HEAD:<branch>`. Never force-push.
 - A High that needs redesign rather than a patch is not fixed here: report it for Cursor rework through the Pass 1.5 brief.
@@ -84,14 +86,15 @@ List out-of-scope findings in the comment with a one-line reason and a rough siz
    - Re-run every number you will report, at the head SHA. Anything not re-run is listed as not verified.
    - Write the executive brief from `executive-brief.md` and post it in chat; post a short PR comment linking the decision.
    - Evaluate the merge gate in `AGENTS.md`. While shadow mode is on (until `v0.1.0`), never merge: record "would merge" or "would escalate" and hand Beni the handoff block.
-   - After shadow mode, merge only if every gate clause holds and `--no-merge` was not given: `gh pr merge <N> --squash --match-head-commit <sha>` with a `Co-authored-by:` trailer per vendor that wrote or reviewed. Then confirm `origin/main` equals the merged commit and the README renders.
+   - After Beni's activation record exists, merge only if every gate clause holds and `--no-merge` was not given: `gh pr merge <N> --squash --match-head-commit <sha>` with a `Co-authored-by:` trailer per vendor that wrote or reviewed. Then confirm `origin/main` equals the squash commit GitHub recorded (`gh pr view <N> --json mergeCommit`), and the README renders.
+   - Fast-track changes review depth only, never who merges or which gate clauses apply.
    - Otherwise escalate with questions answerable in one word, plus the handoff block.
 
 Handoff block (one fenced block, paste-ready): the merge command with the pinned SHA and squash message; for a release, the annotated tag and push commands; `git pull`; and the three green checks (`pnpm install --frozen-lockfile`, `pnpm verify`, demo mode starts with zero outbound requests).
 
 ## 8. Sealed appendix
 
-Prior findings and builder claims in the Pass 0 or 1.5 brief are suspicions to re-derive independently, never conclusions. Report the ones that do not reproduce under "Killed as unreproducible"; do not fix them. A review that finds nothing in a real diff is itself a finding about the review.
+Prior findings and builder claims in the Pass 0 or 1.5 brief are suspicions to re-derive independently, never conclusions. Report the ones that do not reproduce under "Killed as unreproducible"; do not fix them. A review may report no findings when it records the checks it ran, its scope and its limits.
 
 ## 9. Pass 2 extras (Codex)
 

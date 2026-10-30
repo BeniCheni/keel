@@ -10,6 +10,14 @@ Written by the PM on <date, America/New_York> after reading the Pass 1 comment a
 
 A finding goes back to Cursor as rework only when it needs redesign rather than a patch. Rework gets its own short build prompt and a fresh Pass 1.
 
+## Authorship record
+
+The Pass 0 record, extended with every fix commit since. Every commit needs a cold read from a vendor that did not author it; a Codex-authored fix goes to the Pass 2.5 Claude session, not to Codex.
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| | | |
+
 ## Rulings from Beni
 
 <Verbatim, with date. Or "none".>

@@ -23,7 +23,7 @@ Every number below comes from a command run in this session. A number taken from
 | --- | --- | --- |
 | Install | `pnpm install --frozen-lockfile` | |
 | Verify | `pnpm verify` (Node floor and current) | |
-| Determinism | `pnpm fixtures:regen && git diff --exit-code` | |
+| Determinism | `pnpm fixtures:regen && test -z "$(git status --porcelain --untracked-files=all -- fixtures)"` | |
 | Zero network | | |
 | Mutations | | |
 | Pass M | `python3 tools/reference/payoff.py fixtures/golden/` | |
@@ -44,10 +44,11 @@ Not re-run, and why: <list or "none">.
 | Gate clause | Holds? |
 | --- | --- |
 | Not a release, no numbering fork | |
-| Verdict mergeable, every High fixed with a failing-first test | |
+| Verdict mergeable, every High closed (fix commit with a failing-first test, or for a High outside tracked files, a recorded remediation check plus Beni's confirmation) | |
 | Nothing contested | |
 | `verify` green at tip; every number re-run | |
 | No sensitive path, dependency or schema change | |
+| Every commit cold-read by a non-author vendor (authorship record) | |
 | Gate verdict | would merge / would escalate |
 | Beni's decision (filled after) | |
 
@@ -59,4 +60,4 @@ Each answerable in one word. Confirm here any ruling a vendor recorded second-ha
 
 ## Handoff block
 
-One fenced, paste-ready block: merge command pinned to the SHA with the squash message and co-author trailers; for a release, the annotated tag and push commands; `git pull`; and the three green checks.
+One fenced, paste-ready block: merge command pinned to the SHA with the squash message and co-author trailers; for a release, the annotated tag and push commands; `git pull`; a check that `origin/main` equals the squash commit GitHub recorded (`gh pr view <N> --json mergeCommit`); and the three green checks.
