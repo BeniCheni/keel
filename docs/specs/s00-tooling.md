@@ -27,7 +27,7 @@ A workspace where `pnpm verify` gates every commit before any product code exist
 5. **Determinism.** `pnpm fixtures:regen` exists as a generator registry (empty for now). `verify:determinism` runs it and then `git diff --exit-code`.
 6. **Copy lint.** All user-facing strings will live in `packages/ui/src/copy/**`. The lint scans that tree (empty now) for the whole words should, buy, sell, hold, case-insensitive, and exits 1 on a hit.
 7. **Import boundary.** Fails if any file outside `packages/montecarlo/**` and `packages/ui/src/screens/scenario/**` imports `@keel/montecarlo`. Neither path exists yet; the check must still run.
-8. **CI.** `.github/workflows/verify.yml` on `pull_request` and on `push` to `main`. Matrix: `ubuntu-latest` and `macos-latest`, Node floor and current LTS. Steps: checkout, set up pnpm and Node, `pnpm install --frozen-lockfile`, `pnpm verify`. No secrets. No network after install.
+8. **CI.** `.github/workflows/verify.yml` on `pull_request` and on `push` to `main`. Matrix: `ubuntu-latest` and `macos-latest`, Node floor and current LTS. Steps: checkout, set up pnpm and Node, `pnpm install --frozen-lockfile`, `pnpm verify`. No secrets. No network after install. A final job named exactly `verify` depends on every matrix cell and fails if any cell fails, so the branch ruleset can require one stable check name; the workflow sets `permissions: contents: read`.
 9. **README quickstart** lists the commands above.
 
 ## Non-goals
@@ -45,7 +45,7 @@ Any product code; the terms schema (S01); UI; Tauri; data connectors; Monte Carl
 | AC5 | An outbound request in any test fails the run | A self-test that attempts one request of each kind and asserts the throw |
 | AC6 | The determinism check fails on a dirty regeneration | A self-test that writes a changed file into a temp git repo and asserts a non-zero exit |
 | AC7 | Copy lint and the import boundary each fail on a seeded violation | Self-tests on temp fixtures |
-| AC8 | CI runs the four-cell matrix and goes green | The `verify` workflow run on the PR |
+| AC8 | CI runs the four-cell matrix and the final `verify` job goes green; a deliberately failing cell turns `verify` red | The `verify` workflow run on the PR, plus a throwaway commit that breaks one cell |
 
 ## Mutation floor
 
