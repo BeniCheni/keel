@@ -157,10 +157,51 @@ test("flags a digit token within 40 characters after an account keyword", () => 
 
 test("does not flag a token that starts 40 characters after the keyword", () => {
   const repo = cleanRepo();
-  const secret = `AB${"12".repeat(2)}CD`;
+  const secret = `AB${"123456789"}Z`;
   try {
-    add(repo, "notes.txt", `${keyword("acct")} ${" ".repeat(40)}${secret}\n`);
-    expect(tripwire(repo.root).status).toBe(0);
+    add(repo, "notes.txt", `${keyword("acct")}${" ".repeat(40)}${secret}\n`);
+    const result = tripwire(repo.root);
+    expect(result.status).toBe(0);
+    expect(leaked(result, secret)).toBe(false);
+  } finally {
+    repo.cleanup();
+  }
+});
+
+test("flags a 12 character token that starts 39 characters after the keyword and ends outside the window", () => {
+  const repo = cleanRepo();
+  const secret = `AB${"123456789"}Z`;
+  try {
+    add(repo, "notes.txt", `${keyword("account")}${" ".repeat(39)}${secret}\n`);
+    const result = tripwire(repo.root);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("account\tnotes.txt\t1");
+    expect(leaked(result, secret)).toBe(false);
+  } finally {
+    repo.cleanup();
+  }
+});
+
+test("an account token needs 6 to 12 characters and at least 4 digits", () => {
+  const repo = cleanRepo();
+  const cases = [
+    [`A${"1234"}`, false],
+    [`AB${"1234"}`, true],
+    [`AB${"123456789"}Z`, true],
+    [`AB${"1234567890"}Z`, false],
+    [`ABCDE${"123"}`, false],
+    [`ABCD${"1234"}`, true],
+  ];
+  try {
+    add(repo, "notes.txt", `${cases.map(([token]) => `${keyword("account")} ${token}`).join("\n")}\n`);
+    const result = tripwire(repo.root);
+    expect(result.status).toBe(1);
+    cases.forEach(([token, hit], index) => {
+      const line = `account\tnotes.txt\t${index + 1}`;
+      if (hit) expect(result.stdout).toContain(line);
+      else expect(result.stdout).not.toContain(line);
+      expect(leaked(result, token)).toBe(false);
+    });
   } finally {
     repo.cleanup();
   }
@@ -210,6 +251,21 @@ test("flags a street address, a direction, and a unit", () => {
     expect(result.stdout).toContain("address\tnotes.txt\t2");
     expect(result.stdout).toContain("address\tnotes.txt\t3");
     expect(leaked(result, plain)).toBe(false);
+  } finally {
+    repo.cleanup();
+  }
+});
+
+test("a street line takes one to three words before the street type", () => {
+  const repo = cleanRepo();
+  const three = address(["1", "One", "Two", "Three", "Street"]);
+  const four = address(["1", "One", "Two", "Three", "Four", "Street"]);
+  try {
+    add(repo, "notes.txt", `${three}\n${four}\n`);
+    const result = tripwire(repo.root);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("address\tnotes.txt\t1");
+    expect(result.stdout).not.toContain("address\tnotes.txt\t2");
   } finally {
     repo.cleanup();
   }
@@ -374,6 +430,24 @@ test("an unlisted value added to the allowlist file is a hit", () => {
   }
 });
 
+test("an allowlisted value is exempt only inside its glob", () => {
+  const repo = cleanRepo();
+  const secret = makeCusip();
+  try {
+    write(repo.root, "fixtures/seed/a.txt", `${secret}\n`);
+    write(repo.root, "notes.txt", `${secret}\n`);
+    write(repo.root, "tools/tripwire/allowlist.txt", `fixtures/seed/**\t${secret}\tseeded\n`);
+    commitAll(repo.root, "add file");
+    const result = tripwire(repo.root);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("cusip\tnotes.txt\t1");
+    expect(result.stdout).not.toContain("fixtures/seed/a.txt");
+    expect(leaked(result, secret)).toBe(false);
+  } finally {
+    repo.cleanup();
+  }
+});
+
 test("an email inside a valid allowlist entry is still a hit", () => {
   const repo = cleanRepo();
   const secret = email("person");
@@ -403,6 +477,21 @@ test("an out-of-scope allowlist glob is a hit", () => {
   }
 });
 
+test("an allowlist glob outside fixtures/ is a hit even without dot segments", () => {
+  const repo = cleanRepo();
+  try {
+    write(repo.root, "tools/tripwire/allowlist.txt", `docs/**\tplain\treason\nfixtures\tplain\treason\nfixtures/seed/**\tplain\treason\n`);
+    commitAll(repo.root, "add file");
+    const result = tripwire(repo.root);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("allowlist\ttools/tripwire/allowlist.txt\t1");
+    expect(result.stdout).toContain("allowlist\ttools/tripwire/allowlist.txt\t2");
+    expect(result.stdout).not.toContain("allowlist\ttools/tripwire/allowlist.txt\t3");
+  } finally {
+    repo.cleanup();
+  }
+});
+
 test("a malformed allowlist entry is a hit", () => {
   const repo = cleanRepo();
   try {
@@ -426,6 +515,22 @@ test("flags a commit message and hides the text", () => {
     const result = tripwire(repo.root);
     expect(result.status).toBe(1);
     expect(result.stdout).toContain(`cusip\tcommit ${sha}\t1`);
+    expect(leaked(result, secret)).toBe(false);
+  } finally {
+    repo.cleanup();
+  }
+});
+
+test("flags a commit older than HEAD inside origin/main..HEAD", () => {
+  const repo = cleanRepo();
+  const secret = makeCusip();
+  try {
+    expect(git(repo.root, ["commit", "--allow-empty", "-m", secret]).status).toBe(0);
+    const older = git(repo.root, ["rev-parse", "HEAD"]).stdout.trim();
+    expect(git(repo.root, ["commit", "--allow-empty", "-m", "clean follow-up"]).status).toBe(0);
+    const result = tripwire(repo.root);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain(`cusip\tcommit ${older}\t1`);
     expect(leaked(result, secret)).toBe(false);
   } finally {
     repo.cleanup();
