@@ -41,18 +41,24 @@ test("a filter that matches no file fails", () => {
   expect(result.status).not.toBe(0);
 });
 
+function visible(text) {
+  return text.replace(/\u001b\[[0-9;]*m/g, "");
+}
+
 test("a temporary honesty test is discovered, and a failing one turns the run red", () => {
   const passing = join(repoRoot, "packages/core/src/zz-acceptance.honesty.test.ts");
   const failing = join(repoRoot, "packages/core/src/zz-acceptance-fail.honesty.test.ts");
+  const env = { ...process.env, FORCE_COLOR: "1" };
   writeFileSync(
     passing,
     'import { expect, test } from "vitest";\ntest("honesty marker passes", () => {\n  expect(1).toBe(1);\n});\n',
   );
   try {
-    const ok = run("pnpm", ["--filter", "@keel/core", "test", "zz-acceptance.honesty"]);
+    const ok = run("pnpm", ["--filter", "@keel/core", "test", "zz-acceptance.honesty"], { env });
+    const text = visible(`${ok.stdout}\n${ok.stderr}`);
     expect(ok.status).toBe(0);
-    expect(ok.stdout).toContain("zz-acceptance.honesty");
-    expect(ok.stdout).toMatch(/Tests\s+1 passed/);
+    expect(text).toContain("zz-acceptance.honesty");
+    expect(text).toMatch(/Tests\s+1 passed/);
   } finally {
     rmSync(passing, { force: true });
   }
@@ -61,9 +67,10 @@ test("a temporary honesty test is discovered, and a failing one turns the run re
     'import { expect, test } from "vitest";\ntest("honesty marker fails", () => {\n  expect(1).toBe(2);\n});\n',
   );
   try {
-    const bad = run("pnpm", ["--filter", "@keel/core", "test", "zz-acceptance-fail.honesty"]);
+    const bad = run("pnpm", ["--filter", "@keel/core", "test", "zz-acceptance-fail.honesty"], { env });
+    const text = visible(`${bad.stdout}\n${bad.stderr}`);
     expect(bad.status).not.toBe(0);
-    expect(`${bad.stdout}${bad.stderr}`).not.toContain("No test files found");
+    expect(text).not.toContain("No test files found");
   } finally {
     rmSync(failing, { force: true });
   }
