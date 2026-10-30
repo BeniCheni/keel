@@ -54,11 +54,11 @@ pnpm --filter @keel/core test
 pnpm --filter @keel/core test <pattern>
 ```
 
-A filter that matches no test file fails the run. Tooling self-tests:
+A filter that matches no test file fails the run. Tooling self-tests, with an optional filter matched against the test file's path (`pnpm test:tooling -- tripwire` runs `tools/acceptance/test/tripwire.test.mjs` alone):
 
 ```bash
 pnpm test:tooling
-pnpm test:tooling -- <path filter>
+pnpm test:tooling -- <filter>
 ```
 
 Fixture registry:

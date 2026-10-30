@@ -17,7 +17,7 @@
     "verify:determinism": "node tools/verify/one.mjs determinism",
     "verify:copy": "node tools/verify/one.mjs copy",
     "verify:boundaries": "node tools/verify/one.mjs boundaries",
-    "test:tooling": "vitest run --config tools/vitest.config.mjs",
+    "test:tooling": "node tools/test-tooling.mjs",
     "test:ci-evidence": "node tools/ci/ci-evidence.mjs",
     "fixtures:regen": "node tools/fixtures/regen.mjs",
     "fixtures:trees": "node tools/fixtures/trees.mjs"

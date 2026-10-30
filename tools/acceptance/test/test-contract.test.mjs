@@ -2,6 +2,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "vitest";
+import { vitestArgs } from "../../test-tooling.mjs";
 import { repoRoot, run } from "./helpers.mjs";
 
 function tsc(source) {
@@ -39,6 +40,20 @@ test("strict, noUncheckedIndexedAccess, and exactOptionalPropertyTypes are in fo
 test("a filter that matches no file fails", () => {
   const result = run("pnpm", ["--filter", "@keel/core", "test", "zz-no-such-test-file"]);
   expect(result.status).not.toBe(0);
+});
+
+test("test:tooling drops a leading -- so the filter reaches vitest", () => {
+  const scripts = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8")).scripts;
+  expect(scripts["test:tooling"]).toBe("node tools/test-tooling.mjs");
+  expect(vitestArgs(["--", "tripwire"])).toEqual(["run", "--config", "tools/vitest.config.mjs", "tripwire"]);
+  expect(vitestArgs(["tripwire"])).toEqual(["run", "--config", "tools/vitest.config.mjs", "tripwire"]);
+  expect(vitestArgs([])).toEqual(["run", "--config", "tools/vitest.config.mjs"]);
+  const narrowed = run(process.execPath, ["tools/test-tooling.mjs", "--", "copy-boundary"]);
+  expect(narrowed.status).toBe(0);
+  expect(visible(`${narrowed.stdout}\n${narrowed.stderr}`)).toMatch(/Test Files\s+1 passed \(1\)/);
+  const none = run(process.execPath, ["tools/test-tooling.mjs", "--", "zz-no-such-tooling-test"]);
+  expect(none.status).not.toBe(0);
+  expect(visible(`${none.stdout}\n${none.stderr}`)).toContain("No test files found");
 });
 
 function visible(text) {
