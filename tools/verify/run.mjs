@@ -1,18 +1,12 @@
+import { parseOptions, statusOf } from "./options.mjs";
 import { steps } from "./steps.mjs";
 
-const stub = process.env.KEEL_VERIFY_STUB === "1";
-const fail = new Set(
-  (process.env.KEEL_VERIFY_FAIL ?? "")
-    .split(",")
-    .map((name) => name.trim())
-    .filter(Boolean),
-);
+const options = parseOptions(process.argv.slice(2));
+if (options.stub) console.error("verify: stub run, no step executed");
 
 const failed = [];
 for (const step of steps) {
-  let status = 0;
-  if (fail.has(step.name)) status = 1;
-  else if (!stub) status = step.run();
+  const status = statusOf(step, options);
   console.log(`verify:${step.name} ${status === 0 ? "ok" : "fail"}`);
   if (status !== 0) failed.push(step.name);
 }
