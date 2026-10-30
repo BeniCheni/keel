@@ -4,7 +4,7 @@ Every slice moves through up to four rungs: proposal (the research behind the pr
 
 | Slice | Release | Spec | Design brief | Review records | Status |
 | --- | --- | --- | --- | --- | --- |
-| Scaffold (PR #1) | n/a | none; adds S00 and S01 | none | `reviews/pr-1-pass-0.md` (retroactive), `reviews/pr-1-pass-1.5.md` | in review |
+| Scaffold (PR #1) | n/a | none; adds S00 and S01 | none | `reviews/pr-1-pass-0.md` (retroactive), `reviews/pr-1-pass-1.5.md`, `reviews/pr-1-pass-2.5.md` (executive brief) | merged 2026-10-30 at squash `8b316f3`, reviewed head `97ac4dc` |
 | S00 Repo tooling | toward `v0.1.0` (non-release) | `specs/s00-tooling.md` | none (no UI) | `reviews/pr-<N>-*` | spec revised 2026-10-30 after the plan challenge |
 | S01 Terms schema 0.1 and loader | toward `v0.1.0` (non-release) | `specs/s01-terms-schema.md` | none (no UI) | `reviews/pr-<N>-*` | spec revised 2026-10-30 after the plan challenge |
 
