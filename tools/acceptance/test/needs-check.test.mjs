@@ -52,6 +52,8 @@ test("evidence accepts a green matrix and a single red cell", () => {
     job.name === cellName("ubuntu-latest", "24") ? { ...job, conclusion: "skipped" } : job,
   );
   expect(assessSuccess(skipped).length).toBeGreaterThan(0);
+  expect(assessSuccess(jobs("success", "failure"))).toEqual(["verify is failure"]);
+  expect(assessSuccess(jobs("success").filter((job) => job.name !== "verify"))).toEqual(["verify count 0"]);
 });
 
 test("the workflow names verify, checks needs, and confines Linux", () => {

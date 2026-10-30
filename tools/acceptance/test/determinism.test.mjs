@@ -137,6 +137,27 @@ test("an empty path from the registry fails with git's status", () => {
   }
 });
 
+test("a failing fixtures:regen fails the determinism check even when the tree is clean", () => {
+  const repo = tempGit();
+  try {
+    write(
+      repo.root,
+      "package.json",
+      JSON.stringify({
+        name: "keel-regen-probe",
+        private: true,
+        scripts: { "fixtures:regen": 'node -e "process.exit(3)"', "fixtures:trees": "echo fixtures" },
+      }),
+    );
+    commitAll(repo.root, "add package");
+    const result = verifyDeterminism(repo.root);
+    expect(result.status).not.toBe(0);
+    expect(check(repo.root, ["fixtures"]).status).toBe(0);
+  } finally {
+    repo.cleanup();
+  }
+});
+
 test("the production determinism check is clean on this repo", () => {
   const result = verifyDeterminism(repoRoot);
   expect(result.status).toBe(0);

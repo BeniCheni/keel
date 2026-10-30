@@ -27,12 +27,14 @@ test("copy lint flags each banned word in each scanned scope", () => {
     write(repo.root, "README.md", "HOLD\n");
     write(repo.root, "DISCLAIMER.md", "buy\n");
     write(repo.root, "packages/ui/src/copy/labels.ts", "sell\n");
+    write(repo.root, "packages/ui/src/copy/nested/deep.ts", "a Should\n");
     write(repo.root, "docs/extra.md", "should\n");
     const result = copy(repo.root);
     expect(result.status).toBe(1);
     expect(result.stdout).toContain("copy\tREADME.md\t1");
     expect(result.stdout).toContain("copy\tDISCLAIMER.md\t1");
     expect(result.stdout).toContain("copy\tpackages/ui/src/copy/labels.ts\t1");
+    expect(result.stdout).toContain("copy\tpackages/ui/src/copy/nested/deep.ts\t1");
     expect(result.stdout).not.toContain("docs/extra.md");
   } finally {
     repo.cleanup();
@@ -86,6 +88,11 @@ test("an import from an allowed path and a different package name pass", () => {
     write(repo.root, "packages/montecarlo/src/index.ts", `${line("dynamic")}\n`);
     write(repo.root, "packages/core/src/c.ts", `im${""}port x from "${spec("-extra")}";\n`);
     expect(boundary(repo.root).status).toBe(0);
+    write(repo.root, "packages/ui/src/screens/other/view.ts", `${line("static")}\n`);
+    const result = boundary(repo.root);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("boundary\tpackages/ui/src/screens/other/view.ts\t1");
+    expect(result.stdout).not.toContain("scenario/view.ts");
   } finally {
     repo.cleanup();
   }

@@ -71,6 +71,8 @@ test("a temporary honesty test is discovered, and a failing one turns the run re
     const text = visible(`${bad.stdout}\n${bad.stderr}`);
     expect(bad.status).not.toBe(0);
     expect(text).not.toContain("No test files found");
+    expect(text).toContain("zz-acceptance-fail.honesty");
+    expect(text).toMatch(/Tests\s+1 failed/);
   } finally {
     rmSync(failing, { force: true });
   }
