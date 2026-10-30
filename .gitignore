@@ -1,0 +1,19 @@
+# dependencies and build output
+node_modules/
+dist/
+coverage/
+.turbo/
+*.tsbuildinfo
+
+# local-only by rule (AGENTS.md hard rules 1 and 11)
+design/
+.keel-data/
+/terms/
+*.sqlite
+*.sqlite-journal
+*.pdf
+
+# secrets and machine files
+.env
+.env.*
+.DS_Store
