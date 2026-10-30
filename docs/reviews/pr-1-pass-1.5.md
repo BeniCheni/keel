@@ -34,7 +34,9 @@ All 18 findings are accepted. Two are accepted with a narrower fix than Pass 1 p
 | `cd1df4d` scaffold | Claude (PM) | Codex, Pass 1 |
 | `cea220f` S00 `verify` check | Claude (PM) | Codex, Pass 1 |
 | `68b5670` README copy | Codex | fresh Claude session, Pass 2.5 |
-| PM revision commits after this brief | Claude (PM) | Codex, Pass 2 (revision delta only) |
+| `cceb3c8`, `6bbd7de` PM revision | Claude (PM) | Codex, Pass 2 (revision delta only) |
+| `cf82f7c` ideas candidates | Codex | fresh Claude session, Pass 2.5 |
+| PM commit applying rulings 8 and 9 | Claude (PM) | Codex, scoped re-read of that commit only |
 
 Reproduce the first three rows: `git log --format='%h %an' 262f119..68b5670`.
 
@@ -49,6 +51,11 @@ Beni ruled on 2026-10-30 (America/New_York):
 5. S00 AC8's failing-dependency evidence comes from a throwaway probe branch that is never merged and is deleted after the run is recorded: **Approved.**
 6. Anchor the ignore rule to `/design/`: **Approved.**
 7. The earliest PR #1 body revision is deleted from the edit history, and Beni's private-list check shows no leaking revision: **Confirmed by Beni.**
+
+8. Pass 2 proposal P2-B: a validated allowlist entry's value is exempt from the CUSIP class inside the allowlist file only, with a populated-allowlist self-test. **Approved.**
+9. Pass 2 proposal P2-C: the determinism check fails on a Git error and takes its paths from the registered output trees, with a Git-error negative case. **Approved.**
+
+Rulings 8 and 9 were given after Pass 2, in answer to Codex's comment. They are applied in the PM commit after `cf82f7c`, and the two candidates leave `docs/v0.1.0-ideas.md` because they are no longer candidates.
 
 Specs are revised before either build starts; that follows from accepting findings 6 to 14 and needs no separate ruling.
 

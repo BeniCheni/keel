@@ -63,7 +63,7 @@ A PR touching any of these is a sensitive-path PR: Fable 5.1 pins apply, fast-tr
 
 - TypeScript in strict mode; pnpm workspaces; the Node floor is pinned in `package.json` and CI runs the floor and the current LTS.
 - `pnpm verify` runs typecheck, tests, honesty tests, the PII tripwire, the zero-network test, the determinism check, copy lint and the import-boundary check. It is green at every commit.
-- The determinism check regenerates every registered output and then requires `git status --porcelain --untracked-files=all -- <registered output trees>` to print nothing. A bare `git diff --exit-code` misses staged and untracked outputs and is not the check.
+- The determinism check regenerates every registered output, takes the output trees from the registry (`pnpm -s fixtures:trees`), and then requires `git status --porcelain --untracked-files=all -- <those trees>` to succeed and print nothing. A failed Git command fails the check; it never reads as clean. A bare `git diff --exit-code` misses staged and untracked outputs and is not the check.
 - `packages/core` and every category plugin do no I/O: no file system, network, clock or randomness. Time, data and seeds are passed in.
 - Money is integer cents. Levels are decimal ratios with an explicit rounding rule taken from the terms.
 - Every engine or alert claim has at least three mutants that the suite kills, including each boundary (for example 95.00%, 94.99%, 60.00%, 59.99%).

@@ -60,7 +60,7 @@ By what the diff touches:
 ## 4. Dynamic pass
 
 1. Run the README quickstart in the fresh clone, including demo mode.
-2. Run the zero-network test and the determinism check (`pnpm fixtures:regen && test -z "$(git status --porcelain --untracked-files=all -- fixtures)"`). A bare `git diff --exit-code` misses staged and untracked outputs.
+2. Run the zero-network test and the determinism check (`pnpm fixtures:regen && trees="$(pnpm -s fixtures:trees)" && status="$(git status --porcelain --untracked-files=all -- $trees)" && test -z "$status"`). Each `&&` keeps a failed command, Git included, from reading as clean. A bare `git diff --exit-code` misses staged and untracked outputs.
 3. For UI changes: the browser build at 360, 375, 390, ~1000 and 1440 px, light and dark, both densities; set the viewport before any screenshot; assert `document.documentElement.scrollWidth === window.innerWidth`.
 4. For alert changes: replay the synthetic histories and diff firings against the expected fixtures.
 5. Commands named here are defined by slice S00. If one is missing, that is a finding, not a reason to skip the check.
