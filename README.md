@@ -2,7 +2,7 @@
 
 A local-first monitor for investments whose value comes from their terms, not from a market price. The first instrument it tracks is a market-linked note: a worst-of autocall with a call level, observation dates and a barrier.
 
-keel shows what you hold, what each term says and where that term came from, the next date that matters, and how far the underlyings sit from the call level and the barrier. When there is no evidence of a value, it says so instead of inventing one.
+keel shows your instruments, what each term says and where that term came from, the next date that matters, and how far the underlyings sit from the call level and the barrier. When there is no evidence of a value, it says so instead of inventing one.
 
 **Status:** pre-alpha. This repository currently holds its rules, review process and first slice specs; no product code yet.
 
