@@ -1,5 +1,7 @@
-import { rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { expect, test } from "vitest";
 import { probeNames, runProbe, runProbes } from "../../network/run.mjs";
 import { repoRoot, run } from "./helpers.mjs";
@@ -14,6 +16,36 @@ for (const name of probeNames) {
 
 test("an unknown probe name exits 2", () => {
   expect(runProbe("nonsense").status).toBe(2);
+});
+
+test("the guard blocks builtin ESM named imports as well as default imports", () => {
+  const dir = mkdtempSync(join(tmpdir(), "keel-named-network-"));
+  const file = join(dir, "probe.mjs");
+  const guard = pathToFileURL(join(repoRoot, "tools/network/guard.mjs")).href;
+  writeFileSync(file, [
+    'import assert from "node:assert/strict";',
+    'import { lookup } from "node:dns";',
+    'import { lookup as promiseLookup } from "node:dns/promises";',
+    'import { createSocket } from "node:dgram";',
+    `import { installNetworkGuard } from ${JSON.stringify(guard)};`,
+    'installNetworkGuard();',
+    'const calls = {',
+    '  "dns.lookup": () => lookup("localhost", () => {}),',
+    '  "dns.promises.lookup": () => promiseLookup("localhost"),',
+    '  "dgram.createSocket": () => createSocket("udp4"),',
+    '};',
+    'const name = process.argv[2];',
+    'assert.throws(calls[name], { message: `network blocked: ${name}` });',
+    '',
+  ].join("\n"));
+  try {
+    for (const name of ["dns.lookup", "dns.promises.lookup", "dgram.createSocket"]) {
+      const result = run(process.execPath, [file, name]);
+      expect(result.status).toBe(0);
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test("runProbes reports a probe that exits 0, hangs, or dies for another reason", () => {

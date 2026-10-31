@@ -2,6 +2,7 @@ import dgram from "node:dgram";
 import dns from "node:dns";
 import http from "node:http";
 import https from "node:https";
+import { syncBuiltinESMExports } from "node:module";
 import net from "node:net";
 import tls from "node:tls";
 
@@ -40,4 +41,6 @@ export function installNetworkGuard() {
   dns.Resolver.prototype.resolve4 = block("dns.Resolver.prototype.resolve4");
   dns.Resolver.prototype.resolve6 = block("dns.Resolver.prototype.resolve6");
   dgram.createSocket = block("dgram.createSocket");
+  // Builtin named exports otherwise retain the original, unguarded functions.
+  syncBuiltinESMExports();
 }
