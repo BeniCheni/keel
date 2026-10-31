@@ -26,7 +26,8 @@ Codex's AC5 note is adopted too: the unlisted-address case now puts the address 
 | `a0db3bb` housekeeping, `80c0eb3` Pass 0 brief | Claude (PM) | Codex, Pass 1 |
 | `acbcc25` ADR corrections | Codex | fresh Claude session before merge |
 | `ada396b` PM commit applying Q1 to Q6, with this brief | Claude (PM) | Codex, scoped re-read (issuecomment-6547327421) |
-| PM commit applying Q8 | Claude (PM) | Codex, scoped re-read of that commit only |
+| `f1bc1b6`, `72b9a7f` PM commits applying Q8 | Claude (PM) | Codex, scoped re-read (issuecomment-6547815846) |
+| PM commit completing Q8 (per-symbol helper tracking) | Claude (PM) | Codex, scoped re-read of that commit only |
 
 ## Rulings from Beni
 
@@ -40,3 +41,4 @@ Beni ruled on 2026-10-31 (America/New_York):
 6. Q6: S00.1 inherits S00's story IDs. **Approved.**
 7. Q7: ADR-0001 to 0008 as recorded (Accepted, decided 2026-10-29), and the rulings recorded second-hand in this PR (S00.1 numbering, S00.1 before S01, allowlist scoped to `fixtures/`). **Confirmed.**
 8. Q8, from Codex's scoped re-read of `ada396b` (issuecomment-6547327421): S00.1's AC1 computes spawning entry points from the import graph, following wrappers and re-exports transitively, and rejects a test that calls an unlisted wrapper without the timeout. **Approved**, to be fixed in this PR.
+9. Q8, completed after Codex's re-read of `72b9a7f` (issuecomment-6547815846): spawning is tracked per exported symbol, so a wrapper or re-export of a spawning helper from `helpers.mjs` is covered, while a module importing only non-spawning helpers is not; AC1 fixtures add a helper-wrapper, a helper re-export, a second-level wrapper and a passing write-only control. **Approved.**
