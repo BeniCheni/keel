@@ -95,15 +95,15 @@ None. No figure in this PR comes from a model or an assumption.
 | No sensitive path, dependency or schema change | **no**: three sensitive paths and two devDependencies; no schema |
 | Every commit cold-read by a non-author vendor (authorship record) | yes: `8b9dfee`, `3c8b544` (Cursor) read by Claude Code at Pass 1 (issuecomment-6532940023); `9cb2a56`, `585c12e`, `68bac4e`, `84d160e`, `aa78a99`, `885eb4b`, `0fadf6a`, `d0caa9c`, `55774a1` (Claude) read by Codex at Pass 2 (issuecomment-6537661855, commit table); `fc13571`, `f5a0ca7`, `bbe3aec` (Codex) read by this seat. 2 + 9 + 3 = 14 = `git rev-list --count origin/main..HEAD` |
 | Gate verdict | **would escalate** (sensitive paths and dependencies; the delegated gate never covers this PR). Beni merges |
-| Beni's decision (filled after) | |
+| Beni's decision (filled after) | merge approved 2026-10-31 (America/New_York) at `bbe3aec0fb6b0c62441e3cdff72f59ac58c7f879`; squash commit and post-merge checks to be recorded after the merge runs |
 
 ## Questions for Beni
 
 Each answerable in one word.
 
-1. Confirm the ruling Codex recorded during Pass 2: the direction, unit and masked-form survivors are High and close test-only with `fc13571`? (yes/no)
+1. Confirm the ruling Codex recorded during Pass 2: the direction, unit and masked-form survivors are High and close test-only with `fc13571`? (yes/no) **Ruled 2026-10-31 (America/New_York): yes. Approved;** the second-hand record in issuecomment-6537661855 is confirmed first-hand.
 2. Defer the open Medium (honesty discovery satisfied by pnpm's echo; fails under `pnpm -s`) to the ideas file as a test-only follow-up rather than fixing it on this PR? (yes/no) **Ruled 2026-10-31 (America/New_York): defer. Approved.** The Medium stays open on this PR as a record and does not block the merge. `docs/v0.1.0-ideas.md` is part of PR #3's diff (`0fadf6a`), so the row lands after the merge, in the next PM docs change, as: "Honesty-file discovery test asserts the file name from pnpm's command echo, not Vitest's report; `pnpm -s test:tooling -- test-contract` fails while `pnpm verify` passes. Assert on Vitest's own output (pairs with rank 5). Source: PR #3, Pass 2.5. Size XS."
-3. Merge PR #3 at `bbe3aec0fb6b0c62441e3cdff72f59ac58c7f879` with the block below? (yes/no)
+3. Merge PR #3 at `bbe3aec0fb6b0c62441e3cdff72f59ac58c7f879` with the block below? (yes/no) **Ruled 2026-10-31 (America/New_York): yes. Approved.** Shadow mode: Pass 2.5 does not run the merge; Beni, or Cursor as merge logistics on Beni's word, runs the block, and the decision row below is filled once GitHub records the squash commit.
 
 ## Handoff block
 
