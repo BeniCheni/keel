@@ -8,16 +8,18 @@ Every slice moves through up to four rungs: proposal (the research behind the pr
 | Pass 2.5 record for PR #1 (PR #2) | n/a | none | none | `reviews/pr-2-pass-0.md` | merged 2026-10-30 at squash `0db249a` |
 | S00 Repo tooling (PR #3) | toward `v0.1.0` (non-release) | `specs/s00-tooling.md` | none (no UI) | `reviews/pr-3-pass-0.md`, `reviews/pr-3-pass-1.5.md`, `reviews/pr-3-pass-2.5.md` (executive brief) | merged 2026-10-31 at squash `e9ab4ba`, reviewed head `bbe3aec` |
 | Review records for PR #3 (PR #5) | n/a | none | none | `reviews/pr-5-pass-0.md`, `reviews/pr-5-pass-2.5.md` (executive brief) | merged 2026-10-31 at squash `330cc87`, reviewed head `fed9d33` (fast-track) |
-| Record of the PR #5 merge and ideas 7 to 9 (PR #6) | n/a | none | none | `reviews/pr-6-pass-0.md` | in review |
+| Record of the PR #5 merge and ideas 7 to 9 (PR #6) | n/a | none | none | `reviews/pr-6-pass-0.md` | landed 2026-10-31 as `f47e047`, outside the PR: GitHub records no merge on PR #6 and no CI run on that commit; its tree equals the PR's reviewed head `731ad5d` |
+| Housekeeping: trailers, rules, ADRs, S00.1 spec | n/a | adds `specs/s00.1-tooling-hardening.md` | none | none yet | in review |
+| S00.1 Tooling hardening | toward `v0.1.0` (non-release) | `specs/s00.1-tooling-hardening.md` | none (no UI) | `reviews/pr-<N>-*` | spec drafted 2026-10-31; builds before S01 |
 | S01 Terms schema 0.1 and loader | toward `v0.1.0` (non-release) | `specs/s01-terms-schema.md` | none (no UI) | `reviews/pr-<N>-*` | spec revised 2026-10-30 after the plan challenge |
 
 Folders:
 
 - `proposals/`: scrubbed copies of the product research. The original is private because it names a real holding.
-- `specs/`: one file per slice, `sNN-<slug>.md`.
+- `specs/`: one file per slice, `sNN-<slug>.md`, or `sNN.M-<slug>.md` for a follow-up slice Beni numbers that way.
 - `design/`: design briefs and Executive Handoff Briefs. Prototypes themselves stay in the local-only top-level `/design/` folder, which `.gitignore` excludes; `docs/design/` is tracked.
 - `reviews/`: `pr-<N>-pass-0.md`, `pr-<N>-pass-1.5.md`, executive briefs worth keeping, and `gate-activation.md` once Beni ends shadow mode.
-- `adr/`: architecture decision records, `NNNN-<slug>.md`.
+- `adr/`: architecture decision records, `NNNN-<slug>.md`. ADR-0001 to 0008 record the Milestone 1 architecture: Tauri shell, core without I/O, terms as YAML with provenance, SQLite outside the repo, no value without evidence, bring-your-own-key connectors, end-of-day check, Monte Carlo isolated.
 - `providers/`: one terms review per data connector.
 - `v0.1.0-ideas.md`: ranked candidates. Never a release scope.
 

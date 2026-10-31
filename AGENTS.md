@@ -70,9 +70,9 @@ A PR touching any of these is a sensitive-path PR: Fable 5.1 pins apply, fast-tr
 
 ## Workflow
 
-1. **Plan.** The PM writes `docs/specs/sNN-<slug>.md`: story IDs, acceptance criteria with reproducing commands, non-goals, sensitive paths touched, and the design rung if any. The spec PR gets Codex as Pass 1, which is the plan challenge. Beni rules on scope and numbering.
+1. **Plan.** The PM writes `docs/specs/sNN-<slug>.md` (a follow-up slice Beni numbers as `sNN.M`, such as S00.1, uses `sNN.M-<slug>.md`): story IDs, acceptance criteria with reproducing commands, non-goals, sensitive paths touched, and the design rung if any. The spec PR gets Codex as Pass 1, which is the plan challenge. Beni rules on scope and numbering.
 2. **Design** (only for slices the spec marks). The instrument page gets the full Design Review cycle: Round 1 cold review (Claude Code), Round 2 deep-dive rebuttal (Codex), Round 3 regroup, Beni approves the prototype, then an Executive Handoff Brief and declarative build instructions go to Cursor. Terms and Evidence and the alerts inbox get Round 1 plus Beni's approval. Other screens reuse existing components and tokens.
-3. **Build.** Cursor opens a draft PR on branch `sNN/<slug>` for exactly one slice. The PR body lists every claim with its reproducing command.
+3. **Build.** Cursor opens a draft PR on branch `sNN/<slug>` (or `sNN.M/<slug>`) for exactly one slice, and pushes the next commit only after CI is green on the last. The PR body lists every claim with its reproducing command.
 4. **Review.** `/keel-pr-review <N>` runs the passes:
 
 | Pass | Seat | Output |
@@ -83,6 +83,8 @@ A PR touching any of these is a sensitive-path PR: Fable 5.1 pins apply, fast-tr
 | 2 | Codex | Independent read, reproduce or disprove each finding, Pass M on engine PRs, fix commits, one PR comment. On a Claude-authored PR, the cold read of the Claude-authored commits after Pass 1 |
 | 2.5 | PM, fresh session | Re-run of every number at the head, cold read of any Codex-authored commit, executive brief, merge gate verdict |
 | 3 | Beni | Rulings on contested items; merges; tags releases |
+
+**Records PRs.** A PR that only adds or corrects files under `docs/reviews/**`, plus their rows in `docs/README.md`, is a records PR. It needs no review passes: the `verify` check green and Beni's merge are enough, and it writes no review records of its own. Records may batch across slices. A records PR that touches any other file is an ordinary PR.
 
 **Bootstrap path.** Until S00 merges, a docs-only PR has no `package.json`, lockfile or workflow, so install, `verify`, mutations and Pass M cannot run. Such a PR gets static checks only. Every pass states each skipped check as N/A with its reason, and nothing reports a skipped check as green.
 
@@ -97,7 +99,9 @@ A PR touching any of these is a sensitive-path PR: Fable 5.1 pins apply, fast-tr
 - Nothing contested between vendors.
 - `verify` green at the tip, and Pass 2.5 re-ran every number it reports.
 - No sensitive path touched, no new dependency, no terms-schema change.
-- Squash merge pinned to the reviewed SHA (`gh pr merge <N> --squash --match-head-commit <sha>`), with a `Co-authored-by:` trailer for every vendor that wrote or reviewed.
+- Squash merge pinned to the reviewed SHA (`gh pr merge <N> --squash --match-head-commit <sha>`), with a `Co-authored-by:` trailer for every vendor that wrote or reviewed, each spelled out in full.
+
+**`main` moves only by a PR merge.** Every change reaches `main` through `gh pr merge <N> --squash --match-head-commit <sha>` (or the same merge in the GitHub UI) on an open PR with the `verify` check green. Never through a direct push, an API ref or contents edit, or the web editor. The `main` ruleset requires a pull request, squash merges only, and the `verify` check.
 
 **Fast-track.** Allowed only when the Pass 0 brief names it and the diff is docs, UI copy or tokens outside sensitive paths. It is never allowed for a release or a numbering fork. Fast-track changes review depth only: one cold review by a vendor that did not write the PR replaces Passes 1 to 2.5. It does not change who merges. In shadow mode Beni merges, and after activation the gate above still applies in full: findings closed, applicable checks green, and the merge pinned with `--match-head-commit`. Record "fast-track" in the squash message.
 

@@ -90,7 +90,7 @@ List out-of-scope findings in the comment with a one-line reason and a rough siz
    - Fast-track changes review depth only, never who merges or which gate clauses apply.
    - Otherwise escalate with questions answerable in one word, plus the handoff block.
 
-Handoff block (one fenced block, paste-ready): the merge command with the pinned SHA and squash message; for a release, the annotated tag and push commands; `git pull`; and the three green checks (`pnpm install --frozen-lockfile`, `pnpm verify`, demo mode starts with zero outbound requests).
+Handoff block (one fenced block, paste-ready): the merge command with the pinned SHA and squash message. Every `Co-authored-by:` trailer is spelled out in full as literal text (name and address), resolved in the reviewed clone from `git log --format='%an <%ae>' origin/main..<head>` and pasted in. Never fill a trailer by shell substitution at merge time: the merging clone may not have the commit, which is how PR #3's squash got an empty Cursor trailer. Then: for a release, the annotated tag and push commands; `git pull`; and the three green checks (`pnpm install --frozen-lockfile`, `pnpm verify`, demo mode starts with zero outbound requests).
 
 ## 8. Sealed appendix
 
