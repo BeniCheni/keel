@@ -13,7 +13,7 @@ The same evaluation must run in the UI, in the headless check command and in tes
 
 ## Consequences
 
-The core is trivially testable and deterministic, and UI and CLI parity follows from sharing it. `AGENTS.md` enforces the rule, and the import-boundary and network checks back it.
+Passing time, data and seeds into the core makes deterministic testing and UI/CLI parity possible. `AGENTS.md` requires this purity. The network guard checks outbound entry points, and the import-boundary check isolates Monte Carlo; these checks do not check file-system, clock or randomness use.
 
 ## Strongest argument against
 

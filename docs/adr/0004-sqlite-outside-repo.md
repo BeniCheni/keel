@@ -13,7 +13,7 @@ One SQLite file in the OS app-data folder, outside the repo. Documents live in a
 
 ## Consequences
 
-Inspectable, one-file backup; nothing personal can be committed by accident. The exact SQLite binding is chosen in the storage slice.
+Inspectable, one-file backup. Keeping runtime data outside the repo reduces accidental-commit risk; the heuristic tripwire, the owner's private-list check and review remain necessary. The exact SQLite binding is chosen in the storage slice.
 
 ## Strongest argument against
 

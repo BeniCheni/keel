@@ -13,7 +13,7 @@ A dollar value appears only when a dated, sourced mark exists. When none exists,
 
 ## Consequences
 
-Every number on screen can be traced to evidence. The empty state is a designed state, not an error.
+A dollar value in the value slot is traceable to its dated, sourced mark. Scenario estimates stay separate and carry their assumptions, as ADR-0008 requires. The empty state is a designed state, not an error.
 
 ## Strongest argument against
 

@@ -1,4 +1,4 @@
-# ADR-0003: Terms as YAML plus JSON Schema, with provenance on every field
+# ADR-0003: Terms as YAML plus JSON Schema, with provenance on term fields
 
 - Status: Accepted. Decided 2026-10-29 in the product research (Section 6, held privately until a scrubbed copy lands in `docs/proposals/`); recorded 2026-10-31.
 - Deciders: Beni (owner), on the PM's recommendation.
@@ -9,7 +9,7 @@ A note's value is defined by its terms, and those terms arrive from documents of
 
 ## Decision
 
-One YAML file per instrument is the source of truth for its terms. Every field is a value plus its provenance status and source; a field can instead hold a conflict with every candidate. YAML is parsed in strict 1.2 mode and validated against a published, versioned JSON Schema. Only a `primary` source verifies a payoff term.
+One YAML file per instrument is the source of truth for its terms. Each term field carries a value and provenance status, or a conflict with every candidate; a source is required only for the statuses that cite one. Plain structural fields carry no provenance wrapper. The field and status contracts in `docs/specs/s01-terms-schema.md` define these shapes. YAML is parsed in strict 1.2 mode and validated against a published, versioned JSON Schema. Only a `primary` source verifies a payoff term.
 
 ## Consequences
 
