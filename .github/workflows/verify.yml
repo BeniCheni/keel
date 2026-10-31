@@ -1,0 +1,74 @@
+name: verify
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  cells:
+    name: cell (${{ matrix.os }}, node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        node: [24, 26]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch origin/main
+        run: git fetch origin main:refs/remotes/origin/main
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Node version
+        run: node --version
+
+      - name: Verify
+        if: runner.os != 'Linux'
+        run: pnpm verify
+
+      - name: Verify in a network namespace
+        if: runner.os == 'Linux'
+        run: bash tools/ci/verify-netns.sh
+
+  verify:
+    name: verify
+    if: always()
+    needs: [cells]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Check needed jobs
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: node tools/ci/needs-check.mjs
