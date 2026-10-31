@@ -16,7 +16,7 @@ Codex (Claude sessions wrote every line of this PR), model GPT-6.1 Sol High (no 
 
 ## Authorship record
 
-From `git log --format='%h %an' origin/main..HEAD` at `a699303`: 8 commits, all `Claude`. Every commit needs a cold read from a vendor that did not author it.
+The original snapshot at `a699303` had 8 commits, all `Claude` (`git log --format='%h %an' origin/main..a699303`). At the Pass 1 input head `7c6827e`, the range has 10 commits, all `Claude` (`git log --format='%h %an' origin/main..7c6827e`). The table includes the brief's initial commit and its later bootstrap correction. Every commit needs a cold read from a vendor that did not author it.
 
 | Commit | Authoring vendor | Cold read by |
 | --- | --- | --- |
@@ -27,7 +27,9 @@ From `git log --format='%h %an' origin/main..HEAD` at `a699303`: 8 commits, all 
 | `a6f294e`, `d593070` Beni's rulings 1 to 3 | Claude (Pass 2.5 session) | Codex, Pass 1 |
 | `654e8c9` squash record, empty Cursor trailer, CHANGELOG note | Claude (fork of the Pass 2.5 session) | Codex, Pass 1 |
 | `a699303` post-merge verify record | Claude (Pass 2.5 session) | Codex, Pass 1 |
-| the commit adding this brief and the index rows | Claude (PM) | Codex, Pass 1 |
+| `10c23d6` this brief and the index rows | Claude (PM) | Codex, Pass 1 |
+| `7c6827e` run the gate on the merge result | Claude (PM) | Codex, Pass 1 |
+| Pass 1 authorship-record correction (`git log -1 --format='%h %an' -- docs/reviews/pr-5-pass-0.md` after the fix) | Codex | fresh Claude session before the merge gate; Codex cannot cold-read its own fix |
 
 ## Fast-track
 
