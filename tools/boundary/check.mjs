@@ -3,12 +3,15 @@ import { dirname, join, normalize, relative, sep } from "node:path";
 
 const SKIP = new Set([".git", "node_modules", "dist", "coverage"]);
 const PACKAGE = "@keel/montecarlo";
+const TRIVIA = String.raw`(?:\s|/\*[\s\S]*?\*/|//[^\n]*(?:\n|$))*`;
+const CALL = String.raw`\b(?:import|require)${TRIVIA}\(${TRIVIA}`;
+const END_ARGUMENT = String.raw`${TRIVIA}(?=[,)])`;
 
 const SPECIFIERS = [
   /\bimport\s+(?:type\s+)?(?:[^'";]*?\s+from\s+)?["']([^"']+)["']/g,
   /\bexport\s+(?:type\s+)?[^'";]*?\s+from\s+["']([^"']+)["']/g,
-  /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g,
-  /\brequire\s*\(\s*["']([^"']+)["']\s*\)/g,
+  new RegExp(`${CALL}["']([^"']+)["']${END_ARGUMENT}`, "g"),
+  new RegExp(`${CALL}\\x60([^\\x60$]+)\\x60${END_ARGUMENT}`, "g"),
 ];
 
 function posix(path) {

@@ -67,6 +67,26 @@ test("each import form outside the allowed paths fails", () => {
   }
 });
 
+test("literal calls with templates, import options, and comments cannot cross the boundary", () => {
+  const imported = spec();
+  const calls = [
+    `im${""}port(\`${imported}\`);`,
+    `im${""}port("${imported}", { with: { type: "json" } });`,
+    `re${""}quire/* module */("${imported}");`,
+  ];
+  for (const source of calls) {
+    const repo = tempGit();
+    try {
+      write(repo.root, "packages/core/src/a.ts", `${source}\n`);
+      const result = boundary(repo.root);
+      expect(result.status).toBe(1);
+      expect(result.stdout).toContain("boundary\tpackages/core/src/a.ts\t1");
+    } finally {
+      repo.cleanup();
+    }
+  }
+});
+
 test("a subpath and a relative path into montecarlo fail", () => {
   const repo = tempGit();
   try {
