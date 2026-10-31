@@ -102,7 +102,7 @@ None.
 | Every commit cold-read by a non-author vendor (authorship record) | Yes through `6ba4347`: the ten Claude commits by Codex (Pass 1), `6ba4347` by this Claude seat. This brief's commit is Claude's and docs-only; see question 1 |
 | Fast-track | Yes, named in the Pass 0 brief; record "fast-track" in the squash message |
 | Gate verdict | would merge |
-| Beni's decision (filled after) | |
+| Beni's decision (filled after) | merged by Beni 2026-10-31 (America/New_York) as squash commit `330cc87` on base `e9ab4ba`, reviewed head `fed9d33`. Post-merge checks by the PM on 2026-10-31: `origin/main` equals `gh pr view 5 --json mergeCommit` (`330cc870d9c7098f943747289e3a2b848e68ae3c`); the base moved during review (the branch forked from `0db249a`, before S00), so the tree check is `git merge-tree --write-tree e9ab4ba fed9d33` = `dde1e6f`, equal to `origin/main^{tree}`, and `pnpm install --frozen-lockfile && pnpm verify` is green on the squash commit on Node v24.22.2 (core 1 test, tooling 101 tests, eight `verify:* ok` lines). Both co-author trailers are present and spelled out. |
 
 ### Authorship record
 
@@ -114,7 +114,7 @@ None.
 
 ## Questions for Beni
 
-1. Accept this brief's docs-only Claude commit without a further Codex cold read, under the fast-track depth? (yes/no)
+1. Accept this brief's docs-only Claude commit without a further Codex cold read, under the fast-track depth? (yes/no) **Ruled 2026-10-31 (America/New_York): yes. Approved.**
 
 ## Handoff block
 
