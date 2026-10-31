@@ -21,6 +21,8 @@ All ten findings are accepted. Finding 7 is accepted with a narrower severity re
 
 Surviving mutants left open by Pass 1: T14 and T15 are equivalent (accepted as unkillable); T20 (`NoReply` case) and T26 (synthetic marker by `includes`) loosen rules the spec does not pin (accepted as Low, not fixed).
 
+**Correction after Pass 2 (PM, 2026-10-30):** the sentence above was wrong about T14 and T15. Codex showed both are non-equivalent surviving boundary mutants (High): a direction followed by three words, and a unit, each change the scanner's result when deleted. Beni ruled during Pass 2 to treat them as High and close them test-only. `fc13571` kills both (issuecomment-6537661855, finding P2-A). The sentence is kept as the record of what this brief said.
+
 Ideas-file note for S01, from Pass 1's idea 2: a 9-digit integer passes the CUSIP check digit one time in ten, so S01's fixture generator must keep every integer-cent value below nine digits, or the tripwire will flag its own fixtures. This goes into the S01 build prompt; it needs no change here.
 
 ## Authorship record
