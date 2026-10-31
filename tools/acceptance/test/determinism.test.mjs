@@ -162,3 +162,22 @@ test("the production determinism check is clean on this repo", () => {
   const result = verifyDeterminism(repoRoot);
   expect(result.status).toBe(0);
 });
+
+test("a failing fixtures:trees fails even when it prints a clean tree", () => {
+  const repo = tempGit();
+  try {
+    write(repo.root, "package.json", JSON.stringify({
+      name: "keel-trees-probe",
+      private: true,
+      scripts: {
+        "fixtures:regen": 'node -e "process.exit(0)"',
+        "fixtures:trees": 'node -e "console.log(\'fixtures\'); process.exit(4)"',
+      },
+    }));
+    commitAll(repo.root, "add package");
+    expect(check(repo.root, ["fixtures"]).status).toBe(0);
+    expect(verifyDeterminism(repo.root).status).not.toBe(0);
+  } finally {
+    repo.cleanup();
+  }
+});

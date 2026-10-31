@@ -62,6 +62,7 @@ test("the workflow names verify, checks needs, and confines Linux", () => {
   expect(workflow).toContain("fetch-depth: 0");
   expect(workflow).toContain("contents: read");
   expect(workflow).toContain("if: always()");
+  expect(workflow).toMatch(/^    needs: \[cells\]$/m);
   expect(workflow).toContain("tools/ci/needs-check.mjs");
   expect(workflow).toContain("name: verify");
   expect(workflow).toContain("fail-fast: false");

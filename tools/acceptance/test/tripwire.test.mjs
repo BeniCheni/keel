@@ -221,6 +221,30 @@ test("flags a masked run after an account keyword on the same line", () => {
   }
 });
 
+test("masked account forms enforce the mask and digit limits", () => {
+  const cases = [
+    [`${"*".repeat(2)}${"123"}`, false],
+    [`${"*".repeat(3)}${"12"}`, false],
+    [`${"*".repeat(3)}${"123"}`, true],
+    [`${"*".repeat(3)}${"1234"}`, true],
+    [`${"*".repeat(3)}${"12345"}`, false],
+    [`${"x".repeat(3)}${"123"}`, true],
+    [`${"X".repeat(3)}${"123"}`, true],
+  ];
+  for (const [secret, hit] of cases) {
+    const repo = cleanRepo();
+    try {
+      add(repo, "notes.txt", `${keyword("account")} ${secret}\n`);
+      const result = tripwire(repo.root);
+      expect(result.status).toBe(hit ? 1 : 0);
+      expect(result.stdout.includes("account\tnotes.txt\t1")).toBe(hit);
+      expect(leaked(result, secret)).toBe(false);
+    } finally {
+      repo.cleanup();
+    }
+  }
+});
+
 test("flags both hyphenated and spaced SSN forms", () => {
   const repo = cleanRepo();
   const hyphen = ssn("-");
@@ -268,6 +292,41 @@ test("a street line takes one to three words before the street type", () => {
     expect(result.stdout).not.toContain("address\tnotes.txt\t2");
   } finally {
     repo.cleanup();
+  }
+});
+
+test("a direction does not consume one of the three street-name words", () => {
+  const repo = cleanRepo();
+  const directed = address(["1", "N", "One", "Two", "Three", "Street"]);
+  const fullDirection = address(["1", "Northwest", "One", "Two", "Three", "Street"]);
+  const tooMany = address(["1", "N", "One", "Two", "Three", "Four", "Street"]);
+  try {
+    add(repo, "notes.txt", `${directed}\n${fullDirection}\n${tooMany}\n`);
+    const result = tripwire(repo.root);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("address\tnotes.txt\t1");
+    expect(result.stdout).toContain("address\tnotes.txt\t2");
+    expect(result.stdout).not.toContain("address\tnotes.txt\t3");
+    expect(leaked(result, directed)).toBe(false);
+    expect(leaked(result, fullDirection)).toBe(false);
+  } finally {
+    repo.cleanup();
+  }
+});
+
+test("the unit suffix consumes its number before the global address scan continues", () => {
+  for (const unit of ["Apt", "Unit", "Suite", "#"]) {
+    const repo = cleanRepo();
+    const secret = address(["1", "One", "Street", unit, "2", "Two", "Road"]);
+    try {
+      add(repo, "notes.txt", `${secret}\n`);
+      const result = tripwire(repo.root);
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe("address\tnotes.txt\t1\n");
+      expect(leaked(result, secret)).toBe(false);
+    } finally {
+      repo.cleanup();
+    }
   }
 });
 

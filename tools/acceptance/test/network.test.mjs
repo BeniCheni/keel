@@ -22,9 +22,12 @@ test("runProbes reports a probe that exits 0, hangs, or dies for another reason"
       fetch: { status: 0, stderr: "" },
       "http.get": { status: null, stderr: "" },
       "net.connect": { status: 2, stderr: "unknown network probe" },
+      "http.request": { status: 1, stderr: "ReferenceError: probe failed" },
       "tls.connect": { status: 1, stderr: "Error: network blocked: tls.connect" },
     })[name];
-  expect(runProbes(["fetch", "http.get", "net.connect", "tls.connect"], fake)).toEqual(["fetch", "http.get", "net.connect"]);
+  expect(runProbes(["fetch", "http.get", "net.connect", "http.request", "tls.connect"], fake)).toEqual([
+    "fetch", "http.get", "net.connect", "http.request",
+  ]);
   expect(runProbes()).toEqual([]);
 });
 
