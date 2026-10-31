@@ -12,7 +12,7 @@ Codex (Claude sessions wrote every line of this PR), model GPT-6.1 Sol High (no 
 - Sensitive paths touched: none (`CHANGELOG.md`, `docs/README.md` and `docs/reviews/**` only).
 - Release: no.
 - New dependencies: none.
-- Bootstrap path: no. `main` now carries S00, so `pnpm install --frozen-lockfile && pnpm verify` runs on this branch too; the branch changes no code, so a green run shows only that the docs did not break the gate (the tripwire and copy lint do scan them).
+- Bootstrap path: partly. The branch forks from `0db249a`, before S00, so its own tree has no `package.json`, lockfile, workflow or tripwire; install, `verify` and mutations are N/A on the branch itself. `main` now carries S00, so run the gate on the merge result instead (`git merge --no-edit origin/docs/pr-3-reviews` onto `origin/main` in a scratch worktree, or the CI merge ref): the tripwire and copy lint then scan the new docs. A green run there shows only that the docs did not break the gate.
 
 ## Authorship record
 
