@@ -1,0 +1,72 @@
+# Pass 1.5 brief: PR #8
+
+Written by the PM on 2026-11-01 (America/New_York) after reading the Pass 1 comment on PR #8 ([issuecomment-6553379287](https://github.com/BeniCheni/keel/pull/8#issuecomment-6553379287); reviewed head `af037d4`, post-fix head `4f868df`). There are no rulings from Beni yet. Codex receives this brief for Pass 2. Like the Pass 0 brief, it lives on branch `docs/pr-7-records`, not on the PR branch.
+
+All seven findings are accepted. None goes to Cursor as rework: Pass 1 closed findings 1 to 6 with test-only patches, and finding 7 is a defect in the spec's mutation floor, which the PM wrote, not in Cursor's build. Question 1 asks Beni to correct the floor. Pass 1's four questions are taken up below: one goes to Beni as question 3, and the other three become ideas-file entries, which need no ruling now.
+
+## How this brief adjudicated
+
+Every disposition below rests on a run in this session, in a fresh clone of PR #8 (`gh repo clone BeniCheni/keel <dir> && gh pr checkout 8`). The clone sat in the PM's scratch directory, outside every repo, with a Git worktree of it at `af037d4` for the before side. `KEEL_DATA_DIR` was a fresh `mktemp -d` on every command. No user data folder, no private pattern file and no Pass 1 clone was opened. Node was selected with `nvm use` and confirmed with `node --version`.
+
+- **Baseline at `4f868df`:** `pnpm install --frozen-lockfile && pnpm verify` exits 0 on v24.22.2 and on v26.13.0. Each run gives core 1 passed (1 file), tooling 114 passed (8 files), and all eight `verify:* ok` lines. This matches Pass 1's counts.
+- **Diff at `4f868df`:** 14 files, 1862 insertions, 116 deletions (`git diff --shortstat origin/main...HEAD`). It touches no honesty test (`git diff --name-only origin/main...HEAD -- '*.honesty.test.ts' | wc -l` prints `0`). `tools/vitest.config.mjs` equals `origin/main` again (`git diff --stat origin/main HEAD -- tools/vitest.config.mjs` prints nothing).
+- **CI:** the runs Pass 1 cites at `8becc18` (41272198043), `3f8aaf6` (41272397862) and `4f868df` (41272495102) each have event `pull_request` and conclusion `success` (`gh run view <id> --json headSha,conclusion,event`).
+
+## Per finding
+
+| Pass 1 # | Severity | PM disposition | Reason (each from a run in this session) | Rework for Cursor? |
+| --- | --- | --- | --- | --- |
+| 1 | Medium | accept | **Reproduced.** Five generated probe pairs were written under `tools/acceptance/` and checked with `inspectTools(root).missingTimeouts`, without a timeout: a bare `"child_process"` leaf, `test.each`, an alias (`const r = run`), a dynamic `import("node:child_process")` leaf, and `forEach(run)` as a callback. All five evade at `af037d4` and all five are flagged at `4f868df`. Two controls behave on both heads: a direct `run()` without a timeout is flagged, and one with `NESTED_RUN_TIMEOUT_MS` is not. The head's `test-contract.test.mjs`, run against the `af037d4` analyzer, fails "the spawn graph follows wrappers and re-exports and leaves a write-only wrapper out" with `expected [] to deeply equal [ 'bare' ]`. **Severity:** Medium, not High, because no live test escaped. `8becc18` changes no test file other than the self-test, and the live `missingTimeouts` is `[]` at both heads. | no |
+| 2 | Medium | accept | **Reproduced.** I ran the PR body's AC2 loop at `af037d4` with the two `fileParallelism` lines deleted: round 1 `0 0 1`, round 2 `1 0 0`, round 3 `1 0 0`. All three failures are "overlapping processes use different repo temp names and leave the tree unchanged", with the whole-tree `git status` strings unequal. At `4f868df`, the same loop gives `0 0 0` in all three rounds, nine runs of 114 passed, and leftover `0` (`git status --porcelain --untracked-files=all -- packages tools \| wc -l`). The setting was undisclosed, and it masked a race in the PR's own self-test. AC2 itself was true as shipped, so this is a missed edge case and an undisclosed change (Medium), not a trust claim the numbers fail to support. **Spec reading:** AC4's "After the self-test, `git status …` prints nothing" is a command run after the suite. Pass 1's per-file checks inside the test, plus that after-command, meet it, so the spec needs no change. | no |
+| 3 | Medium | accept | **Reproduced as a code path, not as a live race.** The head's new test "a file that vanishes between listing and reading does not fail the scan" fails against the `af037d4` analyzer with `ENOENT … tools/gone.mjs`. My nine concurrent runs without the setting did not hit the race itself; all three of their failures were finding 2. Pass 1's quoted failure, in round 2 process 3, is that vendor's observation. | no |
+| 4 | Medium | accept | **Reproduced for Pass 1's mutant forms.** Dropping the pid segment (`zz-${process.pid}-` to `zz-`) and dropping the random part each pass all 9 tests at `af037d4` and fail 2 of 11 at `4f868df` (`expected 'zz-<hex>.test.mjs' to match /^zz-<pid>-[0-9a-f]{16}\.test\.mjs$/`). One narrowing: a variant that keeps the segment but replaces the pid with a constant (`zz-x-`) is already killed at `af037d4` (`expected 'x' not to be 'x'`). So "without the process id" survives only in the dropped-segment form, which is the form Pass 1 describes. M06b (a fixed name without the `zz-` prefix) was not re-run here. | no |
+| 5 | Medium | accept | **Reproduced.** Deleting ` && EMAIL_EXACT.test(parts[0])` from `parseVendors`, or changing `parts.length === 2` to `>= 2`, passes 44 of 44 at `af037d4`. Each fails 1 at `4f868df` (`expected [ …(4) ] to deeply equal [ …(5) ]`). `parseVendors` is byte-identical on both heads, so the fix is in the test only, as Pass 1 says. | no |
+| 6 | Medium | accept | **Reproduced.** In `argIsTimeout`, two mutants survive at `af037d4` (9 of 9 passed) and are killed at `4f868df` (1 failed of 11): accepting any identifier (`significant[0].type === "ident"`) and also accepting a number token. `argIsTimeout` is unchanged between the heads; `8becc18` adds the "literal" and "other" fixtures. **Severity:** these are logic mutants, not boundary shifts. The floor boundary holds on both sides at `4f868df`: `NESTED_RUN_TIMEOUT_MS = 59_999` fails with `expected 59999 to be greater than or equal to 60000`, and `60_000` passes 11 of 11. Medium stands. | no |
+| 7 | Medium | accept; PM recommends Beni rule yes on Q1 | **Reproduced.** I rewrote the honesty test to assert `/Tests\s+1 passed/` and `/Tests\s+1 failed/` on stdout, with both `--reporter=json` and `--outputFile` args removed. It passes at `af037d4` (9 of 9) and at `4f868df` (11 of 11), so it survives. The PR body's mutant row "assert honesty discovery from printed text" therefore overclaims (question 2). The defect is the PM's spec. S00.1's mutation floor asks the suite to kill a rewrite of a test's own method, and only a check of that test's source text can do that. The requirement belongs to review, which reads the test, as Pass 1 did here. This is not Cursor rework. | no, unless Q1 is answered no |
+
+Low, from this seat, outside tracked files, no action needed: Pass 1's commit table gives `8becc18`'s change to `tools/acceptance/spawn-graph.mjs` as "+88/−25". `git show --numstat 8becc18` prints 135 insertions and 36 deletions in that file. The comment's other figures that this seat re-ran match: the diff size, the tooling counts, the CI run IDs and the mutant results above.
+
+Privacy, this seat: the Pass 1 comment contains no address other than `noreply` ones (`gh api repos/BeniCheni/keel/issues/comments/6553379287 --jq .body | grep -o -E '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' | grep -v -c 'noreply@'` prints `0`). The repo tripwire's `scanRepo` returns no error and 0 hits on the comment's text, in a temporary repository holding the head's `allowlist.txt` and `vendors.txt`. The owner's private-list check was not run by this seat; Codex runs it at Pass 2.
+
+## Pass 1's questions, as the PM takes them up
+
+- **Pass 1 Q1** (drop the printed-text mutant from the floor) is question 1 below.
+- **Pass 1 Q2** (hook callbacks that spawn need the timeout) becomes an ideas-file entry, not a ruling now. No tooling test registers a hook today (`grep -n -E '\b(beforeAll|beforeEach|afterAll|afterEach)\s*\(' tools/*/test/*.mjs` prints nothing at `4f868df`), so nothing escapes at present.
+- **Pass 1 Q3** (the tooling suite keeps Vitest's parallel files unless a spec line says otherwise) becomes an ideas-file entry, for the next tooling spec.
+- **Pass 1 Q4** (the PM confirms the Pass 0 brief is reachable before Pass 1 starts) is question 3 below. It changes the review skill, a sensitive path, so it rides the next PR that touches `AGENTS.md`, together with Beni's two rulings of 2026-10-31.
+
+Ideas-file entries to add, ranked by the PM when they land: spawning from hooks and from module top level; `node:cluster`'s `fork` as a spawning route; wrapper modules outside `tools/`; `.ts` files under `tools/`, which make the analyzer throw (it fails closed, so state that `tools/` stays `.mjs`, or teach the lexer types); temp names built at run time from constants; and the parallel-files spec line. These come from Pass 1's "Deliberately not done" table. `docs/v0.1.0-ideas.md` is outside `docs/reviews/**`, so the entries land in the next ordinary docs PR, not in the records PR.
+
+## Authorship record
+
+The Pass 0 record, extended with every commit since: `git log --format='%h %an' origin/main..4f868df`.
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `af037d4` harden tooling timeouts, honesty discovery, and vendor addresses | Cursor | Claude Code, Pass 1 (issuecomment-6553379287) |
+| `8becc18` close spawn-graph evasion forms | Claude (Pass 1 session) | Codex, Pass 2 |
+| `3f8aaf6` make the temp-file self-tests safe under concurrent runs | Claude (Pass 1 session) | Codex, Pass 2 |
+| `4f868df` cover every malformed `vendors.txt` form | Claude (Pass 1 session) | Codex, Pass 2 |
+| Any PM spec commit on PR #8 after question 1 | Claude (PM) | Codex, Pass 2 |
+| Any Codex fix commit at Pass 2 | Codex | fresh Claude session, Pass 2.5 (Fable 5.1 High) |
+| `1e22d27` (the rebuilt Pass 0 brief) and the commit adding this brief, both on `docs/pr-7-records` | Claude (PM) | the records-PR cold read |
+
+## Rulings from Beni
+
+None yet. Each question is answerable in one word.
+
+1. Remove "asserting honesty discovery from printed text again" from S00.1's mutation floor, and record that review checks how the honesty test proves its claim? If yes, the PM commits that spec change to the PR #8 branch before Pass 2. (yes/no; PM recommends yes)
+2. Have the PM append a "Corrections after Pass 1" section to the PR #8 body, leaving Cursor's text unchanged? It would record: tooling 114 tests at `4f868df`; `fileParallelism: false` added without disclosure and removed in `3f8aaf6`; the AC4 self-test now checks its own two files, with the whole-tree check run after the suite; and the mutant table, where 13 of the 14 rows die for the stated reason. The fourteenth, printed-text assertions, dies only mechanically. Pass 1 also found eight surviving mutants at `af037d4`, and the fix commits kill seven of them. (yes/no; PM recommends yes)
+3. Add a step to the review skill: before Pass 1 starts, the PM confirms the Pass 0 brief is readable at the ref the Pass 1 prompt names (`git fetch origin <ref> && git cat-file -e FETCH_HEAD:docs/reviews/pr-<N>-pass-0.md`)? It would ride the next `AGENTS.md` PR. (yes/no; PM recommends yes)
+
+## Sealed appendix for Pass 2
+
+Pass 1's findings and fixes are suspicions to re-derive, not conclusions, and so are this brief's dispositions. Codex gives the cold read of the three Claude-authored fix commits (`af037d4..4f868df`) and of any PM spec commit added after question 1. Codex reproduces or disproves each Pass 1 finding with its own commands, checks that each fix commit's test fails without it, and adds its own read of the whole PR at the head. Codex also runs the owner's private-list check (counts only, readable-file precheck, nonzero exit on a failed scan) over the diff, every commit message in `origin/main..HEAD`, the PR title and body, and every comment. Neither Claude seat ran it. Pass M does not apply: there is no engine and there are no golden fixtures.
+
+Leads for Codex's own read, none of them established:
+
+1. `8becc18` rewrites spawn detection (135 insertions and 36 deletions in `spawn-graph.mjs`), and a Claude session wrote it. Attack it with forms Pass 1 did not list: a spread call (`run(...args)`), `Reflect.apply`, `.bind`, a destructured rename (`const { run: r } = h`), a computed member (`h["run"]()`), a default export or `export { run as default }`, `new Function`, and `process.getBuiltinModule` reached through an alias. For each, does it flag the test, throw (fail closed), or pass silently?
+2. `3f8aaf6` lets the scan skip a file that vanishes between listing and reading. Can that skip hide a module the scan should have read? Consider a spawning module that a test writes and removes, or a symlink loop.
+3. `3f8aaf6` replaced the overlap test's whole-tree equality with per-file checks. Confirm the new assertions are at least as strict for the files the test owns, and that nothing else in the suite asserts the whole tree during a run.
+4. Re-run the AC2 loop at the head, and once more with the core include glob or the honesty file removed, to confirm the suite still goes red under load for the right reason.
+5. Finding 7 and question 1 rest on a PM argument that a mutant of a test's own method cannot be killed by the suite. Contest it if a structural design, not a source-text check, would kill it.
