@@ -119,10 +119,10 @@ None. No figure in this PR comes from a model or an assumption.
 
 Each answerable in one word.
 
-1. Confirm rulings Q1 to Q9 as recorded second-hand in `docs/reviews/pr-7-pass-1.5.md`, and the ADR decisions dated 2026-10-29, as yours? (yes/no)
-2. Refresh the PR body's commit and diff counts (seven commits, six Claude and one Codex; 17 files, 355 insertions, 17 deletions; rulings Q8 and 9 in `f1bc1b6`, `72b9a7f`, `d3852d9`) before merging? (yes/no)
-3. Merge PR #7 at `d3852d9` with the handoff block below? (yes/no)
-4. Open the records PR from `docs/pr-7-records` now, or batch it with later records? (now/batch)
+1. Confirm rulings Q1 to Q9 as recorded second-hand in `docs/reviews/pr-7-pass-1.5.md`, and the ADR decisions dated 2026-10-29, as yours? (yes/no) **Ruled 2026-10-31 (America/New_York): yes. Confirmed.**
+2. Refresh the PR body's commit and diff counts (seven commits, six Claude and one Codex; 17 files, 355 insertions, 17 deletions; rulings Q8 and 9 in `f1bc1b6`, `72b9a7f`, `d3852d9`) before merging? (yes/no) **Ruled 2026-10-31: yes. Done before the ruling reached this seat: the body was edited at 21:37 (America/New_York) on 2026-10-31, right after the Pass 2.5 comment, and its claims 1 and 2 now equal the re-runs above (`gh pr view 7 --json body,updatedAt`). The Medium from this seat is closed.**
+3. Merge PR #7 at `d3852d9` with the handoff block below? (yes/no) **Ruled 2026-10-31: yes. Beni runs the block; in shadow mode and on a sensitive-path PR this seat does not merge.**
+4. Open the records PR from `docs/pr-7-records` now, or batch it with later records? (now/batch) **Ruled 2026-10-31: batch.**
 
 ## Handoff block
 
