@@ -421,6 +421,126 @@ test("the spawn graph follows wrappers and re-exports and leaves a write-only wr
   }
 });
 
+test("unrecognised uses of spawning namespaces fail closed", () => {
+  const root = spawnFixture();
+  try {
+    const forms = [
+      'test("probe", () => { const { run: r } = h; r(); });',
+      'test("probe", () => { h["run"](); });',
+      'const { run: r } = h; test("probe", () => { r(); });',
+      'const r = h.run; test("probe", () => { r(); });',
+      'const other = h; test("probe", () => { other.run(); });',
+      'test("probe", () => { Reflect.apply(h.run, null, []); });',
+    ];
+    for (const form of forms) {
+      putFile(root, "tools/acceptance/test/namespace.mjs", [
+        'import { test } from "vitest";',
+        'import * as h from "./helpers.mjs";',
+        form,
+      ]);
+      expect(() => inspectTools(root), form).toThrow(/unrecognised spawning namespace use/);
+    }
+    putFile(root, "tools/acceptance/test/namespace.mjs", [
+      'import { test } from "vitest";',
+      'import * as h from "./helpers.mjs";',
+      'import * as c from "../../leaf-common.cjs";',
+      'test("direct namespace spawn", () => { h.run(); });',
+      'test("common namespace spawn", () => { c.common(); });',
+      'test("namespace write only", () => { h.write(); });',
+    ]);
+    expect(inspectTools(root).missingTimeouts.filter((item) => item.file.endsWith("/namespace.mjs"))
+      .map((item) => item.name)).toEqual(["direct namespace spawn", "common namespace spawn"]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("dynamic code execution is forbidden under tools", () => {
+  const root = spawnFixture();
+  try {
+    for (const form of [
+      'new Function("return 1")();',
+      'Function("return 1")();',
+      'eval("1");',
+      '(0, eval)("1");',
+      'const execute = eval; execute("1");',
+      'globalThis["eval"]("1");',
+    ]) {
+      putFile(root, "tools/opaque.mjs", [form]);
+      expect(() => inspectTools(root), form).toThrow(/dynamic code execution is forbidden/);
+    }
+    putFile(root, "tools/opaque.mjs", [
+      '// new Function("ignored"); eval("ignored");',
+      'export const description = "new Function and eval are forbidden";',
+    ]);
+    expect(() => inspectTools(root)).not.toThrow();
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("unrecognised builtin-loader uses fail closed", () => {
+  const root = spawnFixture();
+  try {
+    for (const form of [
+      'const get = process.getBuiltinModule; const cp = get("node:child_process");',
+      'const { getBuiltinModule: get } = process; const cp = get("child_process");',
+      'const cp = process["getBuiltinModule"]("node:child_process");',
+      'const get = process.getBuiltinModule.bind(process); const cp = get("child_process");',
+      'const spec = "node:child_process"; const cp = process.getBuiltinModule(spec);',
+    ]) {
+      putFile(root, "tools/opaque.mjs", [form]);
+      expect(() => inspectTools(root), form).toThrow(/unrecognised builtin loader use/);
+    }
+    putFile(root, "tools/opaque.mjs", ['const fs = process.getBuiltinModule("node:fs");']);
+    expect(() => inspectTools(root)).not.toThrow();
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("missing dependencies inside tools fail closed", () => {
+  const root = spawnFixture();
+  try {
+    symlinkSync("missing.mjs", join(root, "tools/gone.mjs"));
+    for (const form of [
+      'import { run } from "../../gone.mjs"; test("missing", () => { run(); });',
+      'export { run } from "../../gone.mjs";',
+      'test("missing", async () => { const mod = await import("../../gone.mjs"); mod.run(); });',
+    ]) {
+      putFile(root, "tools/acceptance/test/missing.mjs", ['import { test } from "vitest";', form]);
+      expect(() => inspectTools(root), form).toThrow(/missing module inside tools/);
+    }
+    rmSync(join(root, "tools/acceptance/test/missing.mjs"));
+    expect(() => inspectTools(root)).not.toThrow();
+    symlinkSync("loop.mjs", join(root, "tools/loop.mjs"));
+    expect(() => inspectTools(root)).toThrow(/ELOOP/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("timeout options use the complete binding in a Vitest timeout position", () => {
+  const root = spawnFixture();
+  try {
+    putFile(root, "tools/acceptance/test/timeout-options.mjs", [
+      'import { test } from "vitest";',
+      'import { run, NESTED_RUN_TIMEOUT_MS } from "./helpers.mjs";',
+      'test("expression", { timeout: NESTED_RUN_TIMEOUT_MS / 60 }, () => { run(); });',
+      'test("nested", { metadata: { timeout: NESTED_RUN_TIMEOUT_MS }, timeout: 1000 }, () => { run(); });',
+      'test("duplicate", { timeout: NESTED_RUN_TIMEOUT_MS, timeout: 1000 }, () => { run(); });',
+      'test("fourth", () => { run(); }, 1000, NESTED_RUN_TIMEOUT_MS);',
+      'test("named", () => { run(); }, NESTED_RUN_TIMEOUT_MS);',
+      'test("second options", { timeout: NESTED_RUN_TIMEOUT_MS }, () => { run(); });',
+      'test("third options", () => { run(); }, { timeout: NESTED_RUN_TIMEOUT_MS });',
+    ]);
+    expect(inspectTools(root).missingTimeouts.filter((item) => item.file.endsWith("/timeout-options.mjs"))
+      .map((item) => item.name)).toEqual(["expression", "nested", "duplicate", "fourth"]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("spawned tooling tests declare NESTED_RUN_TIMEOUT_MS of at least 60000", () => {
   const live = inspectTools(repoRoot);
   expect(live.forbiddenChildProcessImports).toEqual([]);

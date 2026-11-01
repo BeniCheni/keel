@@ -301,6 +301,22 @@ function assertBalanced(tokens, file) {
   }
 }
 
+/** Reject known dynamic-execution APIs and opaque references to the builtin loader. */
+function assertStaticExecution(tokens, file) {
+  for (let i = 0; i < tokens.length; i += 1) {
+    const token = tokens[i];
+    const computed = token.type === "string" && isPunct(tokens[i - 1], "[") && isPunct(tokens[i + 1], "]");
+    if (token.type !== "ident" && !computed) continue;
+    if (token.value === "Function" || token.value === "eval") {
+      throw new Error(`${file}: dynamic code execution is forbidden at ${token.start}`);
+    }
+    if (token.value !== "getBuiltinModule") continue;
+    const direct = isIdent(tokens[i - 2], "process") && isPunct(tokens[i - 1], ".") &&
+      isPunct(tokens[i + 1], "(") && tokens[i + 2]?.type === "string" && isPunct(tokens[i + 3], ")");
+    if (!direct) throw new Error(`${file}: unrecognised builtin loader use at ${token.start}`);
+  }
+}
+
 function skipPair(tokens, i, open, close) {
   let depth = 0;
   for (let j = i; j < tokens.length; j += 1) {
@@ -589,6 +605,7 @@ function parseModule(text, file) {
   try {
     tokens = lex(text);
     assertBalanced(tokens, file);
+    assertStaticExecution(tokens, file);
   } catch (error) {
     throw new Error(`${file}: ${error.message}`);
   }
@@ -699,9 +716,11 @@ function argIsTimeout(arg, localName) {
   if (!localName) return false;
   const significant = arg.filter((token) => token.type !== "template" || token.value !== "");
   if (significant.length === 1 && significant[0].type === "ident" && significant[0].value === localName) return true;
-  if (!isPunct(significant[0], "{")) return false;
-  const text = significant.map((token) => token.value).join(" ");
-  return new RegExp(`\\btimeout\\s*:\\s*${localName}\\b`).test(text);
+  // Only a complete timeout property is understood; nested, duplicate and computed values
+  // cannot establish the timeout Vitest will receive.
+  const shape = significant.length === 5 || (significant.length === 6 && isPunct(significant[4], ","));
+  return shape && isPunct(significant[0], "{") && isIdent(significant[1], "timeout") &&
+    isPunct(significant[2], ":") && isIdent(significant[3], localName) && isPunct(significant.at(-1), "}");
 }
 
 function argCalls(args) {
@@ -758,7 +777,8 @@ function testCallsIn(tokens, text, testLocals, timeoutLocal) {
       line: lineAt(text, tokens[i].start),
       close: parsed.close.start,
       calls: argCalls(parsed.args),
-      passesTimeout: parsed.args.some((arg) => argIsTimeout(arg, timeoutLocal)),
+      passesTimeout: argIsTimeout(parsed.args[2] ?? [], timeoutLocal) ||
+        (isPunct(parsed.args[1]?.[0], "{") && argIsTimeout(parsed.args[1], timeoutLocal)),
     });
     i = closeIndex;
   }
@@ -863,13 +883,38 @@ function callsSpawning(calls, mod, spawningLocals) {
     if (call.kind === "method") {
       if (spawningLocals.has(call.object)) return true;
       const binding = mod.bindings.get(call.object);
-      if (binding?.kind === "namespace" && binding.target?.spawning.has(call.prop)) return true;
+      if (binding?.kind === "namespace" && (moduleSpawns(binding.target) || binding.target?.spawning.has(call.prop))) return true;
       if (binding?.kind === "named" && binding.target && moduleSpawns(binding.target) && binding.target.exportNames.size === 0) {
         return true;
       }
     }
   }
   return false;
+}
+
+/**
+ * Only direct, known namespace method calls are modelled. Reject other references rather than
+ * guessing what destructuring, computed access, aliasing or forwarding will do at runtime.
+ */
+function assertNamespaceUses(mod) {
+  const namespaces = new Map([...mod.bindings].filter(([, binding]) =>
+    ((binding.kind === "namespace" || binding.imported === "default") && CHILD_PROCESS_SPECS.has(binding.spec)) ||
+    (binding.kind === "namespace" && binding.target && (moduleSpawns(binding.target) || binding.target.spawning.size > 0))));
+  if (namespaces.size === 0) return;
+  for (let i = 0; i < mod.tokens.length; i += 1) {
+    const token = mod.tokens[i];
+    if (isIdent(token, "import") && !isPunct(mod.tokens[i + 1], "(") && !isPunct(mod.tokens[i + 1], ".")) {
+      i = readImport(mod.tokens, i).next - 1;
+      continue;
+    }
+    if (token.type !== "ident" || !namespaces.has(token.value)) continue;
+    const binding = namespaces.get(token.value);
+    const prop = mod.tokens[i + 2];
+    const direct = isPunct(mod.tokens[i + 1], ".") && prop?.type === "ident" &&
+      isPunct(mod.tokens[i + 3], "(") &&
+      (CHILD_PROCESS_SPECS.has(binding.spec) || moduleSpawns(binding.target) || binding.target.exportNames.has(prop.value));
+    if (!direct) throw new Error(`${mod.rel}: unrecognised spawning namespace use at ${token.start}`);
+  }
 }
 
 function localSpawning(mod) {
@@ -948,7 +993,15 @@ function build(root) {
       resolvedReexports: [],
     });
   }
-  const resolve = (fromAbs, spec) => resolveSpec(fromAbs, spec, known);
+  const resolve = (fromAbs, spec) => {
+    const resolved = resolveSpec(fromAbs, spec, known);
+    // Ignore an unrelated disappearing temp file, but never erase an imported graph edge.
+    const rel = posix(relative(root, join(dirname(fromAbs), spec)));
+    if (resolved.kind === "missing" && rel.startsWith("tools/")) {
+      throw new Error(`${posix(relative(root, fromAbs))}: missing module inside tools: ${spec}`);
+    }
+    return resolved;
+  };
   for (const mod of mods.values()) {
     mod.resolveModule = (spec) => {
       const resolved = resolve(mod.abs, spec);
@@ -1008,6 +1061,7 @@ function build(root) {
   const missing = [];
   let nestedTimeoutMs = null;
   for (const mod of mods.values()) {
+    assertNamespaceUses(mod);
     if (mod.isHelpers && mod.timeoutMs !== null) nestedTimeoutMs = mod.timeoutMs;
     for (const symbol of mod.spawning) entryPoints.push({ file: mod.rel, symbol });
     if (mod.importsChildProcess && underTest(mod.rel) && !mod.isHelpers) forbidden.push(mod.rel);
