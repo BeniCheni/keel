@@ -2,7 +2,11 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
 
 const HELPERS_REL = "tools/acceptance/test/helpers.mjs";
-const CHILD_PROCESS = "node:child_process";
+const CHILD_PROCESS_SPECS = new Set(["node:child_process", "child_process"]);
+const LOADER_CALLS = new Set(["import", "require", "getBuiltinModule"]);
+const INVOKERS = new Set(["call", "apply", "bind"]);
+const VALUE_BEFORE = new Set(["(", ",", "{", "[", ":", "=", "?", "=>"]);
+const VALUE_AFTER = new Set([")", ",", "}", "]", ";"]);
 const TIMEOUT_EXPORT = "NESTED_RUN_TIMEOUT_MS";
 const REGEX_KEYWORD = new Set([
   "return",
@@ -309,16 +313,33 @@ function skipPair(tokens, i, open, close) {
   throw new Error(`unclosed ${open} at ${tokens[i]?.start ?? i}`);
 }
 
+/**
+ * A reference to a name counts when it is called (`f()`, `f?.()`, `f.call()`), or used as a value
+ * (an argument, an object value, an assignment, an arrow body), since a value that spawns is still
+ * spawning once the callee runs it. A dynamic `import()`, `require()` or `getBuiltinModule()` of a
+ * string specifier is recorded as a load of that module.
+ */
 function callsFrom(tokens) {
   const calls = [];
   for (let i = 0; i < tokens.length; i += 1) {
     const token = tokens[i];
-    const next = tokens[i + 1];
-    if (token.type !== "ident" || !isPunct(next, "(")) continue;
+    if (token.type !== "ident") continue;
     const prev = tokens[i - 1];
-    if (isPunct(prev, ".") || isIdent(prev, "function") || isPunct(prev, "?.")) continue;
+    const next = tokens[i + 1];
+    if (isPunct(prev, ".") || isPunct(prev, "?.") || isIdent(prev, "function")) continue;
+    if (LOADER_CALLS.has(token.value) && isPunct(next, "(") && tokens[i + 2]?.type === "string") {
+      calls.push({ kind: "load", spec: tokens[i + 2].value });
+      continue;
+    }
     if (CALL_SKIP.has(token.value)) continue;
-    calls.push({ kind: "call", name: token.value });
+    const called = isPunct(next, "(") || (isPunct(next, "?.") && isPunct(tokens[i + 2], "("));
+    const invoked =
+      isPunct(next, ".") && tokens[i + 2]?.type === "ident" && INVOKERS.has(tokens[i + 2].value) && isPunct(tokens[i + 3], "(");
+    const valued =
+      (!prev || (prev.type === "punct" && VALUE_BEFORE.has(prev.value)) || isIdent(prev, "return")) &&
+      (!next || (next.type === "punct" && VALUE_AFTER.has(next.value)));
+    if (called || invoked) calls.push({ kind: "call", name: token.value });
+    else if (valued) calls.push({ kind: "value", name: token.value });
   }
   for (let i = 0; i < tokens.length - 3; i += 1) {
     if (
@@ -347,6 +368,14 @@ function readFunction(tokens, fnIndex) {
   const bodyEnd = skipPair(tokens, i, "{", "}");
   const body = tokens.slice(i + 1, bodyEnd);
   return { name, calls: callsFrom(body), close: bodyEnd };
+}
+
+function readClass(tokens, classIndex) {
+  const name = tokens[classIndex + 1].value;
+  let i = classIndex + 2;
+  while (i < tokens.length && !isPunct(tokens[i], "{")) i += 1;
+  const close = skipPair(tokens, i, "{", "}");
+  return { name, calls: callsFrom(tokens.slice(i + 1, close)), close };
 }
 
 function readNamed(tokens, openIndex) {
@@ -432,6 +461,7 @@ function skipStatement(tokens, i) {
 function readConst(tokens, i, exported) {
   const functions = [];
   const names = [];
+  const values = [];
   let timeoutMs = null;
   i += 1;
   while (i < tokens.length) {
@@ -448,13 +478,17 @@ function readConst(tokens, i, exported) {
       i = fn.close + 1;
     } else if (tokens[i]?.type === "number" && name === TIMEOUT_EXPORT) {
       timeoutMs = Number(tokens[i].value.replaceAll("_", ""));
+      values.push(name);
       i += 1;
     } else if (isPunct(tokens[i], "(") || (tokens[i]?.type === "ident" && isPunct(tokens[i + 1], "=>"))) {
       const arrow = readArrow(tokens, i, name, exported);
       functions.push(arrow.fn);
       i = arrow.next;
     } else {
+      const start = i;
       i = skipStatement(tokens, i);
+      functions.push({ name, exported, calls: callsFrom(tokens.slice(start, i)) });
+      values.push(name);
       break;
     }
     if (isPunct(tokens[i], ",")) {
@@ -464,7 +498,7 @@ function readConst(tokens, i, exported) {
     break;
   }
   if (isPunct(tokens[i], ";")) i += 1;
-  return { names, functions, timeoutMs, next: i };
+  return { names, values, functions, timeoutMs, next: i };
 }
 
 function readArrow(tokens, i, name, exported) {
@@ -484,6 +518,7 @@ function readArrow(tokens, i, name, exported) {
 function readExport(tokens, i) {
   const functions = [];
   const exportNames = [];
+  const values = [];
   const reexports = [];
   let timeoutMs = null;
   i += 1;
@@ -494,13 +529,20 @@ function readExport(tokens, i) {
       exportNames.push(fn.name);
       functions.push({ name: fn.name, exported: true, calls: fn.calls });
     }
-    return { functions, exportNames, reexports, timeoutMs, next: fn.close + 1 };
+    return { functions, exportNames, values, reexports, timeoutMs, next: fn.close + 1 };
+  }
+  if (isIdent(tokens[i], "class") && tokens[i + 1]?.type === "ident") {
+    const cls = readClass(tokens, i);
+    exportNames.push(cls.name);
+    functions.push({ name: cls.name, exported: true, calls: cls.calls });
+    return { functions, exportNames, values, reexports, timeoutMs, next: cls.close + 1 };
   }
   if (isIdent(tokens[i], "const") || isIdent(tokens[i], "let") || isIdent(tokens[i], "var")) {
     const read = readConst(tokens, i, true);
     exportNames.push(...read.names);
+    values.push(...read.values);
     functions.push(...read.functions);
-    return { functions, exportNames, reexports, timeoutMs: read.timeoutMs, next: read.next };
+    return { functions, exportNames, values, reexports, timeoutMs: read.timeoutMs, next: read.next };
   }
   if (isPunct(tokens[i], "{")) {
     const read = readNamed(tokens, i);
@@ -511,10 +553,10 @@ function readExport(tokens, i) {
         exportNames.push(item.local);
         reexports.push({ kind: "named", exported: item.local, imported: item.imported, spec: spec.value });
       }
-      return { functions, exportNames, reexports, timeoutMs, next: finishSemi(tokens, i + 2) };
+      return { functions, exportNames, values, reexports, timeoutMs, next: finishSemi(tokens, i + 2) };
     }
     for (const item of read.specs) exportNames.push(item.local);
-    return { functions, exportNames, reexports, timeoutMs, next: finishSemi(tokens, i) };
+    return { functions, exportNames, values, reexports, timeoutMs, next: finishSemi(tokens, i) };
   }
   if (isPunct(tokens[i], "*")) {
     i += 1;
@@ -523,11 +565,11 @@ function readExport(tokens, i) {
       const spec = tokens[i + 3].value;
       exportNames.push(exported);
       reexports.push({ kind: "star-as", exported, spec });
-      return { functions, exportNames, reexports, timeoutMs, next: finishSemi(tokens, i + 4) };
+      return { functions, exportNames, values, reexports, timeoutMs, next: finishSemi(tokens, i + 4) };
     }
     const spec = tokens[i + 1].value;
     reexports.push({ kind: "star", spec });
-    return { functions, exportNames, reexports, timeoutMs, next: finishSemi(tokens, i + 2) };
+    return { functions, exportNames, values, reexports, timeoutMs, next: finishSemi(tokens, i + 2) };
   }
   if (isIdent(tokens[i], "default")) {
     exportNames.push("default");
@@ -535,11 +577,11 @@ function readExport(tokens, i) {
       const fnAt = isIdent(tokens[i + 1], "async") ? i + 2 : i + 1;
       const fn = readFunction(tokens, fnAt);
       functions.push({ name: fn.name ?? "default", exported: true, calls: fn.calls });
-      return { functions, exportNames, reexports, timeoutMs, next: fn.close + 1 };
+      return { functions, exportNames, values, reexports, timeoutMs, next: fn.close + 1 };
     }
-    return { functions, exportNames, reexports, timeoutMs, next: skipStatement(tokens, i + 1) };
+    return { functions, exportNames, values, reexports, timeoutMs, next: skipStatement(tokens, i + 1) };
   }
-  return { functions, exportNames, reexports, timeoutMs, next: skipStatement(tokens, i) };
+  return { functions, exportNames, values, reexports, timeoutMs, next: skipStatement(tokens, i) };
 }
 
 function parseModule(text, file) {
@@ -554,10 +596,11 @@ function parseModule(text, file) {
   const namespaceImports = [];
   const reexports = [];
   const exportNames = new Set();
+  const valueExports = new Set();
   const functions = [];
   const cpLocals = new Set();
   const cpNamespaces = new Set();
-  let importsChildProcess = false;
+  let importsChildProcess = loadsChildProcess(tokens);
   let timeoutMs = null;
   for (let i = 0; i < tokens.length; i += 1) {
     const token = tokens[i];
@@ -565,18 +608,18 @@ function parseModule(text, file) {
     if (isPunct(prev, ".")) continue;
     if (isIdent(token, "import") && !isPunct(tokens[i + 1], "(") && !isPunct(tokens[i + 1], ".")) {
       const read = readImport(tokens, i);
-      if (read.spec === CHILD_PROCESS) importsChildProcess = true;
+      if (CHILD_PROCESS_SPECS.has(read.spec)) importsChildProcess = true;
       if (read.namespace) {
         namespaceImports.push({ local: read.namespace, spec: read.spec });
-        if (read.spec === CHILD_PROCESS) cpNamespaces.add(read.namespace);
+        if (CHILD_PROCESS_SPECS.has(read.spec)) cpNamespaces.add(read.namespace);
       }
       if (read.defaultName) {
         namedImports.push({ local: read.defaultName, imported: "default", spec: read.spec });
-        if (read.spec === CHILD_PROCESS) cpNamespaces.add(read.defaultName);
+        if (CHILD_PROCESS_SPECS.has(read.spec)) cpNamespaces.add(read.defaultName);
       }
       for (const spec of read.named) {
         namedImports.push({ local: spec.local, imported: spec.imported, spec: read.spec });
-        if (read.spec === CHILD_PROCESS) cpLocals.add(spec.local);
+        if (CHILD_PROCESS_SPECS.has(read.spec)) cpLocals.add(spec.local);
       }
       i = read.next - 1;
       continue;
@@ -584,6 +627,7 @@ function parseModule(text, file) {
     if (isIdent(token, "export")) {
       const read = readExport(tokens, i);
       for (const name of read.exportNames) exportNames.add(name);
+      for (const name of read.values) valueExports.add(name);
       functions.push(...read.functions);
       reexports.push(...read.reexports);
       if (read.timeoutMs !== null) timeoutMs = read.timeoutMs;
@@ -604,6 +648,12 @@ function parseModule(text, file) {
       const fn = readFunction(tokens, i);
       if (fn.name) functions.push({ name: fn.name, exported: false, calls: fn.calls });
       i = fn.close;
+      continue;
+    }
+    if (isIdent(token, "class") && tokens[i + 1]?.type === "ident" && !isIdent(prev, "export")) {
+      const cls = readClass(tokens, i);
+      functions.push({ name: cls.name, exported: false, calls: cls.calls });
+      i = cls.close;
     }
   }
   return {
@@ -612,12 +662,22 @@ function parseModule(text, file) {
     namespaceImports,
     reexports,
     exportNames,
+    valueExports,
     functions,
     cpLocals,
     cpNamespaces,
     importsChildProcess,
     timeoutMs,
   };
+}
+
+function loadsChildProcess(tokens) {
+  for (let i = 0; i + 2 < tokens.length; i += 1) {
+    const token = tokens[i];
+    if (token.type !== "ident" || !LOADER_CALLS.has(token.value) || !isPunct(tokens[i + 1], "(")) continue;
+    if (tokens[i + 2].type === "string" && CHILD_PROCESS_SPECS.has(tokens[i + 2].value)) return true;
+  }
+  return false;
 }
 
 function lineAt(text, index) {
@@ -644,9 +704,8 @@ function argIsTimeout(arg, localName) {
   return new RegExp(`\\btimeout\\s*:\\s*${localName}\\b`).test(text);
 }
 
-function callbackCalls(args) {
-  const fn = args.find((arg) => arg.some((token) => isPunct(token, "=>") || isIdent(token, "function")));
-  return fn ? callsFrom(fn) : [];
+function argCalls(args) {
+  return args.flatMap((arg) => callsFrom(arg));
 }
 
 function parseCall(tokens, openIndex) {
@@ -676,20 +735,32 @@ function parseCall(tokens, openIndex) {
   throw new Error(`unclosed call at ${tokens[openIndex].start}`);
 }
 
+/**
+ * `test(...)`, `test.only(...)`, `test.concurrent(...)` and the curried forms `test.each(table)(...)`
+ * and `test.skipIf(cond)(...)` all register a test; the last call in the chain is the test call.
+ */
 function testCallsIn(tokens, text, testLocals, timeoutLocal) {
   const calls = [];
   for (let i = 0; i < tokens.length; i += 1) {
     if (tokens[i].type !== "ident" || !testLocals.has(tokens[i].value)) continue;
-    if (isPunct(tokens[i - 1], ".") || !isPunct(tokens[i + 1], "(")) continue;
-    const parsed = parseCall(tokens, i + 1);
+    if (isPunct(tokens[i - 1], ".")) continue;
+    let j = i + 1;
+    while (isPunct(tokens[j], ".") && tokens[j + 1]?.type === "ident") j += 2;
+    if (!isPunct(tokens[j], "(")) continue;
+    let parsed = parseCall(tokens, j);
+    let closeIndex = tokens.indexOf(parsed.close);
+    while (isPunct(tokens[closeIndex + 1], "(")) {
+      parsed = parseCall(tokens, closeIndex + 1);
+      closeIndex = tokens.indexOf(parsed.close);
+    }
     calls.push({
       name: testTitle(parsed.args, text),
       line: lineAt(text, tokens[i].start),
       close: parsed.close.start,
-      calls: callbackCalls(parsed.args),
+      calls: argCalls(parsed.args),
       passesTimeout: parsed.args.some((arg) => argIsTimeout(arg, timeoutLocal)),
     });
-    i = tokens.indexOf(parsed.close);
+    i = closeIndex;
   }
   return calls;
 }
@@ -715,7 +786,7 @@ function listFiles(dir) {
 }
 
 function resolveSpec(fromAbs, spec, known) {
-  if (spec === CHILD_PROCESS) return { kind: "cp" };
+  if (CHILD_PROCESS_SPECS.has(spec)) return { kind: "cp" };
   if (!spec.startsWith(".")) return { kind: "external" };
   const base = join(dirname(fromAbs), spec);
   const candidates = [
@@ -751,9 +822,10 @@ function helperSpawning(mod) {
       if (!fn.name || spawning.has(fn.name)) continue;
       for (const call of fn.calls) {
         const direct =
-          (call.kind === "call" && mod.cpLocals.has(call.name)) ||
-          (call.kind === "method" && mod.cpNamespaces.has(call.object));
-        const via = call.kind === "call" && names.has(call.name) && spawning.has(call.name);
+          ((call.kind === "call" || call.kind === "value") && mod.cpLocals.has(call.name)) ||
+          (call.kind === "method" && mod.cpNamespaces.has(call.object)) ||
+          (call.kind === "load" && CHILD_PROCESS_SPECS.has(call.spec));
+        const via = (call.kind === "call" || call.kind === "value") && names.has(call.name) && spawning.has(call.name);
         if (direct || via) {
           spawning.add(fn.name);
           changed = true;
@@ -765,16 +837,36 @@ function helperSpawning(mod) {
   return spawning;
 }
 
+/** A module that loads child_process in any form spawns through every export, parsed or not. */
+function moduleSpawns(target) {
+  return Boolean(target) && !target.isHelpers && target.importsChildProcess;
+}
+
+function namedSpawns(binding) {
+  if (binding?.kind !== "named" || !binding.target) return false;
+  return moduleSpawns(binding.target) || binding.target.spawning.has(binding.imported);
+}
+
 function callsSpawning(calls, mod, spawningLocals) {
   for (const call of calls) {
-    if (call.kind === "call" && spawningLocals.has(call.name)) return true;
-    if (call.kind === "call") {
+    if (call.kind === "load") {
+      if (CHILD_PROCESS_SPECS.has(call.spec)) return true;
+      const target = mod.resolveModule(call.spec);
+      if (target && (moduleSpawns(target) || target.spawning.size > 0)) return true;
+    }
+    if ((call.kind === "call" || call.kind === "value") && spawningLocals.has(call.name)) return true;
+    if (call.kind === "call" && namedSpawns(mod.bindings.get(call.name))) return true;
+    if (call.kind === "value") {
       const binding = mod.bindings.get(call.name);
-      if (binding?.kind === "named" && binding.target?.spawning.has(binding.imported)) return true;
+      if (!binding?.target?.valueExports.has(binding.imported) && namedSpawns(binding)) return true;
     }
     if (call.kind === "method") {
+      if (spawningLocals.has(call.object)) return true;
       const binding = mod.bindings.get(call.object);
       if (binding?.kind === "namespace" && binding.target?.spawning.has(call.prop)) return true;
+      if (binding?.kind === "named" && binding.target && moduleSpawns(binding.target) && binding.target.exportNames.size === 0) {
+        return true;
+      }
     }
   }
   return false;
@@ -799,8 +891,10 @@ function localSpawning(mod) {
 function infected(mod) {
   if (mod.importsChildProcess) return true;
   for (const binding of mod.bindings.values()) {
-    if (binding.kind === "named" && binding.target?.spawning.has(binding.imported)) return true;
-    if (binding.kind === "namespace" && binding.target && binding.target.spawning.size > 0) return true;
+    if (namedSpawns(binding)) return true;
+    if (binding.kind === "namespace" && binding.target && (moduleSpawns(binding.target) || binding.target.spawning.size > 0)) {
+      return true;
+    }
   }
   for (const reexport of mod.resolvedReexports) {
     const target = reexport.target;
@@ -833,6 +927,7 @@ function build(root) {
       isHelpers: isHelpers(rel),
       importsChildProcess: mod.importsChildProcess,
       exportNames: new Set(mod.exportNames),
+      valueExports: new Set(mod.valueExports),
       spawning: new Set(),
       functions: mod.functions,
       cpLocals: mod.cpLocals,
@@ -848,6 +943,10 @@ function build(root) {
   }
   const resolve = (fromAbs, spec) => resolveSpec(fromAbs, spec, known);
   for (const mod of mods.values()) {
+    mod.resolveModule = (spec) => {
+      const resolved = resolve(mod.abs, spec);
+      return resolved.kind === "file" ? (mods.get(resolved.abs) ?? null) : null;
+    };
     for (const item of mod.namedImports) {
       const resolved = resolve(mod.abs, item.spec);
       const target = resolved.kind === "file" ? mods.get(resolved.abs) : null;

@@ -171,7 +171,41 @@ function spawnFixture() {
     "  write();",
     "}",
   ]);
-  putFile(root, "tools/acceptance/test/spawn-fixtures.test.mjs", [
+  putFile(root, "tools/leaf-bare.mjs", [
+    'import { spawnSync } from "child_process";',
+    "export function bare() {",
+    '  spawnSync("true", []);',
+    "}",
+  ]);
+  putFile(root, "tools/leaf-dynamic.mjs", [
+    'const cp = await import("node:child_process");',
+    "export function dynamic() {",
+    '  cp.spawnSync("true", []);',
+    "}",
+  ]);
+  putFile(root, "tools/leaf-require.mjs", [
+    'import { createRequire } from "node:module";',
+    "const require = createRequire(import.meta.url);",
+    'const { spawnSync } = require("node:child_process");',
+    "export function required() {",
+    '  spawnSync("true", []);',
+    "}",
+  ]);
+  putFile(root, "tools/leaf-builtin.mjs", [
+    'const { spawnSync } = process.getBuiltinModule("node:child_process");',
+    "export function builtin() {",
+    '  spawnSync("true", []);',
+    "}",
+  ]);
+  putFile(root, "tools/leaf-common.cjs", [
+    'const { spawnSync } = require("node:child_process");',
+    "module.exports = {",
+    "  common() {",
+    '    spawnSync("true", []);',
+    "  },",
+    "};",
+  ]);
+  putFile(root, "tools/acceptance/test/spawn-fixtures.mjs", [
     'import { test } from "vitest";',
     'import { NESTED_RUN_TIMEOUT_MS } from "./helpers.mjs";',
     'import { leaf } from "../../leaf.mjs";',
@@ -181,6 +215,22 @@ function spawnFixture() {
     'import { run } from "../../reexport-helper.mjs";',
     'import { viaVia } from "../../wrap-helper-2.mjs";',
     'import { viaWrite } from "../../wrap-write.mjs";',
+    'import { bare } from "../../leaf-bare.mjs";',
+    'import { dynamic } from "../../leaf-dynamic.mjs";',
+    'import { required } from "../../leaf-require.mjs";',
+    'import { builtin } from "../../leaf-builtin.mjs";',
+    'import common from "../../leaf-common.cjs";',
+    "const OTHER = 180000;",
+    "const alias = leaf;",
+    "const bag = { leaf };",
+    "const stored = () => {",
+    "  leaf();",
+    "};",
+    "class Box {",
+    "  open() {",
+    "    leaf();",
+    "  }",
+    "}",
     "function throughLeaf() {",
     "  leaf();",
     "}",
@@ -211,10 +261,99 @@ function spawnFixture() {
     'test("leaf with timeout", () => {',
     "  leaf();",
     "}, NESTED_RUN_TIMEOUT_MS);",
+    'test("bare", () => {',
+    "  bare();",
+    "});",
+    'test("dynamic", () => {',
+    "  dynamic();",
+    "});",
+    'test("required", () => {',
+    "  required();",
+    "});",
+    'test("builtin", () => {',
+    "  builtin();",
+    "});",
+    'test("common", () => {',
+    "  common.common();",
+    "});",
+    'test.each([1])("each %i", () => {',
+    "  leaf();",
+    "});",
+    'test.only("only", () => {',
+    "  leaf();",
+    "});",
+    'test.concurrent("concurrent", () => {',
+    "  leaf();",
+    "});",
+    'test("alias", () => {',
+    "  alias();",
+    "});",
+    'test("bag", () => {',
+    "  bag.leaf();",
+    "});",
+    'test("stored", stored);',
+    'test("passed", () => {',
+    "  [1].forEach(leaf);",
+    "});",
+    'test("optional", () => {',
+    "  leaf?.();",
+    "});",
+    'test("invoked", () => {',
+    "  leaf.call(null);",
+    "});",
+    'test("imported", async () => {',
+    '  const mod = await import("../../leaf.mjs");',
+    "  mod.leaf();",
+    "});",
+    'test("boxed", () => {',
+    "  new Box().open();",
+    "});",
+    'test("literal", () => {',
+    "  leaf();",
+    "}, 180000);",
+    'test("other", () => {',
+    "  leaf();",
+    "}, OTHER);",
+    'test("options", { timeout: NESTED_RUN_TIMEOUT_MS }, () => {',
+    "  leaf();",
+    "});",
+    'test.each([1])("each with timeout %i", () => {',
+    "  leaf();",
+    "}, NESTED_RUN_TIMEOUT_MS);",
   ]);
-  putFile(root, "tools/acceptance/test/bad-import.test.mjs", [
+  putFile(root, "tools/acceptance/test/bad-import.mjs", [
     'import { spawnSync } from "node:child_process";',
     'import { test } from "vitest";',
+    'test("bad", () => {',
+    '  spawnSync("true", []);',
+    "});",
+  ]);
+  putFile(root, "tools/acceptance/test/bad-bare.mjs", [
+    'import { spawnSync } from "child_process";',
+    'import { test } from "vitest";',
+    'test("bad", () => {',
+    '  spawnSync("true", []);',
+    "});",
+  ]);
+  putFile(root, "tools/acceptance/test/bad-dynamic.mjs", [
+    'import { test } from "vitest";',
+    'const { spawnSync } = await import("node:child_process");',
+    'test("bad", () => {',
+    '  spawnSync("true", []);',
+    "});",
+  ]);
+  putFile(root, "tools/acceptance/test/bad-require.mjs", [
+    'import { createRequire } from "node:module";',
+    'import { test } from "vitest";',
+    "const require = createRequire(import.meta.url);",
+    'const { spawnSync } = require("node:child_process");',
+    'test("bad", () => {',
+    '  spawnSync("true", []);',
+    "});",
+  ]);
+  putFile(root, "tools/acceptance/test/bad-builtin.mjs", [
+    'import { test } from "vitest";',
+    'const { spawnSync } = process.getBuiltinModule("node:child_process");',
     'test("bad", () => {',
     '  spawnSync("true", []);',
     "});",
@@ -238,16 +377,45 @@ test("the spawn graph follows wrappers and re-exports and leaves a write-only wr
     expect(symbols(report, "tools/wrap-helper-2.mjs")).toEqual(["viaVia"]);
     expect(symbols(report, "tools/wrap-write.mjs")).toEqual([]);
     expect(symbols(report, "tools/acceptance/test/helpers.mjs")).toEqual(["run"]);
+    expect(symbols(report, "tools/leaf-bare.mjs")).toEqual(["bare"]);
+    expect(symbols(report, "tools/leaf-dynamic.mjs")).toEqual(["dynamic"]);
+    expect(symbols(report, "tools/leaf-require.mjs")).toEqual(["required"]);
+    expect(symbols(report, "tools/leaf-builtin.mjs")).toEqual(["builtin"]);
+    expect(symbols(report, "tools/leaf-common.cjs")).toEqual([]);
     expect(report.missingTimeouts.map((item) => item.name).sort()).toEqual([
+      "alias",
+      "bag",
+      "bare",
+      "boxed",
+      "builtin",
+      "common",
+      "concurrent",
+      "dynamic",
+      "each %i",
       "helper",
+      "imported",
+      "invoked",
       "leaf",
+      "literal",
+      "only",
+      "optional",
+      "other",
+      "passed",
       "reexport",
       "reexport helper",
+      "required",
       "second",
+      "stored",
       "through",
       "wrap",
     ]);
-    expect(report.forbiddenChildProcessImports).toEqual(["tools/acceptance/test/bad-import.test.mjs"]);
+    expect(report.forbiddenChildProcessImports).toEqual([
+      "tools/acceptance/test/bad-bare.mjs",
+      "tools/acceptance/test/bad-builtin.mjs",
+      "tools/acceptance/test/bad-dynamic.mjs",
+      "tools/acceptance/test/bad-import.mjs",
+      "tools/acceptance/test/bad-require.mjs",
+    ]);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
