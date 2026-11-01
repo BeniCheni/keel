@@ -9,8 +9,10 @@ Every slice moves through up to four rungs: proposal (the research behind the pr
 | S00 Repo tooling (PR #3) | toward `v0.1.0` (non-release) | `specs/s00-tooling.md` | none (no UI) | `reviews/pr-3-pass-0.md`, `reviews/pr-3-pass-1.5.md`, `reviews/pr-3-pass-2.5.md` (executive brief) | merged 2026-10-31 at squash `e9ab4ba`, reviewed head `bbe3aec` |
 | Review records for PR #3 (PR #5) | n/a | none | none | `reviews/pr-5-pass-0.md`, `reviews/pr-5-pass-2.5.md` (executive brief) | merged 2026-10-31 at squash `330cc87`, reviewed head `fed9d33` (fast-track) |
 | Record of the PR #5 merge and ideas 7 to 9 (PR #6) | n/a | none | none | `reviews/pr-6-pass-0.md` | landed 2026-10-31 as `f47e047`, outside the PR: GitHub records no merge on PR #6 and no CI run on that commit; its tree equals the PR's reviewed head `731ad5d` |
-| Housekeeping: trailers, rules, ADRs, S00.1 spec (PR #7) | n/a | adds `specs/s00.1-tooling-hardening.md` | none | `reviews/pr-7-pass-0.md`, `reviews/pr-7-pass-1.5.md` | in review |
-| S00.1 Tooling hardening | toward `v0.1.0` (non-release) | `specs/s00.1-tooling-hardening.md` | none (no UI) | `reviews/pr-<N>-*` | spec drafted 2026-10-31; builds before S01 |
+| Housekeeping: trailers, rules, ADRs, S00.1 spec (PR #7) | n/a | adds `specs/s00.1-tooling-hardening.md` | none | `reviews/pr-7-pass-0.md`, `reviews/pr-7-pass-1.5.md`, `reviews/pr-7-pass-2.5.md` (executive brief) | merged 2026-10-31 at squash `8a04ff3`, reviewed head `d3852d9` |
+| S00.1 Tooling hardening (PR #8) | toward `v0.1.0` (non-release) | `specs/s00.1-tooling-hardening.md` | none (no UI) | `reviews/pr-8-pass-0.md` (rebuilt 2026-11-01; the original never reached GitHub), `reviews/pr-8-pass-1.5.md`, `reviews/pr-8-pass-2.5.md` (executive brief) | merged 2026-11-01 at squash `f0ad018`, reviewed head `5fcd521` |
+| Scrubbed product research (PR #9) | n/a | none; adds `proposals/0001-product-research.md` | none | `reviews/pr-9-pass-0.md` | merged 2026-11-01 at squash `7b6eddd`, reviewed head `c0ff7d5` (fast-track) |
+| S00.2 Test-registration guard (PR #10) | toward `v0.1.0` (non-release) | none, by Beni's ruling 5 in `reviews/pr-8-pass-2.5.md`, which holds the build brief | none (no UI) | `reviews/pr-10-pass-0.md`, `reviews/pr-10-pass-1.5.md`, `reviews/pr-10-pass-2.5.md` (executive brief) | merged 2026-11-01 at squash `44fa3ae`, reviewed head `5989f81` |
 | S01 Terms schema 0.1 and loader | toward `v0.1.0` (non-release) | `specs/s01-terms-schema.md` | none (no UI) | `reviews/pr-<N>-*` | spec revised 2026-10-30 after the plan challenge |
 
 Folders:
