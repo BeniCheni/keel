@@ -628,6 +628,10 @@ function emailLines(result) {
   return result.stdout.split("\n").filter((line) => line.startsWith("email\t"));
 }
 
+function vendorsLines(result) {
+  return result.stdout.split("\n").filter((line) => line.startsWith("vendors\t"));
+}
+
 test("vendors.txt ships one exact address and a reason", () => {
   const text = readFileSync(join(repoRoot, "tools/tripwire/vendors.txt"), "utf8");
   expect(text.endsWith("\n")).toBe(true);
@@ -699,16 +703,23 @@ test("a listed vendor address does not exempt another class on its line", () => 
   }
 }, NESTED_RUN_TIMEOUT_MS);
 
-test("a malformed vendors line is a hit", () => {
+test("a malformed vendors line is a hit, and its address stays an email hit", () => {
   const repo = cleanRepo();
   const secret = email("vendor-bot");
+  const malformed = [
+    secret, // no reason column
+    "not-an-address\treason", // first column is not an address
+    `${secret}\treason\textra`, // three columns
+    `${secret}\t`, // empty reason
+    `\t${secret}`, // empty address
+  ];
   try {
-    write(repo.root, "tools/tripwire/vendors.txt", `${secret}\n`);
+    write(repo.root, "tools/tripwire/vendors.txt", `${malformed.join("\n")}\n`);
     commitAll(repo.root, "malformed vendors");
     const result = tripwire(repo.root);
     expect(result.status).toBe(1);
-    expect(result.stdout).toContain("vendors\ttools/tripwire/vendors.txt\t1");
-    expect(result.stdout).toContain("email\ttools/tripwire/vendors.txt\t1");
+    expect(vendorsLines(result)).toEqual([1, 2, 3, 4, 5].map((line) => `vendors\ttools/tripwire/vendors.txt\t${line}`));
+    expect(emailLines(result)).toEqual([1, 3, 4, 5].map((line) => `email\ttools/tripwire/vendors.txt\t${line}`));
     expect(leaked(result, secret)).toBe(false);
   } finally {
     repo.cleanup();
