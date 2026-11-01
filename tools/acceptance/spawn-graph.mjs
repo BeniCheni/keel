@@ -463,6 +463,12 @@ function readImport(tokens, i) {
   return { spec, named, namespace, defaultName, next: finishSemi(tokens, i + 1) };
 }
 
+/** Without a semicolon the statement before an import has no other end, and the import must not vanish into it. */
+function startsImport(tokens, i) {
+  return isIdent(tokens[i], "import") && !isPunct(tokens[i - 1], ".") && !isPunct(tokens[i - 1], "?.") &&
+    !isPunct(tokens[i + 1], "(") && !isPunct(tokens[i + 1], ".");
+}
+
 function skipStatement(tokens, i) {
   let brace = 0;
   let paren = 0;
@@ -478,6 +484,7 @@ function skipStatement(tokens, i) {
     else if (isPunct(token, "[")) bracket += 1;
     else if (isPunct(token, "]")) bracket -= 1;
     else if (isPunct(token, ";") && brace === 0 && paren === 0 && bracket === 0) return i + 1;
+    else if (brace === 0 && paren === 0 && bracket === 0 && startsImport(tokens, i)) return i;
     i += 1;
   }
   return i;
@@ -827,7 +834,7 @@ function listFiles(dir) {
       if (entry.name === "node_modules" || entry.name === ".git") continue;
       const path = join(current, entry.name);
       if (entry.isDirectory()) visit(path);
-      else if (/\.(mjs|cjs|js|ts)$/.test(entry.name)) files.push(path);
+      else if (/\.(mjs|cjs|js|ts|mts|cts|jsx|tsx)$/.test(entry.name)) files.push(path);
     }
   };
   visit(dir);

@@ -543,6 +543,12 @@ test("unrecognised vitest test registration fails closed", () => {
       expect(() => inspectTools(root), lines.join("\n")).toThrow(/unrecognised vitest test registration/);
     }
     rmSync(join(root, "tools/acceptance/test/escape.mjs"));
+    for (const extension of ["mts", "cts", "jsx", "tsx"]) {
+      const rel = `tools/escape.${extension}`;
+      putFile(root, rel, ['export { test } from "vitest";']);
+      expect(() => inspectTools(root), rel).toThrow(/unrecognised vitest test registration/);
+      rmSync(join(root, rel));
+    }
     putFile(root, "tools/acceptance/test/other-spec.mjs", [
       'import { defineConfig } from "vitest/config";',
       'import { leaf } from "../../leaf.mjs";',
@@ -586,7 +592,16 @@ test("unrecognised vitest test registration fails closed", () => {
       'import { leaf } from "../../leaf.mjs";',
       'it("continued", () => { leaf(); });',
     ]);
+    putFile(root, "tools/acceptance/test/registered-no-semi.mjs", [
+      "const before = 1",
+      'import { test } from "vitest"',
+      "const between = before + 1",
+      'import { leaf } from "../../leaf.mjs"',
+      'test("no semicolons", () => { leaf() })',
+    ]);
     const report = inspectTools(root);
+    expect(report.missingTimeouts.filter((item) => item.file.endsWith("/registered-no-semi.mjs")).map((item) => item.name))
+      .toEqual(["no semicolons"]);
     expect(report.missingTimeouts.filter((item) => item.file.endsWith("/registered-escaped.mjs")).map((item) => item.name))
       .toEqual(["hex"]);
     expect(report.missingTimeouts.filter((item) => item.file.endsWith("/registered-continued.mjs")).map((item) => item.name))
