@@ -10,7 +10,7 @@ Usage: `/keel-pr-review <PR number or branch> [--pass 1|2|2.5] [--no-merge]`. Th
 
 `AGENTS.md` owns every rule this skill applies. If this file and `AGENTS.md` disagree, `AGENTS.md` wins and the disagreement is a finding.
 
-Seats: Pass 1 is Claude Code, unless a Claude session wrote any line of the PR, in which case Codex runs Pass 1. Pass 2 is Codex. Pass 2.5 is the PM in a fresh session. Every commit needs a cold read from a vendor that did not author it; follow the authorship record in the Pass 0 and 1.5 briefs and the rule in `AGENTS.md`. Never give the cold read of a commit your vendor wrote. If no eligible seat exists for a commit, stop and escalate. Passes 0 and 1.5 are PM briefs written outside this skill, using `pass-0-brief.md` and `pass-1.5-brief.md` in this folder.
+Seats: Pass 1 is Claude Code, unless a Claude session wrote any line of the PR, in which case Codex runs Pass 1. Pass 2 is Codex. Pass 2.5 is the PM in a fresh session. Every commit needs a cold read from a vendor that did not author it; follow the authorship record in the Pass 0 and 1.5 briefs and the rule in `AGENTS.md`. Never give the cold read of a commit your vendor wrote. If no eligible seat exists for a commit, stop and escalate. A records PR (`AGENTS.md`, Records PRs) gets no passes from this skill: one vendor that authored none of its commits gives a cold read and posts one short comment, with no briefs. Passes 0 and 1.5 are PM briefs written outside this skill, using `pass-0-brief.md` and `pass-1.5-brief.md` in this folder.
 
 ## 0. Setup
 
@@ -90,7 +90,7 @@ List out-of-scope findings in the comment with a one-line reason and a rough siz
    - Fast-track changes review depth only, never who merges or which gate clauses apply.
    - Otherwise escalate with questions answerable in one word, plus the handoff block.
 
-Handoff block (one fenced block, paste-ready): the merge command with the pinned SHA and squash message; for a release, the annotated tag and push commands; `git pull`; and the three green checks (`pnpm install --frozen-lockfile`, `pnpm verify`, demo mode starts with zero outbound requests).
+Handoff block (one fenced block, paste-ready): the merge command with the pinned SHA and squash message. Every `Co-authored-by:` trailer is spelled out in full as literal text (name and address): every commit author, resolved in the reviewed clone from `git log --format='%an <%ae>' origin/main..<head>`, plus every vendor that gave a review pass or a records cold read on the PR, taken from the review comments and briefs and written with that vendor's commit identity from `AGENTS.md` hard rule 10. Never fill a trailer by shell substitution at merge time: the merging clone may not have the commit, which is how PR #3's squash got an empty Cursor trailer. Then: for a release, the annotated tag and push commands; `git pull`; and the three green checks (`pnpm install --frozen-lockfile`, `pnpm verify`, demo mode starts with zero outbound requests).
 
 ## 8. Sealed appendix
 
