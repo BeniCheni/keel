@@ -21,7 +21,7 @@ Five personas, one anti-persona. P1 is the design partner and the Milestone 1 ti
 Why P5 matters (ESTIMATE): structured notes, FIAs and VAs carry dates, riders and contacts that live in one person's head and inbox. Continuity is a retiree job that no tracker in Section 9 treats as first-class, and it costs little to build because it reuses the document store and the export path.
 
 ## 2. User stories
-65 stories in 12 epics; 48 are Milestone 1 (M1) Musts or Shoulds, and Section 11 splits those into a v0.1.0 cut (the 35 Musts) and a v0.2.x follow-up (the 13 Shoulds). The M1 cut is driven by one rule: every M1 story either keeps you from being surprised by a date, a barrier or a call, or keeps the app honest about what it does not know. Priority uses MoSCoW (Must, Should, Could, Won't-for-now). Label is M1, Later, or Cat (category-specific, after M1). Personas are from Section 1.
+65 stories in 12 epics; 48 are Milestone 1 (M1) Musts or Shoulds (35 Musts and 13 Shoulds). The M1 cut is driven by one rule: every M1 story either keeps you from being surprised by a date, a barrier or a call, or keeps the app honest about what it does not know. Priority uses MoSCoW (Must, Should, Could, Won't-for-now). Label is M1, Later, or Cat (category-specific, after M1). Personas are from Section 1.
 
 ### E1 Onboarding
 
