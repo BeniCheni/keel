@@ -79,7 +79,11 @@ The Pass 0 record, extended with every commit since: `git log --format='%h %an' 
 
 ## Rulings from Beni
 
-None on this brief yet. Question 1 is open. Ruling 5 in `docs/reviews/pr-8-pass-2.5.md` is the slice's authority.
+Ruling 5 in `docs/reviews/pr-8-pass-2.5.md` is the slice's authority.
+
+Beni ruled on 2026-11-01 (America/New_York), in the words "Yes, close it", on the question "Close S00.2 after Pass 2, sending new silent routes to the ideas file?":
+
+1. **Approved.** S00.2 closes after Pass 2. A silent route that no live test uses is named in the residual-risk sentence and the ideas file, not fixed. That covers finding 10 and the regex route above as well as anything new. A defect in the commits under review still gets fixed, and so does anything High. A defect here means a fix that does not close the exact forms it claims, a regression that cannot fail, or a new rejection of a form a live test uses. Pass 2.5 still runs, as `AGENTS.md` requires, and the same rule applies to anything it finds. S00.2 does not spawn a follow-up slice by default.
 
 ## Sealed appendix for Pass 2
 
@@ -89,7 +93,7 @@ Leads for Codex's own read, none of them established:
 
 1. `57dd887` changes where `skipStatement` stops. What valid source now parses differently? Try a statement that legitimately continues across a line break next to `import` (`const x = y\n  .import`, `const a = b ?\n  import("c") : d`). Can that hide code, or only reject it? Do the newly scanned `.tsx` and `.jsx` files fail with a message an author can act on?
 2. `970d21a` adds `VITEST_OTHER_SPEC` and `reachesVitest`. What do they miss, and what do they wrongly catch: a relative path holding `node_modules/vitest` through a symlink or `..` segments, `./vitest.mjs`, `@vitest-foo/x`?
-3. `d37b08b` throws on a backslash token to stop a misread regex. The "One route" section above shows a quote gets past it. Is there a cheap, sound rule for a `/` right after `)` or `}`, or is naming it the honest end? Report which, and any other way to throw the lexer out of step.
+3. `d37b08b` throws on a backslash token to stop a misread regex. The "One route" section above shows a quote gets past it. Is there a cheap, sound rule for a `/` right after `)` or `}`, or is naming it the honest end? Report which, and any other way to throw the lexer out of step. By Beni's ruling, report these and do not fix them.
 4. `5989f81` removes the `while` loop over chained calls. Does each curried chain still read its timeout from the right call, including `test.each(a)(b)(c)`?
 5. Write your own mutants of the new clauses, with exact edits in your comment. Pass 1's are not listed, and this seat ran only the eight named above.
 6. Run the AC2 loop at your final head, once normally and once with the core include glob broken, as on PR #8. Pass 1 and this seat ran only the normal loop.
