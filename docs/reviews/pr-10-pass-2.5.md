@@ -42,8 +42,8 @@ A1 to A6 are silent: the analyzer reports nothing, Vitest exits 0 with 1 passed,
 | # | Severity | Form | Named in the residual-risk sentence? |
 | --- | --- | --- | --- |
 | A1 | Medium | `vi.importActual?.("vitest")` | No |
-| A2 | Medium | `vi.importActual("vitest")` | No |
-| A3 | Medium | `import.meta.vitest` | No |
+| A2 | Medium | `vi.importActu\u0061l("vitest")` | No |
+| A3 | Medium | `import.meta.vit\u0065st` | No |
 | A4 | Medium | `import("../../../node_modules/./vitest/dist/index.js")` | No |
 | A5 | Medium | `import("vitest?x")` | No |
 | A6 | Medium | `import("#v")` with a `package.json` `imports` map | No |
@@ -189,13 +189,15 @@ Each from a run in the PM's session at `5989f81`, with a generated fixture root,
 | Form | Analyzer at the head | Vitest |
 | --- | --- | --- |
 | A1 `vi.importActual?.("vitest")` | silent | exit 0, 1 passed, 1 spawn |
-| A2 `vi.importActual("vitest")` | silent | exit 0, 1 passed, 1 spawn |
-| A3 `import.meta.vitest` | silent | exit 0, 1 passed, 1 spawn |
+| A2 `vi.importActu\u0061l("vitest")` | silent | exit 0, 1 passed, 1 spawn |
+| A3 `import.meta.vit\u0065st` | silent | exit 0, 1 passed, 1 spawn |
 | A4 `node_modules/./vitest` path | silent | exit 0, 1 passed, 1 spawn |
 | A5 `import("vitest?x")` | silent | exit 0, 1 passed, 1 spawn |
 | A6 `import("#v")` with an `imports` map | silent | exit 0, 1 passed, 1 spawn |
 
 **Low, from this seat: the PR comment misprints A2 and A3.** Its table shows `vi.importActual("vitest")` and `import.meta.vitest`, without the escapes this brief has (`gh api repos/BeniCheni/keel/issues/comments/6562088749 --jq .body`). As printed, both forms throw `unrecognised vitest test registration` at the head, so a reader of the comment alone would think those two fixes do not work. This brief and the PR body's residual-risk sentence have the forms right. The comment stays as posted. At 13:46 EST the PM added a "Pass 2.5 comment" line to the PR body's corrections section, with `gh pr edit 10 --body-file`. `scanRepo` gated it: no error and 0 hits, and a generated address gives 1 email hit. Cursor's first 76 lines stay byte-identical.
+
+**Correction (PM, on PR #11).** As first committed, this record had the same misprint: the A2 and A3 rows, in the brief's table and in the PM's table above, lost their escapes on the way into this file, so this paragraph's "the escapes this brief has" was false. Codex's records cold read caught it ([issuecomment-6562472942](https://github.com/BeniCheni/keel/pull/11#issuecomment-6562472942)). Those rows now match the brief as delivered.
 
 Handoff block: the tree it checks is the head's (`git rev-parse '5989f81^{tree}'` prints `8461baf97979a3622dc2989895d01b236a963f08`), `origin/main` is still `f0ad018`, and all five checks on the head are `SUCCESS` (`gh pr view 10 --json statusCheckRollup`). The first column of `tools/tripwire/vendors.txt` equals the author address of `b4ff2af` (`test "$(cut -f1 tools/tripwire/vendors.txt)" = "$(git log -1 --format=%ae b4ff2af)"` exits 0).
 

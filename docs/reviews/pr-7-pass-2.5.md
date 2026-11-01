@@ -96,7 +96,7 @@ None. No figure in this PR comes from a model or an assumption.
 | Gate clause | Holds? |
 | --- | --- |
 | Not a release, no numbering fork | yes: docs and rules only, root package stays `0.0.0`; S00.1's numbering was ruled by Beni (Q7), not forked |
-| Verdict mergeable, every High closed (fix commit with a failing-first test, or for a High outside tracked files, a recorded remediation check plus Beni's confirmation) | yes: no High in any pass; eight Pass 1 Mediums and one Low closed in `acbcc25` and `ada396b`; two Pass 2 Mediums closed in `f1bc1b6`, `72b9a7f`, `d3852d9`; one Medium from this seat open in the PR body only |
+| Verdict mergeable, every High closed (fix commit with a failing-first test, or for a High outside tracked files, a recorded remediation check plus Beni's confirmation) | yes: no High in any pass; seven Pass 1 Mediums and one Low closed in `acbcc25` and `ada396b` (corrected on PR #11: this read "eight Pass 1 Mediums"; the comment's findings table has seven and one, `gh api repos/BeniCheni/keel/issues/comments/6546987719 --jq .body`); two Pass 2 Mediums closed in `f1bc1b6`, `72b9a7f`, `d3852d9`; one Medium from this seat open in the PR body only |
 | Nothing contested | yes |
 | `verify` green at tip; every number re-run | yes on v24.22.2 and v26.13.0 and in CI run 41232568614 at the head SHA; every number above re-run here, except the private-list check listed as not re-run |
 | No sensitive path, dependency or schema change | **no**: `AGENTS.md` and `.claude/skills/keel-pr-review/SKILL.md` and `executive-brief.md` are sensitive paths; no dependency, no schema |

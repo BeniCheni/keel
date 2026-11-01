@@ -2,7 +2,7 @@
 
 Written by the PM on 2026-11-01 (America/New_York) after reading the Pass 1 comment on PR #8 ([issuecomment-6553379287](https://github.com/BeniCheni/keel/pull/8#issuecomment-6553379287); reviewed head `af037d4`, post-fix head `4f868df`). Beni answered yes to all three questions on 2026-11-01, and ruled on a fourth after Pass 2's first comment; his rulings, and what was done on each, are recorded below. Codex receives this brief for Pass 2. Like the Pass 0 brief, it lives on branch `docs/pr-7-records`, not on the PR branch.
 
-All seven findings are accepted. None goes to Cursor as rework: Pass 1 closed findings 1 to 6 with test-only patches, and finding 7 is a defect in the spec's mutation floor, which the PM wrote, not in Cursor's build. Question 1 asks Beni to correct the floor. Pass 1's four questions are taken up below: one goes to Beni as question 3, and the other three become ideas-file entries, which need no ruling now.
+All seven findings are accepted. None goes to Cursor as rework: Pass 1 closed findings 1 to 6 with fix commits (`8becc18`, `3f8aaf6`, `4f868df`), and finding 7 is a defect in the spec's mutation floor, which the PM wrote, not in Cursor's build. (Corrected on PR #11: this sentence first said "test-only patches", but `8becc18` and `3f8aaf6` also change `tools/acceptance/spawn-graph.mjs`, and `3f8aaf6` changes `tools/vitest.config.mjs`: `git show --numstat 8becc18 3f8aaf6`.) Question 1 asks Beni to correct the floor. Pass 1's four questions are taken up below: one goes to Beni as question 3, and the other three become ideas-file entries, which need no ruling now.
 
 ## How this brief adjudicated
 
