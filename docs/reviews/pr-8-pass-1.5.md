@@ -85,7 +85,7 @@ More ideas-file entries: state the fail-closed rules in the next tooling spec, a
 
 ## Authorship record
 
-The Pass 0 record, extended with every commit since: `git log --format='%h %an' origin/main..5fcd521`. Codex's completing comment gives the cold read of the five Claude commits. `5fcd521` stays open until Pass 2.5.
+The Pass 0 record, extended with every commit since: `git log --format='%h %an' origin/main..5fcd521`. Codex's completing comment gives the cold read of the five Claude commits. The Pass 2.5 comment gives the cold read of `5fcd521`.
 
 | Commit | Authoring vendor | Cold read by |
 | --- | --- | --- |
@@ -95,7 +95,7 @@ The Pass 0 record, extended with every commit since: `git log --format='%h %an' 
 | `4f868df` cover every malformed `vendors.txt` form | Claude (Pass 1 session) | Codex, Pass 2 (issuecomment-6559644651) |
 | `c488cc7` take printed-text honesty assertions off the mutation floor (ruling 1) | Claude (PM) | Codex, Pass 2 (issuecomment-6559644651) |
 | `40328c2` correct the rationale for the printed-text floor ruling (ruling 4) | Claude (PM) | Codex, Pass 2 (issuecomment-6559644651) |
-| `5fcd521` fail closed on opaque spawn and timeout forms | Codex | fresh Claude session, Pass 2.5 (Fable 5.1 High) |
+| `5fcd521` fail closed on opaque spawn and timeout forms | Codex | fresh Claude session, Pass 2.5, Fable 5.1 High (issuecomment-6560062425) |
 | `1e22d27` (the rebuilt Pass 0 brief) and the commit adding this brief, both on `docs/pr-7-records` | Claude (PM) | the records-PR cold read |
 
 ## Rulings from Beni
