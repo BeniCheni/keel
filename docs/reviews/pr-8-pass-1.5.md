@@ -58,19 +58,44 @@ Direction for the fixes, which Codex may contest: this is the second round of es
 
 One more ideas-file entry: the runtime guard for the honesty probe (extract the probe, inject its runner and report reader), with the wiring limit above. The PR body's "Corrections after Pass 1" section still names `c488cc7` as the head, so it needs one refresh after Pass 2, not one per commit.
 
+## Pass 2's completing comment, as the PM takes it up
+
+Codex completed Pass 2 after ruling 4 ([issuecomment-6559644651](https://github.com/BeniCheni/keel/pull/8#issuecomment-6559644651)), with the verdict "mergeable after fixes", and pushed one commit, `5fcd521`. It accepts Pass 1's findings 1 to 6, accepts finding 7's observation with ruling 4 closing the dispute, and reports no High and no vendor disagreement. It also raises three new Mediums: C5 (a module imported but missing inside `tools/` could erase a spawning edge), C6 (the timeout check accepted partial, nested or misplaced option forms) and C7 (the PR body's stale corrections section). `5fcd521` closes C1 to C3, C5 and C6. `40328c2` closes C4. The refresh below closes C7.
+
+This seat does not give the cold read of `5fcd521`; the fresh Claude session does at Pass 2.5. The checks below are what this seat needs for these records and the PR body. Each comes from a run in this session at `5fcd521`, in a fresh clone of PR #8, with a fresh `mktemp -d` as `KEEL_DATA_DIR`.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Baseline | `pnpm install --frozen-lockfile && pnpm verify` on v24.22.2 and v26.13.0 | Exit 0 on both: core 1 passed (1 file), tooling 119 passed (8 files), all eight `verify:* ok` lines |
+| Diff | `git diff --shortstat origin/main...HEAD` | 15 files, 2040 insertions, 118 deletions |
+| Shape of `5fcd521` | `git show --format= --numstat 5fcd521` | `spawn-graph.mjs` 60 added, 6 removed; `test-contract.test.mjs` 120 added, 0 removed |
+| AC2 | The PR body's loop, from a fresh clone and a cold install on v24.22.2 | `0 0 0` in all three rounds, 119 passed in each of the nine runs, leftover `0` (`git status --porcelain --untracked-files=all -- packages tools \| wc -l`) |
+| C1 to C3 | The PM's probes from the first comment, one at a time in the real tree, through `inspectTools(root)` | `const { run: r } = h` and `h["run"]()` throw "unrecognised spawning namespace use"; `new Function` throws "dynamic code execution is forbidden"; an alias of `process.getBuiltinModule` throws "unrecognised builtin loader use". The three controls are still flagged without a timeout: a direct `run()`, `h.run()` and a direct `process.getBuiltinModule("node:child_process")` |
+| CI | `gh run view 41318099897 --json headSha,conclusion,event` | `5fcd521`, `success`, `pull_request` |
+
+Not re-run here: Codex's mutant harness and its AC2 negative control, which Pass 2.5 re-runs, and the owner's private-list check, which no Claude seat runs.
+
+Three points for the record:
+
+- **PR body refresh (C7), with one slip.** At 10:07 EST on 2026-11-01 the PM refreshed the "Corrections after Pass 1" section with `gh pr edit 8 --body-file`, under ruling 2, after Codex's report named it as the PM's remaining step. Cursor's first 112 lines are byte-identical (`cmp` against the saved body). The slip: the repo tripwire's scan of the new text returned an error, not a result, because its temporary repository had no `origin/main`, and the PM's script went on to make the edit anyway. The scan was re-run on the live text straight after, with that ref in place: no error and 0 hits, and a generated address added to the same repository gives 1 email hit. The owner's private-list check has not covered the new text, because Codex's scan came before it. Beni runs that check before merging.
+- **The spec does not state the new rules.** `5fcd521` forbids `new Function` and `eval` under `tools/` and fails on a missing import inside `tools/`. S00.1's spec mentions neither (`grep -n -E 'eval|new Function|fail closed|fails closed' docs/specs/s00.1-tooling-hardening.md` prints nothing). A spec line now would be another Claude commit needing another Codex read, which this does not justify. The analyzer's errors name each rule, and the next tooling spec states them.
+- **The base moved.** PR #9 landed on `main` as `7b6eddd` after PR #8 branched from `8a04ff3`. The two share no file (`comm -12 <(git diff --name-only 8a04ff3 5fcd521 | sort) <(git diff --name-only 8a04ff3 7b6eddd | sort) | wc -l` prints `0`). The squash commit's tree therefore will not equal `5fcd521`'s tree, so the check after merging is `verify` green on the squash commit.
+
+More ideas-file entries: state the fail-closed rules in the next tooling spec, and Codex's residual risk (constructed specifiers and API names, runtime-generated code, modules outside the snapshot, lexical shadowing).
+
 ## Authorship record
 
-The Pass 0 record, extended with every commit since: `git log --format='%h %an' origin/main..40328c2`. Codex's first Pass 2 comment stopped before it finished these reads, so every Claude row below stays open until Pass 2 completes.
+The Pass 0 record, extended with every commit since: `git log --format='%h %an' origin/main..5fcd521`. Codex's completing comment gives the cold read of the five Claude commits. `5fcd521` stays open until Pass 2.5.
 
 | Commit | Authoring vendor | Cold read by |
 | --- | --- | --- |
 | `af037d4` harden tooling timeouts, honesty discovery, and vendor addresses | Cursor | Claude Code, Pass 1 (issuecomment-6553379287) |
-| `8becc18` close spawn-graph evasion forms | Claude (Pass 1 session) | Codex, Pass 2 |
-| `3f8aaf6` make the temp-file self-tests safe under concurrent runs | Claude (Pass 1 session) | Codex, Pass 2 |
-| `4f868df` cover every malformed `vendors.txt` form | Claude (Pass 1 session) | Codex, Pass 2 |
-| `c488cc7` take printed-text honesty assertions off the mutation floor (ruling 1) | Claude (PM) | Codex, Pass 2 |
-| `40328c2` correct the rationale for the printed-text floor ruling (ruling 4) | Claude (PM) | Codex, Pass 2 |
-| Any Codex fix commit at Pass 2 | Codex | fresh Claude session, Pass 2.5 (Fable 5.1 High) |
+| `8becc18` close spawn-graph evasion forms | Claude (Pass 1 session) | Codex, Pass 2 (issuecomment-6559644651) |
+| `3f8aaf6` make the temp-file self-tests safe under concurrent runs | Claude (Pass 1 session) | Codex, Pass 2 (issuecomment-6559644651) |
+| `4f868df` cover every malformed `vendors.txt` form | Claude (Pass 1 session) | Codex, Pass 2 (issuecomment-6559644651) |
+| `c488cc7` take printed-text honesty assertions off the mutation floor (ruling 1) | Claude (PM) | Codex, Pass 2 (issuecomment-6559644651) |
+| `40328c2` correct the rationale for the printed-text floor ruling (ruling 4) | Claude (PM) | Codex, Pass 2 (issuecomment-6559644651) |
+| `5fcd521` fail closed on opaque spawn and timeout forms | Codex | fresh Claude session, Pass 2.5 (Fable 5.1 High) |
 | `1e22d27` (the rebuilt Pass 0 brief) and the commit adding this brief, both on `docs/pr-7-records` | Claude (PM) | the records-PR cold read |
 
 ## Rulings from Beni
