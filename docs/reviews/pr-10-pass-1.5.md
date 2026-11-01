@@ -34,7 +34,7 @@ The probes use a generated fixture root holding a spawning `tools/leaf.mjs`. Eac
 
 Low, from this seat, outside tracked files, no action needed: Pass 1's finding 7 says "Table below", but its mutation table gives totals only, with no edit for any of its 18 or 50 mutants. Under hard rule 9 those two figures have no reproducing command. Codex's PR #8 appendix is the better form. Codex writes its own mutants here.
 
-Correction (PM, on PR #11): when this brief was first committed, the escapes in finding 6's form and in `import { t\u0065st } from "vitest"` below were lost on the way into the file. The PM found this while fixing the same slip in `pr-10-pass-2.5.md`, which Codex's records cold read had caught. Pass 1's comment has the same misprint: its finding 6 shows the form as plain `test("x", ...)`, while its commit table says "escaped identifiers".
+Correction (PM, on PR #11): when this brief was first committed, the escapes in finding 6's form and in `import { t\u0065st } from "vitest"` below were lost on the way into the file. The PM found this while fixing the same slip in `pr-10-pass-2.5.md`, which Codex's records cold read had caught. Pass 1's comment has the same misprint: its finding 6 shows the form as plain `test("x", ...)`. The message of `d37b08b` describes it as "an escaped identifier" (`git show -s --format=%B d37b08b`).
 
 Privacy, this seat: the Pass 1 comment contains no address other than `noreply` ones (`gh api repos/BeniCheni/keel/issues/comments/6561199919 --jq .body | grep -o -E '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' | grep -v -c 'noreply@'` prints `0`). The owner's private-list check was not run by this seat; Codex runs it at Pass 2.
 
