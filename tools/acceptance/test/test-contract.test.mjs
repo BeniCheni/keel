@@ -540,6 +540,10 @@ test("unrecognised vitest test registration fails closed", () => {
         'import { leaf } from "../../leaf.mjs";',
         't\\u0065st("escaped", () => { leaf(); });',
       ],
+      ['import { test } from "vitest";', "const t = test.each([1]);"],
+      ['import { test } from "vitest";', "const t = test.skipIf(0);"],
+      ['import { test } from "vitest";', "const t = test.only;"],
+      ['import { test } from "vitest";', "const t = test.concurrent;"],
       ['export { test } from "vitest";'],
       ['export { test as t } from "vitest";'],
       ['export * from "vitest";'],
@@ -570,6 +574,7 @@ test("unrecognised vitest test registration fails closed", () => {
       ["const { vitest } = import.meta;"],
       ["const meta = import.meta;"],
       ["const vitest = import.meta?.vitest;"],
+      ['const vitest = import.meta?.["vitest"];'],
       ['import { test } from "../../../node_modules/vitest/dist/index.js";'],
       ['const { test } = await import("../../../node_modules/vitest/dist/index.js");'],
       ['export { test } from "../../../node_modules/.pnpm/vitest@5.0.5/node_modules/vitest/dist/index.js";'],
@@ -593,8 +598,12 @@ test("unrecognised vitest test registration fails closed", () => {
       rmSync(join(root, rel));
     }
     putFile(root, "tools/acceptance/test/other-spec.mjs", [
-      'import { defineConfig } from "vitest/config";',
+      'import { defineConfig, test } from "vitest/config";',
       'import { leaf } from "../../leaf.mjs";',
+      "const notATestLocal = test;",
+      'client.require("vitest");',
+      'client?.import("vitest");',
+      'const pair = [require, "vitest"];',
       "const here = import.meta.url;",
       "const located = import.meta?.dirname;",
       'const notVitest = await import("../../leaf.mjs");',
@@ -624,6 +633,47 @@ test("unrecognised vitest test registration fails closed", () => {
       'import { leaf } from "../../leaf.mjs";',
       'it2("aliased", () => { leaf(); });',
     ]);
+    putFile(root, "tools/acceptance/test/not-registered.mjs", [
+      'import { test } from "vitest";',
+      'import { leaf } from "../../leaf.mjs";',
+      "const member = other.test;",
+      "const optional = other?.test;",
+      'other.test("member", () => { leaf(); });',
+      'other?.test("optional", () => { leaf(); });',
+      "function shadow() {",
+      "  function test(value = leaf()) { return value; }",
+      "}",
+    ]);
+    putFile(root, "tools/acceptance/test/registered-timed.mjs", [
+      'import { it, test } from "vitest";',
+      'import { NESTED_RUN_TIMEOUT_MS as T } from "./helpers.mjs";',
+      'import { leaf } from "../../leaf.mjs";',
+      'test.each([1])("each", () => { leaf(); }, T);',
+      'test.skipIf(0)("skipIf", () => { leaf(); }, T);',
+      'test.only("only", { timeout: T }, () => { leaf(); });',
+      'test.only("only third", () => { leaf(); }, T);',
+      'test.concurrent("concurrent", () => { leaf(); }, T);',
+      'test.concurrent("concurrent options", { timeout: T }, () => { leaf(); });',
+      'it.each([1])("it each", { timeout: T }, () => { leaf(); });',
+      'test.each([1], T)("table call", () => { leaf(); });',
+      'test.each([1], { timeout: T })("table options", () => { leaf(); });',
+      'test.skipIf(0, T)("condition call", () => { leaf(); });',
+      'test.each([1])("each fourth", () => { leaf(); }, 1000, T);',
+      'test.only("only literal", () => { leaf(); }, 1000);',
+    ]);
+    putFile(root, "tools/acceptance/test/registered-statement.mjs", [
+      'import { test } from "vitest";',
+      'import { leaf } from "../../leaf.mjs";',
+      "const dotted = other.import, first = leaf();",
+      "const optional = other?.import, second = leaf();",
+      "const located = import.meta.url, third = leaf();",
+      'const loaded = await import("../../leaf.mjs");',
+      'test("dotted", () => { dotted(); });',
+      'test("optional", () => { optional(); });',
+      'test("located", () => { located(); });',
+      'test("loaded", () => { loaded.leaf(); });',
+      'test("first call", () => { leaf(); })();',
+    ]);
     putFile(root, "tools/acceptance/test/registered-escaped.mjs", [
       'import { test } from "vit\\x65st";',
       'import { leaf } from "../../leaf.mjs";',
@@ -643,6 +693,11 @@ test("unrecognised vitest test registration fails closed", () => {
       'test("no semicolons", () => { leaf() })',
     ]);
     const report = inspectTools(root);
+    expect(report.missingTimeouts.filter((item) => item.file.endsWith("/not-registered.mjs"))).toEqual([]);
+    expect(report.missingTimeouts.filter((item) => item.file.endsWith("/registered-timed.mjs")).map((item) => item.name))
+      .toEqual(["table call", "table options", "condition call", "each fourth", "only literal"]);
+    expect(report.missingTimeouts.filter((item) => item.file.endsWith("/registered-statement.mjs")).map((item) => item.name))
+      .toEqual(["dotted", "optional", "located", "loaded", "first call"]);
     expect(report.missingTimeouts.filter((item) => item.file.endsWith("/registered-no-semi.mjs")).map((item) => item.name))
       .toEqual(["no semicolons"]);
     expect(report.missingTimeouts.filter((item) => item.file.endsWith("/registered-escaped.mjs")).map((item) => item.name))

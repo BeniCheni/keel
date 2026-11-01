@@ -791,13 +791,13 @@ function registrationOpen(tokens, i) {
  * `test.only(...)`, `test.concurrent(...)`, `test.each(table)(...)` or `test.skipIf(cond)(...)`.
  * Any other use of that local is unrecognised, inside an accepted registration too, since a table
  * or title runs at collection and can hand the local on. So is a call whose arguments are a spread,
- * and an escaped identifier, which the lexer cannot read as that local. The last call in an accepted
- * chain is the test call.
+ * and an escaped identifier, which the lexer cannot read as that local. The call `registrationOpen`
+ * returns is the test call.
  */
 function testCallsIn(tokens, text, testLocals, timeoutLocal) {
   const calls = [];
   for (let i = 0; i < tokens.length; i += 1) {
-    if (isIdent(tokens[i], "import") && !isPunct(tokens[i + 1], "(") && !isPunct(tokens[i + 1], ".")) {
+    if (startsImport(tokens, i)) {
       i = readImport(tokens, i).next - 1;
       continue;
     }
@@ -806,12 +806,7 @@ function testCallsIn(tokens, text, testLocals, timeoutLocal) {
     if (isPunct(tokens[i - 1], ".") || isPunct(tokens[i - 1], "?.") || isIdent(tokens[i - 1], "function")) continue;
     const open = registrationOpen(tokens, i);
     if (open < 0) throw new Error(`unrecognised vitest test registration at ${tokens[i].start}`);
-    let parsed = parseCall(tokens, open);
-    let closeIndex = tokens.indexOf(parsed.close);
-    while (isPunct(tokens[closeIndex + 1], "(")) {
-      parsed = parseCall(tokens, closeIndex + 1);
-      closeIndex = tokens.indexOf(parsed.close);
-    }
+    const parsed = parseCall(tokens, open);
     if (parsed.args.some((arg) => isPunct(arg[0], "..."))) {
       throw new Error(`unrecognised vitest test registration at ${tokens[i].start}`);
     }
@@ -1160,7 +1155,7 @@ function build(root) {
     });
     const testLocals = new Set(
       [...mod.bindings.entries()]
-        .filter(([, binding]) => binding.spec === "vitest" && (binding.imported === "test" || binding.imported === "it"))
+        .filter(([, binding]) => binding.spec === VITEST_SPEC && (binding.imported === "test" || binding.imported === "it"))
         .map(([local]) => local),
     );
     if (testLocals.size === 0) continue;
