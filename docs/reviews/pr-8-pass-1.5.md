@@ -1,6 +1,6 @@
 # Pass 1.5 brief: PR #8
 
-Written by the PM on 2026-11-01 (America/New_York) after reading the Pass 1 comment on PR #8 ([issuecomment-6553379287](https://github.com/BeniCheni/keel/pull/8#issuecomment-6553379287); reviewed head `af037d4`, post-fix head `4f868df`). There are no rulings from Beni yet. Codex receives this brief for Pass 2. Like the Pass 0 brief, it lives on branch `docs/pr-7-records`, not on the PR branch.
+Written by the PM on 2026-11-01 (America/New_York) after reading the Pass 1 comment on PR #8 ([issuecomment-6553379287](https://github.com/BeniCheni/keel/pull/8#issuecomment-6553379287); reviewed head `af037d4`, post-fix head `4f868df`). Beni answered yes to all three questions on 2026-11-01; his rulings, and what was done on each, are recorded below. Codex receives this brief for Pass 2. Like the Pass 0 brief, it lives on branch `docs/pr-7-records`, not on the PR branch.
 
 All seven findings are accepted. None goes to Cursor as rework: Pass 1 closed findings 1 to 6 with test-only patches, and finding 7 is a defect in the spec's mutation floor, which the PM wrote, not in Cursor's build. Question 1 asks Beni to correct the floor. Pass 1's four questions are taken up below: one goes to Beni as question 3, and the other three become ideas-file entries, which need no ruling now.
 
@@ -39,7 +39,7 @@ Ideas-file entries to add, ranked by the PM when they land: spawning from hooks 
 
 ## Authorship record
 
-The Pass 0 record, extended with every commit since: `git log --format='%h %an' origin/main..4f868df`.
+The Pass 0 record, extended with every commit since: `git log --format='%h %an' origin/main..c488cc7`.
 
 | Commit | Authoring vendor | Cold read by |
 | --- | --- | --- |
@@ -47,21 +47,21 @@ The Pass 0 record, extended with every commit since: `git log --format='%h %an' 
 | `8becc18` close spawn-graph evasion forms | Claude (Pass 1 session) | Codex, Pass 2 |
 | `3f8aaf6` make the temp-file self-tests safe under concurrent runs | Claude (Pass 1 session) | Codex, Pass 2 |
 | `4f868df` cover every malformed `vendors.txt` form | Claude (Pass 1 session) | Codex, Pass 2 |
-| Any PM spec commit on PR #8 after question 1 | Claude (PM) | Codex, Pass 2 |
+| `c488cc7` take printed-text honesty assertions off the mutation floor (ruling 1) | Claude (PM) | Codex, Pass 2 |
 | Any Codex fix commit at Pass 2 | Codex | fresh Claude session, Pass 2.5 (Fable 5.1 High) |
 | `1e22d27` (the rebuilt Pass 0 brief) and the commit adding this brief, both on `docs/pr-7-records` | Claude (PM) | the records-PR cold read |
 
 ## Rulings from Beni
 
-None yet. Each question is answerable in one word.
+Beni ruled on 2026-11-01 (America/New_York), in the words "Yes to all three":
 
-1. Remove "asserting honesty discovery from printed text again" from S00.1's mutation floor, and record that review checks how the honesty test proves its claim? If yes, the PM commits that spec change to the PR #8 branch before Pass 2. (yes/no; PM recommends yes)
-2. Have the PM append a "Corrections after Pass 1" section to the PR #8 body, leaving Cursor's text unchanged? It would record: tooling 114 tests at `4f868df`; `fileParallelism: false` added without disclosure and removed in `3f8aaf6`; the AC4 self-test now checks its own two files, with the whole-tree check run after the suite; and the mutant table, where 13 of the 14 rows die for the stated reason. The fourteenth, printed-text assertions, dies only mechanically. Pass 1 also found eight surviving mutants at `af037d4`, and the fix commits kill seven of them. (yes/no; PM recommends yes)
-3. Add a step to the review skill: before Pass 1 starts, the PM confirms the Pass 0 brief is readable at the ref the Pass 1 prompt names (`git fetch origin <ref> && git cat-file -e FETCH_HEAD:docs/reviews/pr-<N>-pass-0.md`)? It would ride the next `AGENTS.md` PR. (yes/no; PM recommends yes)
+1. Remove "asserting honesty discovery from printed text again" from S00.1's mutation floor, and record that review checks how the honesty test proves its claim? If yes, the PM commits that spec change to the PR #8 branch before Pass 2. **Approved.** Done in `c488cc7` on `s00.1/tooling-hardening`, which changes only the spec's Status line and Mutation floor (`git show --stat c488cc7`: 1 file, 4 insertions, 2 deletions). The PM committed it in a fresh clone. Before the push, `pnpm verify` exited 0 on Node v24.22.2 and v26.13.0 (core 1 test, tooling 114 tests). The push was a fast-forward from `4f868df`. CI run 41273899868 succeeded on all four cells and `verify` (`gh pr checks 8`). Codex reads it at Pass 2.
+2. Have the PM append a "Corrections after Pass 1" section to the PR #8 body, leaving Cursor's text unchanged? It would record: tooling 114 tests at `4f868df`; `fileParallelism: false` added without disclosure and removed in `3f8aaf6`; the AC4 self-test now checks its own two files, with the whole-tree check run after the suite; and the mutant table, where 13 of the 14 rows die for the stated reason. The fourteenth, printed-text assertions, dies only mechanically. Pass 1 also found eight surviving mutants at `af037d4`, and the fix commits kill seven of them. **Approved.** Appended at 00:40 on 2026-11-01 with `gh pr edit 8 --body-file`. The section also records the new head `c488cc7`, the spec file that ruling 1 now adds to the PR, and each later commit's CI run. The body's first 112 lines, Cursor's text, are byte-identical before and after the edit: the saved body was compared with `cmp` against the first 112 lines of `gh pr view 8 --json body --jq .body`. The repo tripwire's `scanRepo` finds 0 hits in the new body.
+3. Add a step to the review skill: before Pass 1 starts, the PM confirms the Pass 0 brief is readable at the ref the Pass 1 prompt names (`git fetch origin <ref> && git cat-file -e FETCH_HEAD:docs/reviews/pr-<N>-pass-0.md`)? It would ride the next `AGENTS.md` PR. **Approved.** Not done yet. It rides the next PR that touches `AGENTS.md`, together with Beni's two rulings of 2026-10-31 (the planner row's effort, and line 9's pointer to `docs/proposals/0001-product-research.md`).
 
 ## Sealed appendix for Pass 2
 
-Pass 1's findings and fixes are suspicions to re-derive, not conclusions, and so are this brief's dispositions. Codex gives the cold read of the three Claude-authored fix commits (`af037d4..4f868df`) and of any PM spec commit added after question 1. Codex reproduces or disproves each Pass 1 finding with its own commands, checks that each fix commit's test fails without it, and adds its own read of the whole PR at the head. Codex also runs the owner's private-list check (counts only, readable-file precheck, nonzero exit on a failed scan) over the diff, every commit message in `origin/main..HEAD`, the PR title and body, and every comment. Neither Claude seat ran it. Pass M does not apply: there is no engine and there are no golden fixtures.
+Pass 1's findings and fixes are suspicions to re-derive, not conclusions, and so are this brief's dispositions. Codex gives the cold read of the four Claude-authored commits (`af037d4..c488cc7`): the three Pass 1 fix commits and the PM's ruling commit `c488cc7`. Codex reproduces or disproves each Pass 1 finding with its own commands, checks that each fix commit's test fails without it, and adds its own read of the whole PR at the head. Codex also runs the owner's private-list check (counts only, readable-file precheck, nonzero exit on a failed scan) over the diff, every commit message in `origin/main..HEAD`, the PR title and body, and every comment. Neither Claude seat ran it. Pass M does not apply: there is no engine and there are no golden fixtures.
 
 Leads for Codex's own read, none of them established:
 
