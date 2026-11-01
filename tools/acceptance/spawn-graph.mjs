@@ -61,6 +61,14 @@ const REGEX_PUNCT = new Set([
 ]);
 const TWO = new Set(["=>", "&&", "||", "==", "!=", "<=", ">=", "+=", "-=", "*=", "??", "?.", "++", "--", "**"]);
 const CALL_SKIP = new Set(["if", "for", "while", "switch", "catch", "function", "with"]);
+const VITEST_SPEC = "vitest";
+// The runner packages, and a path into the installed copy of vitest.
+const VITEST_OTHER_SPEC = /^@vitest\/|(?:^|\/)node_modules\/(?:@vitest\/|vitest(?:\/|$))/;
+const VITEST_LOADER_METHOD = "importActual";
+const VITEST_META = "vitest";
+const STRING_ESCAPE = /\\(?:x([0-9a-fA-F]{2})|u([0-9a-fA-F]{4})|u\{([0-9a-fA-F]+)\}|(\r\n|[\n\r\u2028\u2029])|([^]))/g;
+const TEST_CALL_MODIFIERS = new Set(["only", "concurrent"]);
+const TEST_CURRY_MODIFIERS = new Set(["each", "skipIf"]);
 
 function isIdent(token, value) {
   return token?.type === "ident" && token.value === value;
@@ -110,6 +118,15 @@ function readRegex(text, i) {
     i += 1;
   }
   throw new Error(`unterminated regex at ${start}`);
+}
+
+/** A specifier spelled with escapes names the same module, so the escapes that spell a character are decoded. */
+function cook(raw) {
+  return raw.replace(STRING_ESCAPE, (_, hex, unit, point, continuation, other) => {
+    if (continuation) return "";
+    const code = hex ?? unit ?? point;
+    return code === undefined ? other : String.fromCodePoint(Number.parseInt(code, 16));
+  });
 }
 
 function skipString(text, i) {
@@ -205,16 +222,8 @@ function lex(text) {
       const start = i;
       const q = c;
       i += 1;
-      let value = "";
-      while (i < text.length && text[i] !== q) {
-        if (text[i] === "\\") {
-          value += text[i + 1] ?? "";
-          i += 2;
-          continue;
-        }
-        value += text[i];
-        i += 1;
-      }
+      while (i < text.length && text[i] !== q) i += text[i] === "\\" ? 2 : 1;
+      const value = cook(text.slice(start + 1, i));
       i += 1;
       push({ type: "string", value, start, end: i });
       continue;
@@ -454,6 +463,12 @@ function readImport(tokens, i) {
   return { spec, named, namespace, defaultName, next: finishSemi(tokens, i + 1) };
 }
 
+/** Without a semicolon the statement before an import has no other end, and the import must not vanish into it. */
+function startsImport(tokens, i) {
+  return isIdent(tokens[i], "import") && !isPunct(tokens[i - 1], ".") && !isPunct(tokens[i - 1], "?.") &&
+    !isPunct(tokens[i + 1], "(") && !isPunct(tokens[i + 1], ".");
+}
+
 function skipStatement(tokens, i) {
   let brace = 0;
   let paren = 0;
@@ -469,6 +484,7 @@ function skipStatement(tokens, i) {
     else if (isPunct(token, "[")) bracket += 1;
     else if (isPunct(token, "]")) bracket -= 1;
     else if (isPunct(token, ";") && brace === 0 && paren === 0 && bracket === 0) return i + 1;
+    else if (brace === 0 && paren === 0 && bracket === 0 && startsImport(tokens, i)) return i;
     i += 1;
   }
   return i;
@@ -755,22 +771,44 @@ function parseCall(tokens, openIndex) {
 }
 
 /**
- * `test(...)`, `test.only(...)`, `test.concurrent(...)` and the curried forms `test.each(table)(...)`
- * and `test.skipIf(cond)(...)` all register a test; the last call in the chain is the test call.
+ * A direct call, or `only` / `concurrent` before a call, or curried `each` / `skipIf` whose result
+ * is called. Anything else (a value, `test.extend({})`, an unknown modifier) is not a registration.
+ */
+function registrationOpen(tokens, i) {
+  if (isPunct(tokens[i + 1], "(")) return i + 1;
+  if (!isPunct(tokens[i + 1], ".") || tokens[i + 2]?.type !== "ident" || !isPunct(tokens[i + 3], "(")) return -1;
+  const modifier = tokens[i + 2].value;
+  if (TEST_CALL_MODIFIERS.has(modifier)) return i + 3;
+  if (!TEST_CURRY_MODIFIERS.has(modifier)) return -1;
+  const parsed = parseCall(tokens, i + 3);
+  const closeIndex = tokens.indexOf(parsed.close);
+  if (!isPunct(tokens[closeIndex + 1], "(")) return -1;
+  return closeIndex + 1;
+}
+
+/**
+ * A named import of `test` or `it` registers a test only as a call or as a chain such as
+ * `test.only(...)`, `test.concurrent(...)`, `test.each(table)(...)` or `test.skipIf(cond)(...)`.
+ * Any other use of that local is unrecognised, inside an accepted registration too, since a table
+ * or title runs at collection and can hand the local on. So is a call whose arguments are a spread,
+ * and an escaped identifier, which the lexer cannot read as that local. The call `registrationOpen`
+ * returns is the test call.
  */
 function testCallsIn(tokens, text, testLocals, timeoutLocal) {
   const calls = [];
   for (let i = 0; i < tokens.length; i += 1) {
+    if (startsImport(tokens, i)) {
+      i = readImport(tokens, i).next - 1;
+      continue;
+    }
+    if (isPunct(tokens[i], "\\")) throw new Error(`unrecognised vitest test registration at ${tokens[i].start}`);
     if (tokens[i].type !== "ident" || !testLocals.has(tokens[i].value)) continue;
-    if (isPunct(tokens[i - 1], ".")) continue;
-    let j = i + 1;
-    while (isPunct(tokens[j], ".") && tokens[j + 1]?.type === "ident") j += 2;
-    if (!isPunct(tokens[j], "(")) continue;
-    let parsed = parseCall(tokens, j);
-    let closeIndex = tokens.indexOf(parsed.close);
-    while (isPunct(tokens[closeIndex + 1], "(")) {
-      parsed = parseCall(tokens, closeIndex + 1);
-      closeIndex = tokens.indexOf(parsed.close);
+    if (isPunct(tokens[i - 1], ".") || isPunct(tokens[i - 1], "?.") || isIdent(tokens[i - 1], "function")) continue;
+    const open = registrationOpen(tokens, i);
+    if (open < 0) throw new Error(`unrecognised vitest test registration at ${tokens[i].start}`);
+    const parsed = parseCall(tokens, open);
+    if (parsed.args.some((arg) => isPunct(arg[0], "..."))) {
+      throw new Error(`unrecognised vitest test registration at ${tokens[i].start}`);
     }
     calls.push({
       name: testTitle(parsed.args, text),
@@ -780,7 +818,6 @@ function testCallsIn(tokens, text, testLocals, timeoutLocal) {
       passesTimeout: argIsTimeout(parsed.args[2] ?? [], timeoutLocal) ||
         (isPunct(parsed.args[1]?.[0], "{") && argIsTimeout(parsed.args[1], timeoutLocal)),
     });
-    i = closeIndex;
   }
   return calls;
 }
@@ -798,7 +835,7 @@ function listFiles(dir) {
       if (entry.name === "node_modules" || entry.name === ".git") continue;
       const path = join(current, entry.name);
       if (entry.isDirectory()) visit(path);
-      else if (/\.(mjs|cjs|js|ts)$/.test(entry.name)) files.push(path);
+      else if (/\.(mjs|cjs|js|ts|mts|cts|jsx|tsx)$/.test(entry.name)) files.push(path);
     }
   };
   visit(dir);
@@ -890,6 +927,53 @@ function callsSpawning(calls, mod, spawningLocals) {
     }
   }
   return false;
+}
+
+/** The specifier a loader call names: a string or a template with no substitution, in any parentheses. */
+function loaderSpec(mod, openIndex) {
+  let i = openIndex + 1;
+  while (isPunct(mod.tokens[i], "(")) i += 1;
+  const token = mod.tokens[i];
+  if (token?.type === "string") return token.value;
+  return token?.type === "template" ? cook(mod.text.slice(token.start + 1, token.end - 1)) : null;
+}
+
+function reachesVitest(spec) {
+  return spec === VITEST_SPEC || VITEST_OTHER_SPEC.test(spec);
+}
+
+/**
+ * A test is reached only through a named import of `test` or `it`. A namespace or default import
+ * of vitest, a re-export of it, a loader call that names it, `import.meta.vitest` and a specifier
+ * that reaches its files another way are unrecognised. `import.meta` itself is read only by name.
+ */
+function assertVitestImports(mod) {
+  const tokens = mod.tokens;
+  const unrecognised = (token) => new Error(`${mod.rel}: unrecognised vitest test registration at ${token.start}`);
+  for (let i = 0; i < tokens.length; i += 1) {
+    const token = tokens[i];
+    const member = isPunct(tokens[i - 1], ".") || isPunct(tokens[i - 1], "?.");
+    if (token.type === "ident" && isPunct(tokens[i + 1], "(") &&
+      (token.value === VITEST_LOADER_METHOD || (!member && LOADER_CALLS.has(token.value)))) {
+      const spec = loaderSpec(mod, i + 1);
+      if (spec !== null && reachesVitest(spec)) throw unrecognised(token);
+    }
+    if (member) continue;
+    if (isIdent(token, "import") && isPunct(tokens[i + 1], ".") && isIdent(tokens[i + 2], "meta")) {
+      const named = (isPunct(tokens[i + 3], ".") || isPunct(tokens[i + 3], "?.")) && tokens[i + 4]?.type === "ident";
+      if (!named || tokens[i + 4].value === VITEST_META) throw unrecognised(token);
+    }
+    if (isIdent(token, "export") && readExport(tokens, i).reexports.some((item) => reachesVitest(item.spec))) {
+      throw unrecognised(token);
+    }
+    if (!isIdent(token, "import") || isPunct(tokens[i + 1], "(") || isPunct(tokens[i + 1], ".")) continue;
+    const read = readImport(tokens, i);
+    const namedDefault = read.named.some((item) => item.imported === "default");
+    if (VITEST_OTHER_SPEC.test(read.spec) || (read.spec === VITEST_SPEC && (read.namespace || read.defaultName || namedDefault))) {
+      throw unrecognised(token);
+    }
+    i = read.next - 1;
+  }
 }
 
 /**
@@ -1062,6 +1146,7 @@ function build(root) {
   let nestedTimeoutMs = null;
   for (const mod of mods.values()) {
     assertNamespaceUses(mod);
+    assertVitestImports(mod);
     if (mod.isHelpers && mod.timeoutMs !== null) nestedTimeoutMs = mod.timeoutMs;
     for (const symbol of mod.spawning) entryPoints.push({ file: mod.rel, symbol });
     if (mod.importsChildProcess && underTest(mod.rel) && !mod.isHelpers) forbidden.push(mod.rel);
@@ -1070,7 +1155,7 @@ function build(root) {
     });
     const testLocals = new Set(
       [...mod.bindings.entries()]
-        .filter(([, binding]) => binding.spec === "vitest" && (binding.imported === "test" || binding.imported === "it"))
+        .filter(([, binding]) => binding.spec === VITEST_SPEC && (binding.imported === "test" || binding.imported === "it"))
         .map(([local]) => local),
     );
     if (testLocals.size === 0) continue;
