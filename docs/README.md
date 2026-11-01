@@ -15,7 +15,7 @@ Every slice moves through up to four rungs: proposal (the research behind the pr
 
 Folders:
 
-- `proposals/`: scrubbed copies of the product research. The original is private because it names a real holding.
+- `proposals/`: scrubbed copies of the product research. `0001-product-research.md` holds Sections 1 to 4, 8 and 11 (personas, user stories, chart and alert catalogs, UX direction, Milestone 1 specification). The original is private because it names a real holding.
 - `specs/`: one file per slice, `sNN-<slug>.md`, or `sNN.M-<slug>.md` for a follow-up slice Beni numbers that way.
 - `design/`: design briefs and Executive Handoff Briefs. Prototypes themselves stay in the local-only top-level `/design/` folder, which `.gitignore` excludes; `docs/design/` is tracked.
 - `reviews/`: `pr-<N>-pass-0.md`, `pr-<N>-pass-1.5.md`, executive briefs worth keeping, and `gate-activation.md` once Beni ends shadow mode.

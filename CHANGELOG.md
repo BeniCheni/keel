@@ -12,6 +12,7 @@ All notable changes to keel are recorded here. Versions follow semver. Dates are
 - `README.md`, `DISCLAIMER.md`, `SECURITY.md`, `.gitignore`, and the `docs/` index.
 - ADR-0001 to ADR-0008 in `docs/adr/`, recording the Milestone 1 architecture.
 - Spec for S00.1 (tooling hardening), ruled to build before S01.
+- `docs/proposals/0001-product-research.md`: the scrubbed product research (personas, user stories, chart and alert catalogs, UX direction, Milestone 1 specification), with every detail of the owner's holding removed.
 
 ### Changed
 
