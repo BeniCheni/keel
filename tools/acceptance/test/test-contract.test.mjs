@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -457,15 +457,28 @@ test("spawned tooling tests declare NESTED_RUN_TIMEOUT_MS of at least 60000", ()
   expect(symbols(live, "tools/verify/steps.mjs")).toEqual(["repoRoot", "steps"]);
 });
 
+/** A per-process temp file of a concurrent run can vanish between listing and reading. */
+function readVanishing(path) {
+  try {
+    return readFileSync(path, "utf8");
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw error;
+  }
+}
+
 test("tooling tests do not embed fixed repo temp names", () => {
   const hits = [];
-  const pattern = /["'`][^"'`\n]*?(zz-[A-Za-z0-9_-]+\.test\.mjs|[A-Za-z0-9_-]+\.honesty\.test\.ts)["'`]/g;
+  // A string literal that is a path whose last segment is a test file name. A bare suffix such as
+  // ".test.mjs" has no name part; that is what repoTempPath takes.
+  const pattern = /["'`](?:[^"'`\n]*\/)?([A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*\.test\.(?:mjs|ts))["'`]/g;
   const visit = (dir) => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       const path = join(dir, entry.name);
       if (entry.isDirectory()) visit(path);
       else if (entry.name.endsWith(".test.mjs")) {
-        const source = readFileSync(path, "utf8");
+        const source = readVanishing(path);
+        if (source === null) continue;
         for (const match of source.matchAll(pattern)) hits.push(`${entry.name} ${match[1]}`);
       }
     }
@@ -474,12 +487,36 @@ test("tooling tests do not embed fixed repo temp names", () => {
   expect(hits).toEqual([]);
 });
 
-test("overlapping processes use different repo temp names and leave the tree unchanged", async () => {
+function tempName(pid, suffix) {
+  return new RegExp(`^zz-${pid}-[0-9a-f]{16}${suffix.replaceAll(".", "\\.")}$`);
+}
+
+test("repoTempPath names carry this process id and a fresh random part", () => {
+  const dir = join(tmpdir(), "keel-names");
+  const first = basename(repoTempPath(dir, ".test.mjs"));
+  const second = basename(repoTempPath(dir, ".test.mjs"));
+  expect(first).toMatch(tempName(process.pid, ".test.mjs"));
+  expect(second).toMatch(tempName(process.pid, ".test.mjs"));
+  expect(second).not.toBe(first);
+});
+
+test("a file that vanishes between listing and reading does not fail the scan", () => {
+  const root = spawnFixture();
+  try {
+    symlinkSync("missing.mjs", join(root, "tools/gone.mjs"));
+    const report = inspectTools(root);
+    expect(symbols(report, "tools/leaf.mjs")).toEqual(["leaf"]);
+    expect(report.entryPoints.some((entry) => entry.file === "tools/gone.mjs")).toBe(false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("overlapping processes use different repo temp names and leave nothing behind", async () => {
   const barrier = mkdtempSync(join(tmpdir(), "keel-overlap-"));
   const script = join(barrier, "write-temp.mjs");
   const repoDir = join(repoRoot, "tools/acceptance/test");
   const helperUrl = pathToFileURL(join(repoRoot, "tools/acceptance/test/helpers.mjs")).href;
-  const before = run("git", ["status", "--porcelain", "--untracked-files=all", "--", "packages", "tools"]);
   writeFileSync(
     script,
     [
@@ -504,26 +541,28 @@ test("overlapping processes use different repo temp names and leave the tree unc
       'writeFileSync(join(barrier, "path-" + process.pid), path);',
       'await waitFor("path-", 2);',
       "rmSync(path, { force: true });",
-      'process.stdout.write(path + "\\n");',
+      'process.stdout.write(process.pid + " " + path + "\\n");',
       "",
     ].join("\n"),
   );
   try {
-    expect(before.status).toBe(0);
     const args = [script, barrier, repoDir, ".test.mjs"];
     const results = await Promise.all([
       spawnCollect(process.execPath, args),
       spawnCollect(process.execPath, args),
     ]);
     expect(results.map((result) => result.status), results.map((result) => result.stderr).join("\n")).toEqual([0, 0]);
-    const paths = results.map((result) => result.stdout.trim());
+    const reported = results.map((result) => result.stdout.trim().split(" "));
+    const paths = reported.map(([, path]) => path);
     expect(paths[0]).not.toBe(paths[1]);
-    const pids = paths.map((path) => basename(path).split("-")[1]);
-    expect(pids[0]).not.toBe(pids[1]);
+    expect(reported[0][0]).not.toBe(reported[1][0]);
+    for (const [pid, path] of reported) expect(basename(path)).toMatch(tempName(pid, ".test.mjs"));
     const after = run("git", ["status", "--porcelain", "--untracked-files=all", "--", "packages", "tools"]);
     expect(after.status).toBe(0);
-    expect(after.stdout).toBe(before.stdout);
-    for (const path of paths) expect(after.stdout).not.toContain(basename(path));
+    for (const path of paths) {
+      expect(existsSync(path)).toBe(false);
+      expect(after.stdout).not.toContain(basename(path));
+    }
   } finally {
     try {
       for (const name of readdirSync(barrier)) {

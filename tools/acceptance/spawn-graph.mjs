@@ -912,7 +912,14 @@ function build(root) {
   const parsed = new Map();
   const texts = new Map();
   for (const file of files) {
-    const text = readFileSync(file, "utf8");
+    let text;
+    try {
+      text = readFileSync(file, "utf8");
+    } catch (error) {
+      // A per-process temp file of a concurrent run can vanish between listing and reading.
+      if (error?.code === "ENOENT") continue;
+      throw error;
+    }
     texts.set(file, text);
     parsed.set(file, parseModule(text, posix(relative(root, file))));
   }
