@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { run, tempGit, write } from "./helpers.mjs";
+import { NESTED_RUN_TIMEOUT_MS, run, tempGit, write } from "./helpers.mjs";
 
 function copy(root) {
   return run(process.execPath, ["tools/copy/cli.mjs", root]);
@@ -39,7 +39,7 @@ test("copy lint flags each banned word in each scanned scope", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("copy lint ignores a banned word inside another word", () => {
   const repo = tempGit();
@@ -51,7 +51,7 @@ test("copy lint ignores a banned word inside another word", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("each import form outside the allowed paths fails", () => {
   for (const kind of ["static", "export", "dynamic", "require"]) {
@@ -65,7 +65,7 @@ test("each import form outside the allowed paths fails", () => {
       repo.cleanup();
     }
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("literal calls with templates, import options, and comments cannot cross the boundary", () => {
   const imported = spec();
@@ -85,7 +85,7 @@ test("literal calls with templates, import options, and comments cannot cross th
       repo.cleanup();
     }
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("a subpath and a relative path into montecarlo fail", () => {
   const repo = tempGit();
@@ -99,7 +99,7 @@ test("a subpath and a relative path into montecarlo fail", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("an import from an allowed path and a different package name pass", () => {
   const repo = tempGit();
@@ -116,4 +116,4 @@ test("an import from an allowed path and a different package name pass", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);

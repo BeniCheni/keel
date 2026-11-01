@@ -8,5 +8,7 @@ export default defineConfig({
     include: ["**/test/**/*.test.mjs", "**/test/**/*.test.ts"],
     passWithNoTests: false,
     setupFiles: [guard],
+    // One file at a time, so a test can compare git status after its own cleanup.
+    fileParallelism: false,
   },
 });

@@ -4,19 +4,19 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { expect, test } from "vitest";
 import { probeNames, runProbe, runProbes } from "../../network/run.mjs";
-import { repoRoot, run } from "./helpers.mjs";
+import { NESTED_RUN_TIMEOUT_MS, repoRoot, repoTempPath, run } from "./helpers.mjs";
 
 for (const name of probeNames) {
   test(`child probe for ${name} exits nonzero`, () => {
     const result = runProbe(name);
     expect(result.status).toBe(1);
     expect(result.stderr).toContain(`network blocked: ${name}`);
-  });
+  }, NESTED_RUN_TIMEOUT_MS);
 }
 
 test("an unknown probe name exits 2", () => {
   expect(runProbe("nonsense").status).toBe(2);
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("the guard blocks builtin ESM named imports as well as default imports", () => {
   const dir = mkdtempSync(join(tmpdir(), "keel-named-network-"));
@@ -46,7 +46,7 @@ test("the guard blocks builtin ESM named imports as well as default imports", ()
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("runProbes reports a probe that exits 0, hangs, or dies for another reason", () => {
   const fake = (name) =>
@@ -61,10 +61,10 @@ test("runProbes reports a probe that exits 0, hangs, or dies for another reason"
     "fetch", "http.get", "net.connect", "http.request",
   ]);
   expect(runProbes()).toEqual([]);
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("vitest setup blocks fetch and dns", () => {
-  const file = join(repoRoot, "tools/acceptance/test/zz-guard.test.mjs");
+  const file = repoTempPath(join(repoRoot, "tools/acceptance/test"), ".test.mjs");
   writeFileSync(
     file,
     [
@@ -87,4 +87,4 @@ test("vitest setup blocks fetch and dns", () => {
   } finally {
     rmSync(file, { force: true });
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);

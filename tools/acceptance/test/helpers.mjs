@@ -1,10 +1,45 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../../..");
+
+export const NESTED_RUN_TIMEOUT_MS = 180_000;
+
+export function repoTempPath(directory, suffix) {
+  return join(directory, `zz-${process.pid}-${randomBytes(8).toString("hex")}${suffix}`);
+}
+
+export function spawnCollect(command, args, opts = {}) {
+  return new Promise((resolve) => {
+    const child = spawn(command, args, {
+      cwd: opts.cwd ?? repoRoot,
+      env: opts.env ?? process.env,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let stdout = "";
+    let stderr = "";
+    let settled = false;
+    const finish = (status) => {
+      if (settled) return;
+      settled = true;
+      resolve({ status, stdout, stderr });
+    };
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.on("error", () => finish(1));
+    child.on("close", (code) => finish(code ?? 1));
+  });
+}
 
 const gitEnv = {
   ...process.env,
@@ -64,6 +99,7 @@ export function pointOrigin(root) {
 export function cleanRepo() {
   const repo = tempGit();
   write(repo.root, "tools/tripwire/allowlist.txt", "");
+  write(repo.root, "tools/tripwire/vendors.txt", "");
   write(repo.root, "README.md", "clean\n");
   commitAll(repo.root, "init");
   pointOrigin(repo.root);

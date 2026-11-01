@@ -3,6 +3,9 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 export const ALLOWLIST_REL = "tools/tripwire/allowlist.txt";
+export const VENDORS_REL = "tools/tripwire/vendors.txt";
+
+const EMAIL_EXACT = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
 const PRICE_KEYS = new Set(["open", "high", "low", "close", "adj close", "price"]);
 
@@ -141,7 +144,7 @@ function findAddresses(text) {
   return hits;
 }
 
-function findEmails(text) {
+function findEmails(text, exempt) {
   const hits = [];
   for (const match of text.matchAll(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g)) {
     const email = match[0];
@@ -152,12 +155,13 @@ function findEmails(text) {
     if (after && /[A-Za-z0-9.-]/.test(after)) continue;
     const local = email.slice(0, email.indexOf("@"));
     if (local.toLowerCase() === "noreply") continue;
+    if (exempt.has(email.toLowerCase())) continue;
     hits.push(match.index);
   }
   return hits;
 }
 
-function textHits(text, where) {
+function textHits(text, where, exempt) {
   const hits = [];
   const add = (klass, indexes) => {
     for (const index of indexes) hits.push({ class: klass, where, line: lineAt(text, index), index });
@@ -166,7 +170,7 @@ function textHits(text, where) {
   add("account", findAccounts(text));
   add("ssn", findSsns(text));
   add("address", findAddresses(text));
-  add("email", findEmails(text));
+  add("email", findEmails(text, exempt));
   return hits;
 }
 
@@ -254,6 +258,27 @@ function parseAllowlist(text) {
     offset += raw.length + 1;
   }
   return { entries, hits };
+}
+
+function parseVendors(text) {
+  const lines = text.split("\n");
+  let offset = 0;
+  const addresses = new Set();
+  const hits = [];
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i];
+    const lineNo = i + 1;
+    if (raw.length === 0) {
+      offset += raw.length + 1;
+      continue;
+    }
+    const parts = raw.split("\t");
+    const valid = parts.length === 2 && parts.every((part) => part.length > 0) && EMAIL_EXACT.test(parts[0]);
+    if (!valid) hits.push({ class: "vendors", where: VENDORS_REL, line: lineNo, index: offset });
+    else addresses.add(parts[0].toLowerCase());
+    offset += raw.length + 1;
+  }
+  return { addresses, hits };
 }
 
 function blankSpans(text, entries) {
@@ -344,6 +369,17 @@ export function scanRepo(root) {
   const allow = parseAllowlist(allowText);
   const hits = [...allow.hits];
 
+  if (!files.includes(VENDORS_REL)) return { error: "vendors missing", hits: [] };
+  let vendorsBuf;
+  try {
+    vendorsBuf = readFileSync(join(root, VENDORS_REL));
+  } catch {
+    return { error: "vendors unreadable", hits: [] };
+  }
+  if (unscannable(vendorsBuf)) return { error: "vendors unscannable", hits: [] };
+  const vendors = parseVendors(decode(vendorsBuf));
+  hits.push(...vendors.hits);
+
   const range = git(root, ["rev-list", "refs/remotes/origin/main..HEAD"]);
   if (range.status !== 0) return { error: "commit range failed", hits: [] };
   const shas = range.stdout.toString("utf8").split("\n").filter(Boolean);
@@ -351,7 +387,7 @@ export function scanRepo(root) {
     const shown = git(root, ["show", "-s", "--format=%B", sha]);
     if (shown.status !== 0) return { error: "commit message unreadable", hits: [] };
     if (unscannable(shown.stdout)) return { error: "commit message unscannable", hits: [] };
-    hits.push(...textHits(decode(shown.stdout), `commit ${sha}`));
+    hits.push(...textHits(decode(shown.stdout), `commit ${sha}`, vendors.addresses));
   }
 
   for (const rel of files) {
@@ -369,13 +405,13 @@ export function scanRepo(root) {
     const text = decode(buf);
     if (priceHit(rel, text)) hits.push({ class: "price", where: rel, line: 1, index: 0 });
     if (rel === ALLOWLIST_REL) {
-      const cusipOnly = textHits(blankSpans(text, allow.entries), rel).filter((hit) => hit.class === "cusip");
-      const rest = textHits(text, rel).filter((hit) => hit.class !== "cusip");
+      const cusipOnly = textHits(blankSpans(text, allow.entries), rel, vendors.addresses).filter((hit) => hit.class === "cusip");
+      const rest = textHits(text, rel, vendors.addresses).filter((hit) => hit.class !== "cusip");
       hits.push(...cusipOnly, ...rest);
       continue;
     }
     const values = allow.entries.filter((entry) => entry.globRe.test(rel)).map((entry) => entry.value);
-    hits.push(...textHits(values.length === 0 ? text : blankValues(text, values), rel));
+    hits.push(...textHits(values.length === 0 ? text : blankValues(text, values), rel, vendors.addresses));
   }
 
   return { error: null, hits: dedupe(hits) };
