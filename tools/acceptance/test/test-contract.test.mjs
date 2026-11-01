@@ -431,6 +431,7 @@ test("unrecognised uses of spawning namespaces fail closed", () => {
       'const r = h.run; test("probe", () => { r(); });',
       'const other = h; test("probe", () => { other.run(); });',
       'test("probe", () => { Reflect.apply(h.run, null, []); });',
+      'test("probe", () => { h.nope(); });',
     ];
     for (const form of forms) {
       putFile(root, "tools/acceptance/test/namespace.mjs", [
@@ -450,6 +451,83 @@ test("unrecognised uses of spawning namespaces fail closed", () => {
     ]);
     expect(inspectTools(root).missingTimeouts.filter((item) => item.file.endsWith("/namespace.mjs"))
       .map((item) => item.name)).toEqual(["direct namespace spawn", "common namespace spawn"]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("unrecognised vitest test registration fails closed", () => {
+  const root = spawnFixture();
+  try {
+    const escaping = [
+      [
+        'import * as v from "vitest";',
+        'import { leaf } from "../../leaf.mjs";',
+        'v.test("namespace", () => { leaf(); });',
+      ],
+      [
+        'import vitest from "vitest";',
+        'import { leaf } from "../../leaf.mjs";',
+        'vitest.test("default", () => { leaf(); });',
+      ],
+      [
+        'import { default as vitest } from "vitest";',
+        'import { leaf } from "../../leaf.mjs";',
+        'vitest.test("named default", () => { leaf(); });',
+      ],
+      [
+        'import { test } from "vitest";',
+        'import { leaf } from "../../leaf.mjs";',
+        "const extended = test.extend({});",
+        'extended("extended", () => { leaf(); });',
+      ],
+      [
+        'import { leaf } from "../../leaf.mjs";',
+        'const { test } = await import("vitest");',
+        'test("dynamic", () => { leaf(); });',
+      ],
+      [
+        'import { leaf } from "../../leaf.mjs";',
+        'const { test } = require("vitest");',
+        'test("required", () => { leaf(); });',
+      ],
+      [
+        'import { test } from "vitest";',
+        'import { leaf } from "../../leaf.mjs";',
+        "const t = test;",
+        't("bound", () => { leaf(); });',
+      ],
+    ];
+    for (const lines of escaping) {
+      putFile(root, "tools/acceptance/test/escape.mjs", lines);
+      expect(() => inspectTools(root), lines.join("\n")).toThrow(/unrecognised vitest test registration/);
+    }
+    rmSync(join(root, "tools/acceptance/test/escape.mjs"));
+    putFile(root, "tools/acceptance/test/registered.mjs", [
+      'import { describe, it, test } from "vitest";',
+      'import { NESTED_RUN_TIMEOUT_MS } from "./helpers.mjs";',
+      'import { leaf } from "../../leaf.mjs";',
+      'test("plain", () => { leaf(); });',
+      'it("it", () => { leaf(); });',
+      'test.each([1])("each %i", () => { leaf(); });',
+      'test.only("only", () => { leaf(); });',
+      'test.concurrent("concurrent", () => { leaf(); });',
+      'test.skipIf(1)("skipIf", () => { leaf(); });',
+      'describe("suite", () => {',
+      '  test("inside describe", () => { leaf(); });',
+      "});",
+      'test("timed", () => { leaf(); }, NESTED_RUN_TIMEOUT_MS);',
+    ]);
+    putFile(root, "tools/acceptance/test/registered-alias.mjs", [
+      'import { test as it2 } from "vitest";',
+      'import { leaf } from "../../leaf.mjs";',
+      'it2("aliased", () => { leaf(); });',
+    ]);
+    const report = inspectTools(root);
+    expect(report.missingTimeouts.filter((item) => item.file.endsWith("/registered.mjs")).map((item) => item.name))
+      .toEqual(["plain", "it", "each %i", "only", "concurrent", "skipIf", "inside describe"]);
+    expect(report.missingTimeouts.filter((item) => item.file.endsWith("/registered-alias.mjs")).map((item) => item.name))
+      .toEqual(["aliased"]);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

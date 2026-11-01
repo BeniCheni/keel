@@ -61,6 +61,9 @@ const REGEX_PUNCT = new Set([
 ]);
 const TWO = new Set(["=>", "&&", "||", "==", "!=", "<=", ">=", "+=", "-=", "*=", "??", "?.", "++", "--", "**"]);
 const CALL_SKIP = new Set(["if", "for", "while", "switch", "catch", "function", "with"]);
+const VITEST_SPEC = "vitest";
+const TEST_CALL_MODIFIERS = new Set(["only", "concurrent"]);
+const TEST_CURRY_MODIFIERS = new Set(["each", "skipIf"]);
 
 function isIdent(token, value) {
   return token?.type === "ident" && token.value === value;
@@ -755,18 +758,38 @@ function parseCall(tokens, openIndex) {
 }
 
 /**
- * `test(...)`, `test.only(...)`, `test.concurrent(...)` and the curried forms `test.each(table)(...)`
- * and `test.skipIf(cond)(...)` all register a test; the last call in the chain is the test call.
+ * A direct call, or `only` / `concurrent` before a call, or curried `each` / `skipIf` whose result
+ * is called. Anything else (a value, `test.extend({})`, an unknown modifier) is not a registration.
+ */
+function registrationOpen(tokens, i) {
+  if (isPunct(tokens[i + 1], "(")) return i + 1;
+  if (!isPunct(tokens[i + 1], ".") || tokens[i + 2]?.type !== "ident" || !isPunct(tokens[i + 3], "(")) return -1;
+  const modifier = tokens[i + 2].value;
+  if (TEST_CALL_MODIFIERS.has(modifier)) return i + 3;
+  if (!TEST_CURRY_MODIFIERS.has(modifier)) return -1;
+  const parsed = parseCall(tokens, i + 3);
+  const closeIndex = tokens.indexOf(parsed.close);
+  if (!isPunct(tokens[closeIndex + 1], "(")) return -1;
+  return closeIndex + 1;
+}
+
+/**
+ * A named import of `test` or `it` registers a test only as a call or as a chain such as
+ * `test.only(...)`, `test.concurrent(...)`, `test.each(table)(...)` or `test.skipIf(cond)(...)`.
+ * Any other use of that local is unrecognised. The last call in an accepted chain is the test call.
  */
 function testCallsIn(tokens, text, testLocals, timeoutLocal) {
   const calls = [];
   for (let i = 0; i < tokens.length; i += 1) {
+    if (isIdent(tokens[i], "import") && !isPunct(tokens[i + 1], "(") && !isPunct(tokens[i + 1], ".")) {
+      i = readImport(tokens, i).next - 1;
+      continue;
+    }
     if (tokens[i].type !== "ident" || !testLocals.has(tokens[i].value)) continue;
-    if (isPunct(tokens[i - 1], ".")) continue;
-    let j = i + 1;
-    while (isPunct(tokens[j], ".") && tokens[j + 1]?.type === "ident") j += 2;
-    if (!isPunct(tokens[j], "(")) continue;
-    let parsed = parseCall(tokens, j);
+    if (isPunct(tokens[i - 1], ".") || isPunct(tokens[i - 1], "?.") || isIdent(tokens[i - 1], "function")) continue;
+    const open = registrationOpen(tokens, i);
+    if (open < 0) throw new Error(`unrecognised vitest test registration at ${tokens[i].start}`);
+    let parsed = parseCall(tokens, open);
     let closeIndex = tokens.indexOf(parsed.close);
     while (isPunct(tokens[closeIndex + 1], "(")) {
       parsed = parseCall(tokens, closeIndex + 1);
@@ -890,6 +913,29 @@ function callsSpawning(calls, mod, spawningLocals) {
     }
   }
   return false;
+}
+
+/**
+ * A test is reached only through a named import of `test` or `it`. A namespace or default import
+ * of vitest, and a dynamic `import()` or `require()` of vitest, are unrecognised.
+ */
+function assertVitestImports(mod) {
+  const tokens = mod.tokens;
+  for (let i = 0; i < tokens.length; i += 1) {
+    const token = tokens[i];
+    if (isPunct(tokens[i - 1], ".") || isPunct(tokens[i - 1], "?.")) continue;
+    if (token.type === "ident" && LOADER_CALLS.has(token.value) && isPunct(tokens[i + 1], "(") &&
+      tokens[i + 2]?.type === "string" && tokens[i + 2].value === VITEST_SPEC) {
+      throw new Error(`${mod.rel}: unrecognised vitest test registration at ${token.start}`);
+    }
+    if (!isIdent(token, "import") || isPunct(tokens[i + 1], "(") || isPunct(tokens[i + 1], ".")) continue;
+    const read = readImport(tokens, i);
+    const namedDefault = read.named.some((item) => item.imported === "default");
+    if (read.spec === VITEST_SPEC && (read.namespace || read.defaultName || namedDefault)) {
+      throw new Error(`${mod.rel}: unrecognised vitest test registration at ${token.start}`);
+    }
+    i = read.next - 1;
+  }
 }
 
 /**
@@ -1062,6 +1108,7 @@ function build(root) {
   let nestedTimeoutMs = null;
   for (const mod of mods.values()) {
     assertNamespaceUses(mod);
+    assertVitestImports(mod);
     if (mod.isHelpers && mod.timeoutMs !== null) nestedTimeoutMs = mod.timeoutMs;
     for (const symbol of mod.spawning) entryPoints.push({ file: mod.rel, symbol });
     if (mod.importsChildProcess && underTest(mod.rel) && !mod.isHelpers) forbidden.push(mod.rel);
