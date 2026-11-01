@@ -9,5 +9,8 @@
   },
   "scripts": {
     "test": "vitest run --config vitest.config.mjs"
+  },
+  "devDependencies": {
+    "vitest": "5.0.5"
   }
 }

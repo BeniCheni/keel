@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { expect, test } from "vitest";
 import { assessFailure, assessSuccess } from "../../ci/evidence.mjs";
 import { cellName, expectedCells } from "../../ci/matrix.mjs";
-import { repoRoot, run } from "./helpers.mjs";
+import { NESTED_RUN_TIMEOUT_MS, repoRoot, run } from "./helpers.mjs";
 
 function needs(payload) {
   return run(process.execPath, ["tools/ci/needs-check.mjs", JSON.stringify(payload)]);
@@ -24,7 +24,7 @@ test("needs-check rejects failure, cancelled, and skipped", () => {
     expect(runResult.status).not.toBe(0);
     expect(runResult.stderr).toContain(result);
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("needs-check accepts only all-success and still checks later jobs", () => {
   expect(needs({ cells: { result: "success", outputs: {} } }).status).toBe(0);
@@ -32,12 +32,12 @@ test("needs-check accepts only all-success and still checks later jobs", () => {
   const mixed = needs({ cells: { result: "success" }, other: { result: "failure" } });
   expect(mixed.status).not.toBe(0);
   expect(mixed.stderr).toContain("other");
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("needs-check rejects invalid input", () => {
   expect(run(process.execPath, ["tools/ci/needs-check.mjs", "not-json"]).status).not.toBe(0);
   expect(run(process.execPath, ["tools/ci/needs-check.mjs"], { env: { ...process.env, NEEDS: "" } }).status).not.toBe(0);
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("evidence accepts a green matrix and a single red cell", () => {
   expect(assessSuccess(jobs("success"))).toEqual([]);

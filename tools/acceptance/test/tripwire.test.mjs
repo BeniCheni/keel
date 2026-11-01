@@ -1,7 +1,9 @@
 import { randomBytes } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { expect, test } from "vitest";
 import { cusipCheckDigit } from "../../tripwire/scan.mjs";
-import { cleanRepo, commitAll, git, leaked, tripwire, write } from "./helpers.mjs";
+import { NESTED_RUN_TIMEOUT_MS, cleanRepo, commitAll, git, leaked, repoRoot, tripwire, write } from "./helpers.mjs";
 
 function makeCusip() {
   const alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -47,7 +49,7 @@ test("cusip check digit matches the modulus-10 rule", () => {
   expect(cusipCheckDigit(`0B${"0".repeat(6)}`)).toBe(6);
   expect(cusipCheckDigit(`Z${"0".repeat(7)}`)).toBe(2);
   expect(cusipCheckDigit(`a${"0".repeat(7)}`)).toBe(9);
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("flags a check-digit-valid CUSIP and hides the text", () => {
   const repo = cleanRepo();
@@ -61,7 +63,7 @@ test("flags a check-digit-valid CUSIP and hides the text", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("does not flag a 9 character token with a bad check digit", () => {
   const repo = cleanRepo();
@@ -74,7 +76,7 @@ test("does not flag a 9 character token with a bad check digit", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("does not flag a CUSIP glued inside a longer token", () => {
   const repo = cleanRepo();
@@ -86,7 +88,7 @@ test("does not flag a CUSIP glued inside a longer token", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("flags a lowercase CUSIP after uppercasing", () => {
   const repo = cleanRepo();
@@ -100,7 +102,7 @@ test("flags a lowercase CUSIP after uppercasing", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("flags an ISIN whose embedded nine characters are a valid CUSIP", () => {
   const repo = cleanRepo();
@@ -114,7 +116,7 @@ test("flags an ISIN whose embedded nine characters are a valid CUSIP", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("does not flag a 12 character token whose embedded nine fail the check digit", () => {
   const repo = cleanRepo();
@@ -125,7 +127,7 @@ test("does not flag a 12 character token whose embedded nine fail the check digi
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("flags three letters, a hyphen, and six digits", () => {
   const repo = cleanRepo();
@@ -139,7 +141,7 @@ test("flags three letters, a hyphen, and six digits", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("flags a digit token within 40 characters after an account keyword", () => {
   const repo = cleanRepo();
@@ -153,7 +155,7 @@ test("flags a digit token within 40 characters after an account keyword", () => 
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("does not flag a token that starts 40 characters after the keyword", () => {
   const repo = cleanRepo();
@@ -166,7 +168,7 @@ test("does not flag a token that starts 40 characters after the keyword", () => 
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("flags a 12 character token that starts 39 characters after the keyword and ends outside the window", () => {
   const repo = cleanRepo();
@@ -180,7 +182,7 @@ test("flags a 12 character token that starts 39 characters after the keyword and
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("an account token needs 6 to 12 characters and at least 4 digits", () => {
   const repo = cleanRepo();
@@ -205,7 +207,7 @@ test("an account token needs 6 to 12 characters and at least 4 digits", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("flags a masked run after an account keyword on the same line", () => {
   const repo = cleanRepo();
@@ -219,7 +221,7 @@ test("flags a masked run after an account keyword on the same line", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("masked account forms enforce the mask and digit limits", () => {
   const cases = [
@@ -243,7 +245,7 @@ test("masked account forms enforce the mask and digit limits", () => {
       repo.cleanup();
     }
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("flags both hyphenated and spaced SSN forms", () => {
   const repo = cleanRepo();
@@ -260,7 +262,7 @@ test("flags both hyphenated and spaced SSN forms", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("flags a street address, a direction, and a unit", () => {
   const repo = cleanRepo();
@@ -278,7 +280,7 @@ test("flags a street address, a direction, and a unit", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("a street line takes one to three words before the street type", () => {
   const repo = cleanRepo();
@@ -293,7 +295,7 @@ test("a street line takes one to three words before the street type", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("a direction does not consume one of the three street-name words", () => {
   const repo = cleanRepo();
@@ -312,7 +314,7 @@ test("a direction does not consume one of the three street-name words", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("the unit suffix consumes its number before the global address scan continues", () => {
   for (const unit of ["Apt", "Unit", "Suite", "#"]) {
@@ -328,7 +330,7 @@ test("the unit suffix consumes its number before the global address scan continu
       repo.cleanup();
     }
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("does not flag a lowercase street line or a banned word inside another word", () => {
   const repo = cleanRepo();
@@ -338,7 +340,7 @@ test("does not flag a lowercase street line or a banned word inside another word
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("flags an email and ignores a noreply address", () => {
   const repo = cleanRepo();
@@ -353,7 +355,7 @@ test("flags an email and ignores a noreply address", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("flags price columns in csv and tsv, and skips a synthetic marker", () => {
   const repo = cleanRepo();
@@ -370,7 +372,7 @@ test("flags price columns in csv and tsv, and skips a synthetic marker", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("flags price keys at the first array level only", () => {
   const repo = cleanRepo();
@@ -392,7 +394,7 @@ test("flags price keys at the first array level only", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("flags tracked local-only paths and ignores anchored negatives", () => {
   const repo = cleanRepo();
@@ -418,7 +420,7 @@ test("flags tracked local-only paths and ignores anchored negatives", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("flags a non-utf8 file and a file with a NUL byte", () => {
   const repo = cleanRepo();
@@ -433,7 +435,7 @@ test("flags a non-utf8 file and a file with a NUL byte", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("does not flag an ordinary code sample", () => {
   const repo = cleanRepo();
@@ -447,7 +449,7 @@ test("does not flag an ordinary code sample", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("a populated allowlist of check-digit-valid values scans clean", () => {
   const repo = cleanRepo();
@@ -463,7 +465,7 @@ test("a populated allowlist of check-digit-valid values scans clean", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("an unlisted value added to the allowlist file is a hit", () => {
   const repo = cleanRepo();
@@ -487,7 +489,7 @@ test("an unlisted value added to the allowlist file is a hit", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("an allowlisted value is exempt only inside its glob", () => {
   const repo = cleanRepo();
@@ -505,7 +507,7 @@ test("an allowlisted value is exempt only inside its glob", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("an email inside a valid allowlist entry is still a hit", () => {
   const repo = cleanRepo();
@@ -520,7 +522,7 @@ test("an email inside a valid allowlist entry is still a hit", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("an out-of-scope allowlist glob is a hit", () => {
   const repo = cleanRepo();
@@ -534,7 +536,7 @@ test("an out-of-scope allowlist glob is a hit", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("an allowlist glob outside fixtures/ is a hit even without dot segments", () => {
   const repo = cleanRepo();
@@ -549,7 +551,7 @@ test("an allowlist glob outside fixtures/ is a hit even without dot segments", (
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("a malformed allowlist entry is a hit", () => {
   const repo = cleanRepo();
@@ -562,7 +564,7 @@ test("a malformed allowlist entry is a hit", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("flags a commit message and hides the text", () => {
   const repo = cleanRepo();
@@ -578,7 +580,7 @@ test("flags a commit message and hides the text", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("flags a commit older than HEAD inside origin/main..HEAD", () => {
   const repo = cleanRepo();
@@ -594,7 +596,7 @@ test("flags a commit older than HEAD inside origin/main..HEAD", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("missing origin/main exits 2", () => {
   const repo = cleanRepo();
@@ -607,7 +609,7 @@ test("missing origin/main exits 2", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("a directory that is not a git repo exits 2", () => {
   const repo = cleanRepo();
@@ -620,4 +622,136 @@ test("a directory that is not a git repo exits 2", () => {
   } finally {
     repo.cleanup();
   }
+}, NESTED_RUN_TIMEOUT_MS);
+
+function emailLines(result) {
+  return result.stdout.split("\n").filter((line) => line.startsWith("email\t"));
+}
+
+function vendorsLines(result) {
+  return result.stdout.split("\n").filter((line) => line.startsWith("vendors\t"));
+}
+
+test("vendors.txt ships one exact address and a reason", () => {
+  const text = readFileSync(join(repoRoot, "tools/tripwire/vendors.txt"), "utf8");
+  expect(text.endsWith("\n")).toBe(true);
+  const lines = text.split("\n").filter((line) => line.length > 0);
+  expect(lines).toHaveLength(1);
+  const parts = lines[0].split("\t");
+  expect(parts).toHaveLength(2);
+  expect(parts[1]).toBe("Cursor agent commit address");
+  expect(parts[0]).toMatch(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/);
+  expect(parts[0]).toBe(parts[0].toLowerCase());
 });
+
+test("a listed vendor address is not an email hit, in a file or a commit message", () => {
+  const repo = cleanRepo();
+  const listed = email("vendor-bot");
+  try {
+    write(repo.root, "tools/tripwire/vendors.txt", `${listed}\treason\n`);
+    add(repo, "notes.txt", `${listed}\n${listed.toUpperCase()}\n`);
+    expect(git(repo.root, ["commit", "--allow-empty", "-m", listed]).status).toBe(0);
+    const result = tripwire(repo.root);
+    expect(result.status).toBe(0);
+    expect(leaked(result, listed)).toBe(false);
+  } finally {
+    repo.cleanup();
+  }
+}, NESTED_RUN_TIMEOUT_MS);
+
+test("a near-miss of a listed vendor address is an email hit", () => {
+  const repo = cleanRepo();
+  const listed = email("vendor-bot");
+  const oneChar = email("vendor-box");
+  const otherDomain = ["vendor-bot", "example.org"].join("@");
+  const longer = email("notvendor-bot");
+  try {
+    write(repo.root, "tools/tripwire/vendors.txt", `${listed}\treason\n`);
+    add(repo, "notes.txt", `${oneChar}\n${otherDomain}\n${longer}\n`);
+    const result = tripwire(repo.root);
+    expect(result.status).toBe(1);
+    expect(emailLines(result)).toEqual(["email\tnotes.txt\t1", "email\tnotes.txt\t2", "email\tnotes.txt\t3"]);
+    expect(leaked(result, listed)).toBe(false);
+    expect(leaked(result, oneChar)).toBe(false);
+    expect(leaked(result, otherDomain)).toBe(false);
+    expect(leaked(result, longer)).toBe(false);
+  } finally {
+    repo.cleanup();
+  }
+}, NESTED_RUN_TIMEOUT_MS);
+
+test("a listed vendor address does not exempt another class on its line", () => {
+  const repo = cleanRepo();
+  const listed = email("vendor-bot");
+  const secret = ssn("-");
+  const shape = ["abc", "123456"].join("-");
+  const shaped = [shape, "example.com"].join("@");
+  try {
+    write(repo.root, "tools/tripwire/vendors.txt", `${listed}\treason\n${shaped}\tlisted\n`);
+    add(repo, "notes.txt", `${listed} ${secret}\n${shaped}\n`);
+    const result = tripwire(repo.root);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("ssn\tnotes.txt\t1");
+    expect(result.stdout).toContain("account\tnotes.txt\t2");
+    expect(result.stdout).toContain("account\ttools/tripwire/vendors.txt\t2");
+    expect(emailLines(result)).toEqual([]);
+    expect(leaked(result, listed)).toBe(false);
+    expect(leaked(result, secret)).toBe(false);
+    expect(leaked(result, shaped)).toBe(false);
+  } finally {
+    repo.cleanup();
+  }
+}, NESTED_RUN_TIMEOUT_MS);
+
+test("a malformed vendors line is a hit, and its address stays an email hit", () => {
+  const repo = cleanRepo();
+  const secret = email("vendor-bot");
+  const malformed = [
+    secret, // no reason column
+    "not-an-address\treason", // first column is not an address
+    `${secret}\treason\textra`, // three columns
+    `${secret}\t`, // empty reason
+    `\t${secret}`, // empty address
+  ];
+  try {
+    write(repo.root, "tools/tripwire/vendors.txt", `${malformed.join("\n")}\n`);
+    commitAll(repo.root, "malformed vendors");
+    const result = tripwire(repo.root);
+    expect(result.status).toBe(1);
+    expect(vendorsLines(result)).toEqual([1, 2, 3, 4, 5].map((line) => `vendors\ttools/tripwire/vendors.txt\t${line}`));
+    expect(emailLines(result)).toEqual([1, 3, 4, 5].map((line) => `email\ttools/tripwire/vendors.txt\t${line}`));
+    expect(leaked(result, secret)).toBe(false);
+  } finally {
+    repo.cleanup();
+  }
+}, NESTED_RUN_TIMEOUT_MS);
+
+test("an unlisted address in a vendors reason is an email hit", () => {
+  const repo = cleanRepo();
+  const listed = email("vendor-bot");
+  const unlisted = email("other-bot");
+  try {
+    write(repo.root, "tools/tripwire/vendors.txt", `${listed}\tsee ${unlisted}\n`);
+    add(repo, "notes.txt", `${listed}\n`);
+    const result = tripwire(repo.root);
+    expect(result.status).toBe(1);
+    expect(emailLines(result)).toEqual(["email\ttools/tripwire/vendors.txt\t1"]);
+    expect(leaked(result, listed)).toBe(false);
+    expect(leaked(result, unlisted)).toBe(false);
+  } finally {
+    repo.cleanup();
+  }
+}, NESTED_RUN_TIMEOUT_MS);
+
+test("a missing vendors file exits 2", () => {
+  const repo = cleanRepo();
+  try {
+    expect(git(repo.root, ["rm", "-f", "tools/tripwire/vendors.txt"]).status).toBe(0);
+    commitAll(repo.root, "remove vendors");
+    const result = tripwire(repo.root);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("vendors missing");
+  } finally {
+    repo.cleanup();
+  }
+}, NESTED_RUN_TIMEOUT_MS);

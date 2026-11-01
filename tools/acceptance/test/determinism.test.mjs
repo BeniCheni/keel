@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "vitest";
 import { check, splitTrees, treesOf, verifyDeterminism, verifyRegistered } from "../../fixtures/check.mjs";
-import { commitAll, git, repoRoot, run, tempGit, write } from "./helpers.mjs";
+import { NESTED_RUN_TIMEOUT_MS, commitAll, git, repoRoot, run, tempGit, write } from "./helpers.mjs";
 
 test("fixtures:trees prints fixtures when nothing is registered", () => {
   expect(treesOf([])).toEqual(["fixtures"]);
@@ -12,7 +12,7 @@ test("fixtures:trees prints fixtures when nothing is registered", () => {
   expect(result.stdout).toBe("fixtures\n");
   expect(splitTrees(result.stdout)).toEqual(["fixtures"]);
   expect(splitTrees("\n")).toEqual([""]);
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("a clean regeneration exits 0", () => {
   const repo = tempGit();
@@ -34,7 +34,7 @@ test("a clean regeneration exits 0", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 function committedDemo() {
   const repo = tempGit();
@@ -60,7 +60,7 @@ test("a tracked edit fails the determinism check", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("a deletion fails the determinism check", () => {
   const { repo, generators } = committedDemo();
@@ -70,7 +70,7 @@ test("a deletion fails the determinism check", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("a staged change fails while git diff --exit-code stays clean", () => {
   const { repo, generators } = committedDemo();
@@ -83,7 +83,7 @@ test("a staged change fails while git diff --exit-code stays clean", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("an untracked file fails while git diff --exit-code stays clean", () => {
   const { repo, generators } = committedDemo();
@@ -95,7 +95,7 @@ test("an untracked file fails while git diff --exit-code stays clean", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("dirt outside a registered tree is ignored, including a tree name with a space", () => {
   const repo = tempGit();
@@ -116,7 +116,7 @@ test("dirt outside a registered tree is ignored, including a tree name with a sp
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("a git failure outside a repository is nonzero", () => {
   const dir = mkdtempSync(join(tmpdir(), "keel-nogit-"));
@@ -125,7 +125,7 @@ test("a git failure outside a repository is nonzero", () => {
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("an empty path from the registry fails with git's status", () => {
   const repo = tempGit();
@@ -135,7 +135,7 @@ test("an empty path from the registry fails with git's status", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("a failing fixtures:regen fails the determinism check even when the tree is clean", () => {
   const repo = tempGit();
@@ -156,12 +156,12 @@ test("a failing fixtures:regen fails the determinism check even when the tree is
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("the production determinism check is clean on this repo", () => {
   const result = verifyDeterminism(repoRoot);
   expect(result.status).toBe(0);
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("a failing fixtures:trees fails even when it prints a clean tree", () => {
   const repo = tempGit();
@@ -180,4 +180,4 @@ test("a failing fixtures:trees fails even when it prints a clean tree", () => {
   } finally {
     repo.cleanup();
   }
-});
+}, NESTED_RUN_TIMEOUT_MS);

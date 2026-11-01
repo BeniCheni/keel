@@ -1,9 +1,11 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { expect, test } from "vitest";
+import { inspectTools } from "../spawn-graph.mjs";
 import { vitestArgs } from "../../test-tooling.mjs";
-import { repoRoot, run } from "./helpers.mjs";
+import { NESTED_RUN_TIMEOUT_MS, repoRoot, repoTempPath, run, spawnCollect } from "./helpers.mjs";
 
 function tsc(source) {
   const dir = mkdtempSync(join(tmpdir(), "keel-tsc-"));
@@ -26,6 +28,7 @@ test("the core package is @keel/core with no runtime dependencies and a Node 24 
   const core = JSON.parse(readFileSync(join(repoRoot, "packages/core/package.json"), "utf8"));
   expect(root.engines.node).toBe(">=24");
   expect(core.name).toBe("@keel/core");
+  expect(core.devDependencies.vitest).toBe(root.devDependencies.vitest);
   expect(core.dependencies ?? {}).toEqual({});
   expect(Object.keys(root.devDependencies).sort()).toEqual(["typescript", "vitest"]);
 });
@@ -35,12 +38,12 @@ test("strict, noUncheckedIndexedAccess, and exactOptionalPropertyTypes are in fo
   expect(tsc("export function first(values: string[]): string {\n  return values[0];\n}\n").status).not.toBe(0);
   expect(tsc("type Box = { label?: string };\nexport const box: Box = { label: undefined };\n").status).not.toBe(0);
   expect(tsc("export function shout(value: string | null): string {\n  return value.toUpperCase();\n}\n").status).not.toBe(0);
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("a filter that matches no file fails", () => {
   const result = run("pnpm", ["--filter", "@keel/core", "test", "zz-no-such-test-file"]);
   expect(result.status).not.toBe(0);
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("test:tooling drops a leading -- so the filter reaches vitest", () => {
   const scripts = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8")).scripts;
@@ -54,41 +57,641 @@ test("test:tooling drops a leading -- so the filter reaches vitest", () => {
   const none = run(process.execPath, ["tools/test-tooling.mjs", "--", "zz-no-such-tooling-test"]);
   expect(none.status).not.toBe(0);
   expect(visible(`${none.stdout}\n${none.stderr}`)).toContain("No test files found");
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 function visible(text) {
   return text.replace(/\u001b\[[0-9;]*m/g, "");
 }
 
-test("a temporary honesty test is discovered, and a failing one turns the run red", () => {
-  const passing = join(repoRoot, "packages/core/src/zz-acceptance.honesty.test.ts");
-  const failing = join(repoRoot, "packages/core/src/zz-acceptance-fail.honesty.test.ts");
-  const env = { ...process.env, FORCE_COLOR: "1" };
-  writeFileSync(
-    passing,
-    'import { expect, test } from "vitest";\ntest("honesty marker passes", () => {\n  expect(1).toBe(1);\n});\n',
-  );
+function honestySource(passes) {
+  return [
+    'import { expect, test } from "vitest";',
+    'test("marker", () => {',
+    passes ? "  expect(1).toBe(1);" : "  expect(1).toBe(2);",
+    "});",
+    "",
+  ].join("\n");
+}
+
+function readReport(file) {
+  return JSON.parse(readFileSync(file, "utf8"));
+}
+
+test("a temporary honesty test is discovered from the json report, and a failing one turns the run red", () => {
+  const reportDir = mkdtempSync(join(tmpdir(), "keel-honesty-"));
+  const srcDir = join(repoRoot, "packages/core/src");
+  const passing = repoTempPath(srcDir, ".honesty.test.ts");
+  const failing = repoTempPath(srcDir, ".honesty.test.ts");
+  const passReport = join(reportDir, "pass.json");
+  const failReport = join(reportDir, "fail.json");
   try {
-    const ok = run("pnpm", ["--filter", "@keel/core", "test", "zz-acceptance.honesty"], { env });
-    const text = visible(`${ok.stdout}\n${ok.stderr}`);
+    writeFileSync(passing, honestySource(true));
+    const ok = run("pnpm", [
+      "--filter",
+      "@keel/core",
+      "test",
+      basename(passing, ".test.ts"),
+      "--reporter=json",
+      `--outputFile=${passReport}`,
+    ]);
+    const passed = readReport(passReport);
     expect(ok.status).toBe(0);
-    expect(text).toContain("zz-acceptance.honesty");
-    expect(text).toMatch(/Tests\s+1 passed/);
+    expect(passed.testResults.map((item) => item.name)).toEqual([passing]);
+    expect(passed.numPassedTests).toBe(1);
+    expect(passed.numFailedTests).toBe(0);
+    rmSync(passing, { force: true });
+    writeFileSync(failing, honestySource(false));
+    const bad = run("pnpm", [
+      "--filter",
+      "@keel/core",
+      "test",
+      basename(failing, ".test.ts"),
+      "--reporter=json",
+      `--outputFile=${failReport}`,
+    ]);
+    const failed = readReport(failReport);
+    expect(bad.status).not.toBe(0);
+    expect(failed.testResults.map((item) => item.name)).toEqual([failing]);
+    expect(failed.numFailedTests).toBe(1);
+    expect(failed.numPassedTests).toBe(0);
   } finally {
     rmSync(passing, { force: true });
-  }
-  writeFileSync(
-    failing,
-    'import { expect, test } from "vitest";\ntest("honesty marker fails", () => {\n  expect(1).toBe(2);\n});\n',
-  );
-  try {
-    const bad = run("pnpm", ["--filter", "@keel/core", "test", "zz-acceptance-fail.honesty"], { env });
-    const text = visible(`${bad.stdout}\n${bad.stderr}`);
-    expect(bad.status).not.toBe(0);
-    expect(text).not.toContain("No test files found");
-    expect(text).toContain("zz-acceptance-fail.honesty");
-    expect(text).toMatch(/Tests\s+1 failed/);
-  } finally {
     rmSync(failing, { force: true });
+    rmSync(reportDir, { recursive: true, force: true });
+  }
+}, NESTED_RUN_TIMEOUT_MS);
+
+function putFile(root, rel, lines) {
+  const path = join(root, rel);
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, `${lines.join("\n")}\n`);
+}
+
+function spawnFixture() {
+  const root = mkdtempSync(join(tmpdir(), "keel-spawn-"));
+  putFile(root, "tools/acceptance/test/helpers.mjs", [
+    'import { spawnSync } from "node:child_process";',
+    "export const NESTED_RUN_TIMEOUT_MS = 60000;",
+    "export function run() {",
+    '  spawnSync("true", []);',
+    "}",
+    "export function write() {",
+    "  return 1;",
+    "}",
+  ]);
+  putFile(root, "tools/leaf.mjs", [
+    'import { spawnSync } from "node:child_process";',
+    "export function leaf() {",
+    '  spawnSync("true", []);',
+    "}",
+  ]);
+  putFile(root, "tools/wrap-leaf.mjs", [
+    'import { leaf } from "./leaf.mjs";',
+    "export function wrapped() {",
+    "  leaf();",
+    "}",
+  ]);
+  putFile(root, "tools/reexport-leaf.mjs", ['export { leaf } from "./leaf.mjs";']);
+  putFile(root, "tools/wrap-helper.mjs", [
+    'import { run } from "./acceptance/test/helpers.mjs";',
+    "export function viaRun() {",
+    "  run();",
+    "}",
+  ]);
+  putFile(root, "tools/reexport-helper.mjs", ['export { run } from "./acceptance/test/helpers.mjs";']);
+  putFile(root, "tools/wrap-helper-2.mjs", [
+    'import { viaRun } from "./wrap-helper.mjs";',
+    "export function viaVia() {",
+    "  viaRun();",
+    "}",
+  ]);
+  putFile(root, "tools/wrap-write.mjs", [
+    'import { write } from "./acceptance/test/helpers.mjs";',
+    "export function viaWrite() {",
+    "  write();",
+    "}",
+  ]);
+  putFile(root, "tools/leaf-bare.mjs", [
+    'import { spawnSync } from "child_process";',
+    "export function bare() {",
+    '  spawnSync("true", []);',
+    "}",
+  ]);
+  putFile(root, "tools/leaf-dynamic.mjs", [
+    'const cp = await import("node:child_process");',
+    "export function dynamic() {",
+    '  cp.spawnSync("true", []);',
+    "}",
+  ]);
+  putFile(root, "tools/leaf-require.mjs", [
+    'import { createRequire } from "node:module";',
+    "const require = createRequire(import.meta.url);",
+    'const { spawnSync } = require("node:child_process");',
+    "export function required() {",
+    '  spawnSync("true", []);',
+    "}",
+  ]);
+  putFile(root, "tools/leaf-builtin.mjs", [
+    'const { spawnSync } = process.getBuiltinModule("node:child_process");',
+    "export function builtin() {",
+    '  spawnSync("true", []);',
+    "}",
+  ]);
+  putFile(root, "tools/leaf-common.cjs", [
+    'const { spawnSync } = require("node:child_process");',
+    "module.exports = {",
+    "  common() {",
+    '    spawnSync("true", []);',
+    "  },",
+    "};",
+  ]);
+  putFile(root, "tools/acceptance/test/spawn-fixtures.mjs", [
+    'import { test } from "vitest";',
+    'import { NESTED_RUN_TIMEOUT_MS } from "./helpers.mjs";',
+    'import { leaf } from "../../leaf.mjs";',
+    'import { wrapped } from "../../wrap-leaf.mjs";',
+    'import { leaf as reexported } from "../../reexport-leaf.mjs";',
+    'import { viaRun } from "../../wrap-helper.mjs";',
+    'import { run } from "../../reexport-helper.mjs";',
+    'import { viaVia } from "../../wrap-helper-2.mjs";',
+    'import { viaWrite } from "../../wrap-write.mjs";',
+    'import { bare } from "../../leaf-bare.mjs";',
+    'import { dynamic } from "../../leaf-dynamic.mjs";',
+    'import { required } from "../../leaf-require.mjs";',
+    'import { builtin } from "../../leaf-builtin.mjs";',
+    'import common from "../../leaf-common.cjs";',
+    "const OTHER = 180000;",
+    "const alias = leaf;",
+    "const bag = { leaf };",
+    "const stored = () => {",
+    "  leaf();",
+    "};",
+    "class Box {",
+    "  open() {",
+    "    leaf();",
+    "  }",
+    "}",
+    "function throughLeaf() {",
+    "  leaf();",
+    "}",
+    'test("leaf", () => {',
+    "  leaf();",
+    "});",
+    'test("wrap", () => {',
+    "  wrapped();",
+    "});",
+    'test("reexport", () => {',
+    "  reexported();",
+    "});",
+    'test("helper", () => {',
+    "  viaRun();",
+    "});",
+    'test("reexport helper", () => {',
+    "  run();",
+    "});",
+    'test("second", () => {',
+    "  viaVia();",
+    "});",
+    'test("through", () => {',
+    "  throughLeaf();",
+    "});",
+    'test("write", () => {',
+    "  viaWrite();",
+    "});",
+    'test("leaf with timeout", () => {',
+    "  leaf();",
+    "}, NESTED_RUN_TIMEOUT_MS);",
+    'test("bare", () => {',
+    "  bare();",
+    "});",
+    'test("dynamic", () => {',
+    "  dynamic();",
+    "});",
+    'test("required", () => {',
+    "  required();",
+    "});",
+    'test("builtin", () => {',
+    "  builtin();",
+    "});",
+    'test("common", () => {',
+    "  common.common();",
+    "});",
+    'test.each([1])("each %i", () => {',
+    "  leaf();",
+    "});",
+    'test.only("only", () => {',
+    "  leaf();",
+    "});",
+    'test.concurrent("concurrent", () => {',
+    "  leaf();",
+    "});",
+    'test("alias", () => {',
+    "  alias();",
+    "});",
+    'test("bag", () => {',
+    "  bag.leaf();",
+    "});",
+    'test("stored", stored);',
+    'test("passed", () => {',
+    "  [1].forEach(leaf);",
+    "});",
+    'test("optional", () => {',
+    "  leaf?.();",
+    "});",
+    'test("invoked", () => {',
+    "  leaf.call(null);",
+    "});",
+    'test("imported", async () => {',
+    '  const mod = await import("../../leaf.mjs");',
+    "  mod.leaf();",
+    "});",
+    'test("boxed", () => {',
+    "  new Box().open();",
+    "});",
+    'test("literal", () => {',
+    "  leaf();",
+    "}, 180000);",
+    'test("other", () => {',
+    "  leaf();",
+    "}, OTHER);",
+    'test("options", { timeout: NESTED_RUN_TIMEOUT_MS }, () => {',
+    "  leaf();",
+    "});",
+    'test.each([1])("each with timeout %i", () => {',
+    "  leaf();",
+    "}, NESTED_RUN_TIMEOUT_MS);",
+  ]);
+  putFile(root, "tools/acceptance/test/bad-import.mjs", [
+    'import { spawnSync } from "node:child_process";',
+    'import { test } from "vitest";',
+    'test("bad", () => {',
+    '  spawnSync("true", []);',
+    "});",
+  ]);
+  putFile(root, "tools/acceptance/test/bad-bare.mjs", [
+    'import { spawnSync } from "child_process";',
+    'import { test } from "vitest";',
+    'test("bad", () => {',
+    '  spawnSync("true", []);',
+    "});",
+  ]);
+  putFile(root, "tools/acceptance/test/bad-dynamic.mjs", [
+    'import { test } from "vitest";',
+    'const { spawnSync } = await import("node:child_process");',
+    'test("bad", () => {',
+    '  spawnSync("true", []);',
+    "});",
+  ]);
+  putFile(root, "tools/acceptance/test/bad-require.mjs", [
+    'import { createRequire } from "node:module";',
+    'import { test } from "vitest";',
+    "const require = createRequire(import.meta.url);",
+    'const { spawnSync } = require("node:child_process");',
+    'test("bad", () => {',
+    '  spawnSync("true", []);',
+    "});",
+  ]);
+  putFile(root, "tools/acceptance/test/bad-builtin.mjs", [
+    'import { test } from "vitest";',
+    'const { spawnSync } = process.getBuiltinModule("node:child_process");',
+    'test("bad", () => {',
+    '  spawnSync("true", []);',
+    "});",
+  ]);
+  return root;
+}
+
+function symbols(report, file) {
+  return report.entryPoints.filter((entry) => entry.file === file).map((entry) => entry.symbol).sort();
+}
+
+test("the spawn graph follows wrappers and re-exports and leaves a write-only wrapper out", () => {
+  const root = spawnFixture();
+  try {
+    const report = inspectTools(root);
+    expect(symbols(report, "tools/leaf.mjs")).toEqual(["leaf"]);
+    expect(symbols(report, "tools/wrap-leaf.mjs")).toEqual(["wrapped"]);
+    expect(symbols(report, "tools/reexport-leaf.mjs")).toEqual(["leaf"]);
+    expect(symbols(report, "tools/wrap-helper.mjs")).toEqual(["viaRun"]);
+    expect(symbols(report, "tools/reexport-helper.mjs")).toEqual(["run"]);
+    expect(symbols(report, "tools/wrap-helper-2.mjs")).toEqual(["viaVia"]);
+    expect(symbols(report, "tools/wrap-write.mjs")).toEqual([]);
+    expect(symbols(report, "tools/acceptance/test/helpers.mjs")).toEqual(["run"]);
+    expect(symbols(report, "tools/leaf-bare.mjs")).toEqual(["bare"]);
+    expect(symbols(report, "tools/leaf-dynamic.mjs")).toEqual(["dynamic"]);
+    expect(symbols(report, "tools/leaf-require.mjs")).toEqual(["required"]);
+    expect(symbols(report, "tools/leaf-builtin.mjs")).toEqual(["builtin"]);
+    expect(symbols(report, "tools/leaf-common.cjs")).toEqual([]);
+    expect(report.missingTimeouts.map((item) => item.name).sort()).toEqual([
+      "alias",
+      "bag",
+      "bare",
+      "boxed",
+      "builtin",
+      "common",
+      "concurrent",
+      "dynamic",
+      "each %i",
+      "helper",
+      "imported",
+      "invoked",
+      "leaf",
+      "literal",
+      "only",
+      "optional",
+      "other",
+      "passed",
+      "reexport",
+      "reexport helper",
+      "required",
+      "second",
+      "stored",
+      "through",
+      "wrap",
+    ]);
+    expect(report.forbiddenChildProcessImports).toEqual([
+      "tools/acceptance/test/bad-bare.mjs",
+      "tools/acceptance/test/bad-builtin.mjs",
+      "tools/acceptance/test/bad-dynamic.mjs",
+      "tools/acceptance/test/bad-import.mjs",
+      "tools/acceptance/test/bad-require.mjs",
+    ]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("unrecognised uses of spawning namespaces fail closed", () => {
+  const root = spawnFixture();
+  try {
+    const forms = [
+      'test("probe", () => { const { run: r } = h; r(); });',
+      'test("probe", () => { h["run"](); });',
+      'const { run: r } = h; test("probe", () => { r(); });',
+      'const r = h.run; test("probe", () => { r(); });',
+      'const other = h; test("probe", () => { other.run(); });',
+      'test("probe", () => { Reflect.apply(h.run, null, []); });',
+    ];
+    for (const form of forms) {
+      putFile(root, "tools/acceptance/test/namespace.mjs", [
+        'import { test } from "vitest";',
+        'import * as h from "./helpers.mjs";',
+        form,
+      ]);
+      expect(() => inspectTools(root), form).toThrow(/unrecognised spawning namespace use/);
+    }
+    putFile(root, "tools/acceptance/test/namespace.mjs", [
+      'import { test } from "vitest";',
+      'import * as h from "./helpers.mjs";',
+      'import * as c from "../../leaf-common.cjs";',
+      'test("direct namespace spawn", () => { h.run(); });',
+      'test("common namespace spawn", () => { c.common(); });',
+      'test("namespace write only", () => { h.write(); });',
+    ]);
+    expect(inspectTools(root).missingTimeouts.filter((item) => item.file.endsWith("/namespace.mjs"))
+      .map((item) => item.name)).toEqual(["direct namespace spawn", "common namespace spawn"]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("dynamic code execution is forbidden under tools", () => {
+  const root = spawnFixture();
+  try {
+    for (const form of [
+      'new Function("return 1")();',
+      'Function("return 1")();',
+      'eval("1");',
+      '(0, eval)("1");',
+      'const execute = eval; execute("1");',
+      'globalThis["eval"]("1");',
+    ]) {
+      putFile(root, "tools/opaque.mjs", [form]);
+      expect(() => inspectTools(root), form).toThrow(/dynamic code execution is forbidden/);
+    }
+    putFile(root, "tools/opaque.mjs", [
+      '// new Function("ignored"); eval("ignored");',
+      'export const description = "new Function and eval are forbidden";',
+    ]);
+    expect(() => inspectTools(root)).not.toThrow();
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("unrecognised builtin-loader uses fail closed", () => {
+  const root = spawnFixture();
+  try {
+    for (const form of [
+      'const get = process.getBuiltinModule; const cp = get("node:child_process");',
+      'const { getBuiltinModule: get } = process; const cp = get("child_process");',
+      'const cp = process["getBuiltinModule"]("node:child_process");',
+      'const get = process.getBuiltinModule.bind(process); const cp = get("child_process");',
+      'const spec = "node:child_process"; const cp = process.getBuiltinModule(spec);',
+    ]) {
+      putFile(root, "tools/opaque.mjs", [form]);
+      expect(() => inspectTools(root), form).toThrow(/unrecognised builtin loader use/);
+    }
+    putFile(root, "tools/opaque.mjs", ['const fs = process.getBuiltinModule("node:fs");']);
+    expect(() => inspectTools(root)).not.toThrow();
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("missing dependencies inside tools fail closed", () => {
+  const root = spawnFixture();
+  try {
+    symlinkSync("missing.mjs", join(root, "tools/gone.mjs"));
+    for (const form of [
+      'import { run } from "../../gone.mjs"; test("missing", () => { run(); });',
+      'export { run } from "../../gone.mjs";',
+      'test("missing", async () => { const mod = await import("../../gone.mjs"); mod.run(); });',
+    ]) {
+      putFile(root, "tools/acceptance/test/missing.mjs", ['import { test } from "vitest";', form]);
+      expect(() => inspectTools(root), form).toThrow(/missing module inside tools/);
+    }
+    rmSync(join(root, "tools/acceptance/test/missing.mjs"));
+    expect(() => inspectTools(root)).not.toThrow();
+    symlinkSync("loop.mjs", join(root, "tools/loop.mjs"));
+    expect(() => inspectTools(root)).toThrow(/ELOOP/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("timeout options use the complete binding in a Vitest timeout position", () => {
+  const root = spawnFixture();
+  try {
+    putFile(root, "tools/acceptance/test/timeout-options.mjs", [
+      'import { test } from "vitest";',
+      'import { run, NESTED_RUN_TIMEOUT_MS } from "./helpers.mjs";',
+      'test("expression", { timeout: NESTED_RUN_TIMEOUT_MS / 60 }, () => { run(); });',
+      'test("nested", { metadata: { timeout: NESTED_RUN_TIMEOUT_MS }, timeout: 1000 }, () => { run(); });',
+      'test("duplicate", { timeout: NESTED_RUN_TIMEOUT_MS, timeout: 1000 }, () => { run(); });',
+      'test("fourth", () => { run(); }, 1000, NESTED_RUN_TIMEOUT_MS);',
+      'test("named", () => { run(); }, NESTED_RUN_TIMEOUT_MS);',
+      'test("second options", { timeout: NESTED_RUN_TIMEOUT_MS }, () => { run(); });',
+      'test("third options", () => { run(); }, { timeout: NESTED_RUN_TIMEOUT_MS });',
+    ]);
+    expect(inspectTools(root).missingTimeouts.filter((item) => item.file.endsWith("/timeout-options.mjs"))
+      .map((item) => item.name)).toEqual(["expression", "nested", "duplicate", "fourth"]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("spawned tooling tests declare NESTED_RUN_TIMEOUT_MS of at least 60000", () => {
+  const live = inspectTools(repoRoot);
+  expect(live.forbiddenChildProcessImports).toEqual([]);
+  expect(live.missingTimeouts).toEqual([]);
+  expect(live.nestedTimeoutMs).toBe(NESTED_RUN_TIMEOUT_MS);
+  expect(live.nestedTimeoutMs).toBeGreaterThanOrEqual(60000);
+  expect(symbols(live, "tools/acceptance/test/helpers.mjs")).toEqual([
+    "cleanRepo",
+    "commitAll",
+    "git",
+    "pointOrigin",
+    "run",
+    "spawnCollect",
+    "tempGit",
+    "tripwire",
+  ]);
+  expect(symbols(live, "tools/tripwire/scan.mjs")).toEqual([
+    "ALLOWLIST_REL",
+    "VENDORS_REL",
+    "cusipCheckDigit",
+    "isLocalOnly",
+    "scanRepo",
+  ]);
+  expect(symbols(live, "tools/fixtures/check.mjs")).toEqual([
+    "check",
+    "productionTrees",
+    "splitTrees",
+    "treesOf",
+    "verifyDeterminism",
+    "verifyRegistered",
+  ]);
+  expect(symbols(live, "tools/network/run.mjs")).toEqual(["blockedByGuard", "probeNames", "runProbe", "runProbes"]);
+  expect(symbols(live, "tools/test-tooling.mjs")).toEqual(["vitestArgs"]);
+  expect(symbols(live, "tools/verify/steps.mjs")).toEqual(["repoRoot", "steps"]);
+});
+
+/** A per-process temp file of a concurrent run can vanish between listing and reading. */
+function readVanishing(path) {
+  try {
+    return readFileSync(path, "utf8");
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+test("tooling tests do not embed fixed repo temp names", () => {
+  const hits = [];
+  // A string literal that is a path whose last segment is a test file name. A bare suffix such as
+  // ".test.mjs" has no name part; that is what repoTempPath takes.
+  const pattern = /["'`](?:[^"'`\n]*\/)?([A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*\.test\.(?:mjs|ts))["'`]/g;
+  const visit = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) visit(path);
+      else if (entry.name.endsWith(".test.mjs")) {
+        const source = readVanishing(path);
+        if (source === null) continue;
+        for (const match of source.matchAll(pattern)) hits.push(`${entry.name} ${match[1]}`);
+      }
+    }
+  };
+  visit(join(repoRoot, "tools"));
+  expect(hits).toEqual([]);
+});
+
+function tempName(pid, suffix) {
+  return new RegExp(`^zz-${pid}-[0-9a-f]{16}${suffix.replaceAll(".", "\\.")}$`);
+}
+
+test("repoTempPath names carry this process id and a fresh random part", () => {
+  const dir = join(tmpdir(), "keel-names");
+  const first = basename(repoTempPath(dir, ".test.mjs"));
+  const second = basename(repoTempPath(dir, ".test.mjs"));
+  expect(first).toMatch(tempName(process.pid, ".test.mjs"));
+  expect(second).toMatch(tempName(process.pid, ".test.mjs"));
+  expect(second).not.toBe(first);
+});
+
+test("a file that vanishes between listing and reading does not fail the scan", () => {
+  const root = spawnFixture();
+  try {
+    symlinkSync("missing.mjs", join(root, "tools/gone.mjs"));
+    const report = inspectTools(root);
+    expect(symbols(report, "tools/leaf.mjs")).toEqual(["leaf"]);
+    expect(report.entryPoints.some((entry) => entry.file === "tools/gone.mjs")).toBe(false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("overlapping processes use different repo temp names and leave nothing behind", async () => {
+  const barrier = mkdtempSync(join(tmpdir(), "keel-overlap-"));
+  const script = join(barrier, "write-temp.mjs");
+  const repoDir = join(repoRoot, "tools/acceptance/test");
+  const helperUrl = pathToFileURL(join(repoRoot, "tools/acceptance/test/helpers.mjs")).href;
+  writeFileSync(
+    script,
+    [
+      'import { readdirSync, rmSync, writeFileSync } from "node:fs";',
+      'import { setTimeout } from "node:timers/promises";',
+      'import { join } from "node:path";',
+      `import { repoTempPath } from ${JSON.stringify(helperUrl)};`,
+      "const barrier = process.argv[2];",
+      "const repoDir = process.argv[3];",
+      "const suffix = process.argv[4];",
+      "const deadline = Date.now() + 30000;",
+      "async function waitFor(prefix, count) {",
+      "  while (readdirSync(barrier).filter((name) => name.startsWith(prefix)).length < count) {",
+      "    if (Date.now() > deadline) process.exit(3);",
+      "    await setTimeout(15);",
+      "  }",
+      "}",
+      'writeFileSync(join(barrier, "ready-" + process.pid), "ready");',
+      'await waitFor("ready-", 2);',
+      "const path = repoTempPath(repoDir, suffix);",
+      'writeFileSync(path, "overlap\\n", { flag: "wx" });',
+      'writeFileSync(join(barrier, "path-" + process.pid), path);',
+      'await waitFor("path-", 2);',
+      "rmSync(path, { force: true });",
+      'process.stdout.write(process.pid + " " + path + "\\n");',
+      "",
+    ].join("\n"),
+  );
+  try {
+    const args = [script, barrier, repoDir, ".test.mjs"];
+    const results = await Promise.all([
+      spawnCollect(process.execPath, args),
+      spawnCollect(process.execPath, args),
+    ]);
+    expect(results.map((result) => result.status), results.map((result) => result.stderr).join("\n")).toEqual([0, 0]);
+    const reported = results.map((result) => result.stdout.trim().split(" "));
+    const paths = reported.map(([, path]) => path);
+    expect(paths[0]).not.toBe(paths[1]);
+    expect(reported[0][0]).not.toBe(reported[1][0]);
+    for (const [pid, path] of reported) expect(basename(path)).toMatch(tempName(pid, ".test.mjs"));
+    const after = run("git", ["status", "--porcelain", "--untracked-files=all", "--", "packages", "tools"]);
+    expect(after.status).toBe(0);
+    for (const path of paths) {
+      expect(existsSync(path)).toBe(false);
+      expect(after.stdout).not.toContain(basename(path));
+    }
+  } finally {
+    try {
+      for (const name of readdirSync(barrier)) {
+        if (!name.startsWith("path-")) continue;
+        rmSync(readFileSync(join(barrier, name), "utf8").trim(), { force: true });
+      }
+    } catch {
+      // The barrier is removed below either way.
+    }
+    rmSync(barrier, { recursive: true, force: true });
+  }
+}, NESTED_RUN_TIMEOUT_MS);

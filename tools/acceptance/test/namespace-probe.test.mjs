@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "vitest";
-import { run } from "./helpers.mjs";
+import { NESTED_RUN_TIMEOUT_MS, run } from "./helpers.mjs";
 
 /**
  * The namespace itself only exists on the Linux CI cells. These tests preload a
@@ -42,13 +42,13 @@ test("the namespace probe passes only when both requests fail for want of a rout
   expect(result.status).toBe(0);
   expect(result.stdout).toContain("fetch blocked: EAI_AGAIN");
   expect(result.stdout).toContain("net.connect blocked: ENETUNREACH");
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("the namespace probe fails when fetch completes", () => {
   const result = probeWith({ fetchBody: "return { status: 200 };", socketEvent: noRouteSocket });
   expect(result.status).toBe(1);
   expect(result.stderr).toContain("fetch completed with status 200");
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("the namespace probe fails when fetch throws for a reason other than the network", () => {
   const result = probeWith({
@@ -57,7 +57,7 @@ test("the namespace probe fails when fetch throws for a reason other than the ne
   });
   expect(result.status).toBe(1);
   expect(result.stderr).toContain("fetch failed for another reason: ERR_INVALID_URL");
-});
+}, NESTED_RUN_TIMEOUT_MS);
 
 test("the namespace probe fails when the socket connects or only times out", () => {
   const connected = probeWith({ fetchBody: noRouteFetch, socketEvent: 'socket.emit("connect");' });
@@ -66,4 +66,4 @@ test("the namespace probe fails when the socket connects or only times out", () 
   const timedOut = probeWith({ fetchBody: noRouteFetch, socketEvent: 'socket.emit("timeout");' });
   expect(timedOut.status).toBe(1);
   expect(timedOut.stderr).toContain("net.connect did not fail with a no-route error: timeout");
-});
+}, NESTED_RUN_TIMEOUT_MS);
