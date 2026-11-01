@@ -497,12 +497,64 @@ test("unrecognised vitest test registration fails closed", () => {
         "const t = test;",
         't("bound", () => { leaf(); });',
       ],
+      ['export { test } from "vitest";'],
+      ['export { test as t } from "vitest";'],
+      ['export * from "vitest";'],
+      ['export * as v from "vitest";'],
+      ["const before = 1", 'export { test } from "vitest"'],
+      [
+        'import { leaf } from "../../leaf.mjs";',
+        "const { test } = await import(`vitest`);",
+        'test("template", () => { leaf(); });',
+      ],
+      [
+        'import { leaf } from "../../leaf.mjs";',
+        'const { test } = await import(("vitest"));',
+        'test("parenthesised", () => { leaf(); });',
+      ],
+      [
+        'import { vi } from "vitest";',
+        'import { leaf } from "../../leaf.mjs";',
+        'const { test } = await vi.importActual("vitest");',
+        'test("actual", () => { leaf(); });',
+      ],
+      [
+        'import { leaf } from "../../leaf.mjs";',
+        "const { test } = import.meta.vitest;",
+        'test("meta", () => { leaf(); });',
+      ],
+      ['const { test } = import.meta["vitest"];'],
+      ["const { vitest } = import.meta;"],
+      ["const meta = import.meta;"],
+      ["const vitest = import.meta?.vitest;"],
+      ['import { test } from "../../../node_modules/vitest/dist/index.js";'],
+      ['const { test } = await import("../../../node_modules/vitest/dist/index.js");'],
+      ['export { test } from "../../../node_modules/.pnpm/vitest@5.0.5/node_modules/vitest/dist/index.js";'],
+      ['import { test } from "@vitest/runner";'],
+      [
+        'import { leaf } from "../../leaf.mjs";',
+        'const { test } = await import("vit\\u0065st");',
+        'test("unicode", () => { leaf(); });',
+      ],
+      ['const { test } = await import(`vit\\u{65}st`);'],
     ];
     for (const lines of escaping) {
       putFile(root, "tools/acceptance/test/escape.mjs", lines);
       expect(() => inspectTools(root), lines.join("\n")).toThrow(/unrecognised vitest test registration/);
     }
     rmSync(join(root, "tools/acceptance/test/escape.mjs"));
+    putFile(root, "tools/acceptance/test/other-spec.mjs", [
+      'import { defineConfig } from "vitest/config";',
+      'import { leaf } from "../../leaf.mjs";',
+      "const here = import.meta.url;",
+      "const located = import.meta?.dirname;",
+      'const notVitest = await import("../../leaf.mjs");',
+      'const vitest = "../../leaf.mjs";',
+      "const constructed = await import(vitest);",
+      'const quoted = "vitest";',
+      'export { leaf as again } from "../../leaf.mjs";',
+    ]);
+    expect(inspectTools(root).missingTimeouts.filter((item) => item.file.endsWith("/other-spec.mjs"))).toEqual([]);
     putFile(root, "tools/acceptance/test/registered.mjs", [
       'import { describe, it, test } from "vitest";',
       'import { NESTED_RUN_TIMEOUT_MS } from "./helpers.mjs";',
@@ -523,7 +575,22 @@ test("unrecognised vitest test registration fails closed", () => {
       'import { leaf } from "../../leaf.mjs";',
       'it2("aliased", () => { leaf(); });',
     ]);
+    putFile(root, "tools/acceptance/test/registered-escaped.mjs", [
+      'import { test } from "vit\\x65st";',
+      'import { leaf } from "../../leaf.mjs";',
+      'test("hex", () => { leaf(); });',
+    ]);
+    putFile(root, "tools/acceptance/test/registered-continued.mjs", [
+      'import { it } from "vi\\',
+      'test";',
+      'import { leaf } from "../../leaf.mjs";',
+      'it("continued", () => { leaf(); });',
+    ]);
     const report = inspectTools(root);
+    expect(report.missingTimeouts.filter((item) => item.file.endsWith("/registered-escaped.mjs")).map((item) => item.name))
+      .toEqual(["hex"]);
+    expect(report.missingTimeouts.filter((item) => item.file.endsWith("/registered-continued.mjs")).map((item) => item.name))
+      .toEqual(["continued"]);
     expect(report.missingTimeouts.filter((item) => item.file.endsWith("/registered.mjs")).map((item) => item.name))
       .toEqual(["plain", "it", "each %i", "only", "concurrent", "skipIf", "inside describe"]);
     expect(report.missingTimeouts.filter((item) => item.file.endsWith("/registered-alias.mjs")).map((item) => item.name))

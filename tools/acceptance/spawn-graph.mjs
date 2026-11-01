@@ -62,6 +62,11 @@ const REGEX_PUNCT = new Set([
 const TWO = new Set(["=>", "&&", "||", "==", "!=", "<=", ">=", "+=", "-=", "*=", "??", "?.", "++", "--", "**"]);
 const CALL_SKIP = new Set(["if", "for", "while", "switch", "catch", "function", "with"]);
 const VITEST_SPEC = "vitest";
+// The runner packages, and a path into the installed copy of vitest.
+const VITEST_OTHER_SPEC = /^@vitest\/|(?:^|\/)node_modules\/(?:@vitest\/|vitest(?:\/|$))/;
+const VITEST_LOADER_METHOD = "importActual";
+const VITEST_META = "vitest";
+const STRING_ESCAPE = /\\(?:x([0-9a-fA-F]{2})|u([0-9a-fA-F]{4})|u\{([0-9a-fA-F]+)\}|(\r\n|[\n\r\u2028\u2029])|([^]))/g;
 const TEST_CALL_MODIFIERS = new Set(["only", "concurrent"]);
 const TEST_CURRY_MODIFIERS = new Set(["each", "skipIf"]);
 
@@ -113,6 +118,15 @@ function readRegex(text, i) {
     i += 1;
   }
   throw new Error(`unterminated regex at ${start}`);
+}
+
+/** A specifier spelled with escapes names the same module, so the escapes that spell a character are decoded. */
+function cook(raw) {
+  return raw.replace(STRING_ESCAPE, (_, hex, unit, point, continuation, other) => {
+    if (continuation) return "";
+    const code = hex ?? unit ?? point;
+    return code === undefined ? other : String.fromCodePoint(Number.parseInt(code, 16));
+  });
 }
 
 function skipString(text, i) {
@@ -208,16 +222,8 @@ function lex(text) {
       const start = i;
       const q = c;
       i += 1;
-      let value = "";
-      while (i < text.length && text[i] !== q) {
-        if (text[i] === "\\") {
-          value += text[i + 1] ?? "";
-          i += 2;
-          continue;
-        }
-        value += text[i];
-        i += 1;
-      }
+      while (i < text.length && text[i] !== q) i += text[i] === "\\" ? 2 : 1;
+      const value = cook(text.slice(start + 1, i));
       i += 1;
       push({ type: "string", value, start, end: i });
       continue;
@@ -915,24 +921,48 @@ function callsSpawning(calls, mod, spawningLocals) {
   return false;
 }
 
+/** The specifier a loader call names: a string or a template with no substitution, in any parentheses. */
+function loaderSpec(mod, openIndex) {
+  let i = openIndex + 1;
+  while (isPunct(mod.tokens[i], "(")) i += 1;
+  const token = mod.tokens[i];
+  if (token?.type === "string") return token.value;
+  return token?.type === "template" ? cook(mod.text.slice(token.start + 1, token.end - 1)) : null;
+}
+
+function reachesVitest(spec) {
+  return spec === VITEST_SPEC || VITEST_OTHER_SPEC.test(spec);
+}
+
 /**
  * A test is reached only through a named import of `test` or `it`. A namespace or default import
- * of vitest, and a dynamic `import()` or `require()` of vitest, are unrecognised.
+ * of vitest, a re-export of it, a loader call that names it, `import.meta.vitest` and a specifier
+ * that reaches its files another way are unrecognised. `import.meta` itself is read only by name.
  */
 function assertVitestImports(mod) {
   const tokens = mod.tokens;
+  const unrecognised = (token) => new Error(`${mod.rel}: unrecognised vitest test registration at ${token.start}`);
   for (let i = 0; i < tokens.length; i += 1) {
     const token = tokens[i];
-    if (isPunct(tokens[i - 1], ".") || isPunct(tokens[i - 1], "?.")) continue;
-    if (token.type === "ident" && LOADER_CALLS.has(token.value) && isPunct(tokens[i + 1], "(") &&
-      tokens[i + 2]?.type === "string" && tokens[i + 2].value === VITEST_SPEC) {
-      throw new Error(`${mod.rel}: unrecognised vitest test registration at ${token.start}`);
+    const member = isPunct(tokens[i - 1], ".") || isPunct(tokens[i - 1], "?.");
+    if (token.type === "ident" && isPunct(tokens[i + 1], "(") &&
+      (token.value === VITEST_LOADER_METHOD || (!member && LOADER_CALLS.has(token.value)))) {
+      const spec = loaderSpec(mod, i + 1);
+      if (spec !== null && reachesVitest(spec)) throw unrecognised(token);
+    }
+    if (member) continue;
+    if (isIdent(token, "import") && isPunct(tokens[i + 1], ".") && isIdent(tokens[i + 2], "meta")) {
+      const named = (isPunct(tokens[i + 3], ".") || isPunct(tokens[i + 3], "?.")) && tokens[i + 4]?.type === "ident";
+      if (!named || tokens[i + 4].value === VITEST_META) throw unrecognised(token);
+    }
+    if (isIdent(token, "export") && readExport(tokens, i).reexports.some((item) => reachesVitest(item.spec))) {
+      throw unrecognised(token);
     }
     if (!isIdent(token, "import") || isPunct(tokens[i + 1], "(") || isPunct(tokens[i + 1], ".")) continue;
     const read = readImport(tokens, i);
     const namedDefault = read.named.some((item) => item.imported === "default");
-    if (read.spec === VITEST_SPEC && (read.namespace || read.defaultName || namedDefault)) {
-      throw new Error(`${mod.rel}: unrecognised vitest test registration at ${token.start}`);
+    if (VITEST_OTHER_SPEC.test(read.spec) || (read.spec === VITEST_SPEC && (read.namespace || read.defaultName || namedDefault))) {
+      throw unrecognised(token);
     }
     i = read.next - 1;
   }
