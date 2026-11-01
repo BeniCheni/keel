@@ -1,5 +1,5 @@
 # Proposals
 
-The product research behind keel (personas, user stories, chart and alert catalogs, data feasibility, architecture options, and the Milestone 1 specification) is held privately for now because it names a real holding. A scrubbed copy will land here as `0001-product-research.md`.
+`0001-product-research.md` is the scrubbed copy of the product research behind keel: personas, user stories, the chart and alert catalogs, UX direction and the Milestone 1 specification. The original stays private because it describes the owner's real holding; the scrubbed copy keeps its section and story numbering so specs can cite it.
 
-Until then, `docs/specs/` restates everything a builder or reviewer needs for each slice.
+`docs/specs/` remains the build authority for each slice.
