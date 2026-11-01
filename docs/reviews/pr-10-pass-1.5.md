@@ -63,18 +63,34 @@ Five passes in a row have found silent routes through the spawn analyzer: PR #8'
 
 1. Does S00.2 close after Pass 2, with any new silent route that no live test uses named in the residual-risk sentence and the ideas file instead of being fixed? A defect in the commits under review, and anything High, still gets fixed. The PM recommends yes.
 
+## Pass 2's comment, as the PM takes it up
+
+Codex completed Pass 2 ([issuecomment-6561656921](https://github.com/BeniCheni/keel/pull/10#issuecomment-6561656921)), with the verdict "mergeable", and pushed no commit, so the head stays `5989f81` and no Codex commit is owed a cold read. It accepts all eleven findings, reproduces the regex route, and reports no High and no vendor disagreement. It leaves finding 11 open, as the ruling allows. It raises four more, each left unfixed by ruling 1, and each reproduced in this session with the harness above:
+
+| Pass 2 # | Severity | PM disposition | Reason |
+| --- | --- | --- | --- |
+| C1 | Medium | accept; stays open | `vi["importActual"]("vitest")`: silent at `b4ff2af` and `5989f81`, Vitest exit 0 and 1 spawn. `970d21a` claims `vi.importActual`, not the computed form, so this is a new variant and not a defect in that commit. |
+| C2 | Medium | accept; stays open | `import("../../../vitest-link/dist/index.js")` through a symlink to the installed Vitest: silent at both, Vitest exit 0 and 1 spawn. |
+| C3 | Medium | accept; stays open | `const before = 1`, then `function run() { leaf(); }` and `test("x", run);`: silent at both, Vitest exit 0 and 1 spawn. `57dd887` claims imports, not functions, and Pass 1 had flagged this as unprobed. |
+| C4 | Low | accept; stays open | `export const v = <div>text</div>;` in a `.jsx` file under `tools/` throws `unterminated regex` at `5989f81`, naming the file. `b4ff2af` did not scan it. It fails closed, and the message does not explain why. |
+
+Pass 2's comment lists its mutant edits, which closes this seat's Low on Pass 1's comment for this PR. Not re-run here: its 43 and 19 mutants, its AC2 negative control and its private-list check. Pass 2.5 re-runs the first two. Its comment contains no address other than `noreply` ones (`gh api repos/BeniCheni/keel/issues/comments/6561656921 --jq .body | grep -o -E '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' | grep -v -c 'noreply@'` prints `0`).
+
+The PM refreshed the PR body once for this comment, with `gh pr edit 10 --body-file`, using its residual-risk sentence word for word. The first 76 lines stay byte-identical, and `scanRepo` gated the edit: no error and 0 hits on the new text, and a generated address gives 1 email hit. Codex's private-list check came before this edit, so Beni runs that check before merging.
+
+More ideas-file entries for the PM: a computed loader call, symlink paths into a package, JSX and TSX syntax in the scanned files, and finding 11's error message.
+
 ## Authorship record
 
-The Pass 0 record, extended with every commit since: `git log --format='%h %an' origin/main..5989f81`.
+The Pass 0 record, extended with every commit since: `git log --format='%h %an' origin/main..5989f81`. Every commit now has a cold read from a vendor that did not author it. Pass 2 pushed no commit.
 
 | Commit | Authoring vendor | Cold read by |
 | --- | --- | --- |
 | `b4ff2af` fail closed when a vitest test is not a named call | Cursor | Claude Code, Pass 1 (issuecomment-6561199919) |
-| `970d21a` fail closed on every other route to vitest | Claude (Pass 1 session) | Codex, Pass 2 |
-| `57dd887` read imports after a semicolon-free const and every module extension | Claude (Pass 1 session) | Codex, Pass 2 |
-| `d37b08b` visit a test local inside an accepted registration | Claude (Pass 1 session) | Codex, Pass 2 |
-| `5989f81` pin each registration clause and every chain's timeout | Claude (Pass 1 session) | Codex, Pass 2 |
-| Any Codex fix commit at Pass 2 | Codex | fresh Claude session, Pass 2.5 (Opus 5.5 High) |
+| `970d21a` fail closed on every other route to vitest | Claude (Pass 1 session) | Codex, Pass 2 (issuecomment-6561656921) |
+| `57dd887` read imports after a semicolon-free const and every module extension | Claude (Pass 1 session) | Codex, Pass 2 (issuecomment-6561656921) |
+| `d37b08b` visit a test local inside an accepted registration | Claude (Pass 1 session) | Codex, Pass 2 (issuecomment-6561656921) |
+| `5989f81` pin each registration clause and every chain's timeout | Claude (Pass 1 session) | Codex, Pass 2 (issuecomment-6561656921) |
 | The commits adding this brief and `pr-10-pass-0.md`, on `docs/pr-7-records` | Claude (PM) | the records-PR cold read |
 
 ## Rulings from Beni
