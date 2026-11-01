@@ -789,7 +789,10 @@ function registrationOpen(tokens, i) {
 /**
  * A named import of `test` or `it` registers a test only as a call or as a chain such as
  * `test.only(...)`, `test.concurrent(...)`, `test.each(table)(...)` or `test.skipIf(cond)(...)`.
- * Any other use of that local is unrecognised. The last call in an accepted chain is the test call.
+ * Any other use of that local is unrecognised, inside an accepted registration too, since a table
+ * or title runs at collection and can hand the local on. So is a call whose arguments are a spread,
+ * and an escaped identifier, which the lexer cannot read as that local. The last call in an accepted
+ * chain is the test call.
  */
 function testCallsIn(tokens, text, testLocals, timeoutLocal) {
   const calls = [];
@@ -798,6 +801,7 @@ function testCallsIn(tokens, text, testLocals, timeoutLocal) {
       i = readImport(tokens, i).next - 1;
       continue;
     }
+    if (isPunct(tokens[i], "\\")) throw new Error(`unrecognised vitest test registration at ${tokens[i].start}`);
     if (tokens[i].type !== "ident" || !testLocals.has(tokens[i].value)) continue;
     if (isPunct(tokens[i - 1], ".") || isPunct(tokens[i - 1], "?.") || isIdent(tokens[i - 1], "function")) continue;
     const open = registrationOpen(tokens, i);
@@ -808,6 +812,9 @@ function testCallsIn(tokens, text, testLocals, timeoutLocal) {
       parsed = parseCall(tokens, closeIndex + 1);
       closeIndex = tokens.indexOf(parsed.close);
     }
+    if (parsed.args.some((arg) => isPunct(arg[0], "..."))) {
+      throw new Error(`unrecognised vitest test registration at ${tokens[i].start}`);
+    }
     calls.push({
       name: testTitle(parsed.args, text),
       line: lineAt(text, tokens[i].start),
@@ -816,7 +823,6 @@ function testCallsIn(tokens, text, testLocals, timeoutLocal) {
       passesTimeout: argIsTimeout(parsed.args[2] ?? [], timeoutLocal) ||
         (isPunct(parsed.args[1]?.[0], "{") && argIsTimeout(parsed.args[1], timeoutLocal)),
     });
-    i = closeIndex;
   }
   return calls;
 }
