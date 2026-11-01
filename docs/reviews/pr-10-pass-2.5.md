@@ -135,7 +135,7 @@ None.
 | No sensitive path, dependency or schema change | Yes. Only `tools/acceptance/spawn-graph.mjs` and its contract test |
 | Every commit cold-read by a non-author vendor | Yes. `b4ff2af` by Claude at Pass 1; the four Claude commits by Codex at Pass 2 |
 | Gate verdict | **would merge** |
-| Beni's decision (filled after) | |
+| Beni's decision (filled after) | merged by Beni 2026-11-01 at 13:47 (America/New_York) as squash commit `44fa3ae42afb3dc0d0e288448a4f0d8e1484d75a` on base `f0ad018`, reviewed head `5989f81` (`gh pr view 10 --json state,mergedAt,mergeCommit`). This matches the gate's "would merge" |
 
 ## Questions for Beni
 
@@ -200,6 +200,19 @@ Each from a run in the PM's session at `5989f81`, with a generated fixture root,
 Handoff block: the tree it checks is the head's (`git rev-parse '5989f81^{tree}'` prints `8461baf97979a3622dc2989895d01b236a963f08`), `origin/main` is still `f0ad018`, and all five checks on the head are `SUCCESS` (`gh pr view 10 --json statusCheckRollup`). The first column of `tools/tripwire/vendors.txt` equals the author address of `b4ff2af` (`test "$(cut -f1 tools/tripwire/vendors.txt)" = "$(git log -1 --format=%ae b4ff2af)"` exits 0).
 
 Not re-run here: the rest of the numbers above, which are the Pass 2.5 session's. The owner's private-list check has not covered the last two edits to the PR body or the Pass 2.5 comment. Beni runs it before merging.
+
+## Post-merge checks (added by the PM)
+
+Run by the PM on 2026-11-01, in a fresh clone.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| `origin/main` equals the recorded squash | `gh pr view 10 --json mergeCommit`; `git rev-parse origin/main` | both `44fa3ae42afb3dc0d0e288448a4f0d8e1484d75a` |
+| Squash tree, the base not having moved | `git rev-parse 'origin/main^{tree}'` | `8461baf97979a3622dc2989895d01b236a963f08`, the reviewed head's tree; the squash's parent is `f0ad018` (`git log -1 --format=%p 44fa3ae`) |
+| `verify` on the squash commit | `gh run list --commit 44fa3ae42afb3dc0d0e288448a4f0d8e1484d75a --json databaseId,event,conclusion` | 41338436220, `push`, `success` |
+| Trailers, none empty as on PR #3's squash | `git log -1 --format=%b 44fa3ae \| grep -c -E '^Co-authored-by: [A-Za-z]+ <[^>]+@[^>]+>$'` | `3` |
+
+Private-list check: Beni reported the result on 2026-11-01, in the words "Merged, 0 hits", when the PM asked whether the check had printed 0 hits and the PR had merged. No Claude seat runs this check, so the result is his report and the PM has not re-run it. The command the PM gave him covers the PR's title, body, comments and reviews, not the squash message. Codex's cold read of the records PR covers that.
 
 ## Carried to the ideas file (added by the PM)
 
