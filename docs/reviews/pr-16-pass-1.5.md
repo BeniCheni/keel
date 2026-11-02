@@ -69,9 +69,37 @@ catch (e) { process.stdout.write(`${mode}: ${e.name}: ${e.message}\n`); }
 
 Whether a JSContext defines `console` is what decides it, and nobody has run that. `BundleLoadTests` will show it. This is a disagreement between vendors on a fact, so Codex settles it with its own run at Pass 2. It changes no plan: the spec states both hosts.
 
+## Pass 2's comment, as the PM takes it up
+
+Codex completed Pass 2 ([issuecomment-6588858035](https://github.com/BeniCheni/keel/pull/16#issuecomment-6588858035)), on GPT-6.1 Sol High with no fallback, with the verdict "not mergeable", and pushed one commit, `804720e`. It accepts all eighteen of Cursor's findings, disputing the characterisation of 5 and the breadth of 15. It reports nine of its own, C1 to C9, and fixes C1 to C8 in that commit. Its reading of the Ajv and `console` dispute agrees with this brief: an absent binding throws, and a binding set to `undefined` does not. No JSContext has been run on it.
+
+**C9, the High, is right.** Row 2 above says `b6cbcc9` closed finding 2. `AGENTS.md` closes a High in tracked files only with a fix commit carrying a test that fails without it, and neither that commit nor any other on this docs PR has one. The PM's row overclaimed. No test can land on a PR that holds no code, so the PM put the closure to Beni, who ruled below. `804720e` also removes wording of the PM's that the new rule itself forbade, in the A4 row and the A9 reminder.
+
+This seat does not give the cold read of `804720e`; the fresh Claude session does at Pass 2.5. These checks are what this seat needs for these records, each from a run in this session.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Authorship | `git log --format='%h %an' origin/main..c4c3e1f` | `c4c3e1f`, `025f853`, then `804720e` by Codex, and the earlier commits by Claude |
+| Role counts, IDs and priorities | Command R in Codex's comment, at `025f853` | 48 IDs and priorities match; 13 Primary, 20 Read-only, 15 Desktop-only |
+| `verify` before each PM push | `pnpm install --frozen-lockfile && pnpm verify` on v24.22.2 and v26.13.0 | exit 0 on both; core 33, tooling 122 |
+| Addresses in Codex's comment | `gh api repos/BeniCheni/keel/issues/comments/6588858035 --jq .body \| grep -o -E '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' \| grep -v 'noreply@' \| grep -v -c '^cursoragent@cursor\.com$'` | `0` |
+
+Not re-run here: Codex's probes, its source reads and its private-list check. Its check came before the PM's last two commits and the PR body refresh, so the prompt for the short re-read below repeats it.
+
+The PM's take on what `804720e` changed, without giving it a cold read:
+
+- C2 replaces the PM's as-of definition, which a mixed or empty export could make false.
+- C3 corrects the ADR's claim that `loadTerms` validates a whole snapshot.
+- C4 moves 5.2, 7.1 and 7.2 to Primary, so the role counts differ from those in this brief's earlier sections.
+- C5 replaces a check that a Git failure could pass.
+- C7 corrects "interpreter-only", which the PM used in the spec and the PR body.
+- C8 reads the forum thread directly: the 64 is confirmed, and which requests survive an overflow is not. This supersedes finding 9's note that the 64 stays a lead.
+
+Out-of-scope items for the next ideas batch: a full export envelope with CSV and alert validation, per-series completeness and malformed replacement tests, from Codex's "Deliberately not done". Idea 32 covers part of this.
+
 ## Authorship record
 
-From `git log --format='%h %an' origin/main..044690c`.
+From `git log --format='%h %an' origin/main..c4c3e1f`.
 
 | Commit | Authoring vendor | Cold read by |
 | --- | --- | --- |
@@ -80,7 +108,10 @@ From `git log --format='%h %an' origin/main..044690c`.
 | `8cdd91c` record Beni's ruling on the plan challenge seat | Claude | Cursor, Pass 1; Codex, Pass 2 |
 | `8c0deaf` merge `origin/main` | Claude | Cursor, Pass 1; Codex, Pass 2 |
 | `b6cbcc9` apply Pass 1 findings and Beni's rulings | Claude | Codex, Pass 2 |
-| `044690c` stop quoting the import the boundary check rejects | Claude | Codex, Pass 2 |
+| `044690c` stop quoting the import the boundary check rejects | Claude | Codex, Pass 2 (issuecomment-6588858035) |
+| `804720e` tighten snapshot contracts and spike evidence checks | Codex | the fresh Claude session, Pass 2.5 |
+| `025f853` record Beni's rulings after Pass 2 | Claude | Codex, short re-read |
+| `c4c3e1f` put AC11 and AC12 in order | Claude | Codex, short re-read |
 | The commits adding this brief and `pr-16-pass-0.md`, on `docs/pr-16-records` | Claude | the records-PR cold read |
 
 Any commit Codex pushes gets its cold read from the fresh Claude session at Pass 2.5.
@@ -102,6 +133,12 @@ Beni ruled on 2026-11-02 (America/New_York), in the option "Take them all (Recom
 11. Finding 1 closes once a re-run is green, with this as Beni's confirmation: **yes**.
 
 Rulings 1 to 7 answer Cursor's Q-A to Q-G. Ruling 6 changes what clause 2 measures, which only Beni could do.
+
+After Pass 2, Beni ruled on 2026-11-02 on Codex's three questions, in the options below:
+
+12. **"Yes, with obligations (Recommended)"**, on "May the stale-notification High close on this docs PR without a test, because no code can land here?" An exception for this PR only. The spec gains AC12: the spike's harness tests the notification wording rule, and the test fails without it. ADR-0009 requires such a test to land with the real app before any notification text ships, because spike code never merges.
+13. **"No, stays conditional A (Recommended)"**, on "If only the standalone variant passes, does that formally select Path B?"
+14. **"No, keep the two medians (Recommended)"**, on "Should the load gate also require the same launches to meet both limits together?" The paired measurements stay reported.
 
 ## Privacy
 
