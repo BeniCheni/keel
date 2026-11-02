@@ -351,9 +351,9 @@ The spike consumes `@keel/core` as merged at its base SHA. Any core change it sh
 | AC5 | Load times are measured on macOS and on Beni's iPhone, in 5 fresh launches per variant | The Q3 lines; the device lines are Beni's run |
 | AC6 | Q4 and Q6 tables are filled, with a command or a source per row | PR body and results |
 | AC7 | Q5 is run by hand on the device | A checklist in the PR body, with Beni's results |
-| AC8 | The spike touches nothing outside its folder, relative to a frozen base that is the branch's fork point from `main`; a Git failure fails the check | `test "$(git merge-base origin/main HEAD)" = "$(git rev-parse "$KEEL_SPIKE_BASE")" && git diff --exit-code "$KEEL_SPIKE_BASE" HEAD -- . ':(exclude)spike/ios-core/**'` exits 0 |
+| AC8 | The spike touches nothing outside its folder, relative to a frozen base that is the branch's fork point from `main`; a Git failure fails the check | `fork="$(git merge-base origin/main HEAD)" && base="$(git rev-parse --verify --end-of-options "${KEEL_SPIKE_BASE}^{commit}")" && test "$fork" = "$base" && git diff --exit-code "$base" HEAD -- . ':(exclude)spike/ios-core/**'` exits 0 |
 | AC9 | The repo's gate stays green on the spike branch | `pnpm install --frozen-lockfile && pnpm verify`, on Node 24.22.2 and 26.13.0 |
-| AC10 | No account identifier is committed | `git grep -n -E 'DEVELOPMENT_TEAM *= *[A-Z0-9]{10}\|[0-9A-F]{8}-[0-9A-F]{16}' -- spike/ios-core` prints nothing, plus the owner's private-list check |
+| AC10 | No account identifier is committed; a Git failure fails the check | `git grep -n -E -e 'DEVELOPMENT_TEAM *= *[A-Z0-9]{10}' -e '[0-9A-F]{8}-[0-9A-F]{16}' -- spike/ios-core` exits 1, plus the owner's private-list check |
 | AC11 | The spike branch was cut after this spec merged | `git merge-base --is-ancestor <this spec's squash> <first spike commit>` exits 0 |
 | AC12 | The notification wording rule has a test that can fail | `swift test --package-path spike/ios-core --filter NotificationWordingTests`. A pure function in the harness builds the title, subtitle and body for A3, A5, A8 and A9 from a synthetic snapshot. The test asserts the rule under "Two limits that follow", and fails when that rule is removed from the function |
 
