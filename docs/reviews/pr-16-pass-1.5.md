@@ -164,6 +164,8 @@ The PM also changed AC10, which no review had reported, because testing AC8 turn
 
 For Codex at the next re-read: check both command changes, and whether `19ea2f5` changes anything else.
 
+Codex's third re-read is issuecomment-6591278315, at `19ea2f5`: M2 is closed, the AC10 repair is justified and not overreach, and it has no new findings. Its private-list scan found 0 hits across the diff, the commit messages, the PR fields, the comments and its own comment.
+
 ## Authorship record
 
 From `git log --format='%h %an' origin/main..19ea2f5`.
@@ -180,7 +182,7 @@ From `git log --format='%h %an' origin/main..19ea2f5`.
 | `025f853` record Beni's rulings after Pass 2 | Claude | Codex, short re-read (issuecomment-6589253253) |
 | `c4c3e1f` put AC11 and AC12 in order | Claude | Codex, short re-read (issuecomment-6589253253) |
 | `8419c84` fix the four Pass 2.5 Mediums and take A4's prompt out | Claude | Codex, second short re-read (issuecomment-6590981024) |
-| `19ea2f5` complete M2, and stop AC8 and AC10 reading a Git failure as clean | Claude | Codex, third short re-read, to come |
+| `19ea2f5` complete M2, and stop AC8 and AC10 reading a Git failure as clean | Claude | Codex, third short re-read (issuecomment-6591278315) |
 | The commits adding this brief and `pr-16-pass-0.md`, on `docs/pr-16-records` | Claude | the records-PR cold read |
 
 Any commit Codex pushes gets its cold read from the fresh Claude session at Pass 2.5.
