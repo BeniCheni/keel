@@ -59,25 +59,71 @@ Privacy, this seat: the only address in the Pass 1 comment other than `noreply` 
 
 Forms this seat tried that came out as they should at `747ea72`, each with no throw: flow nesting of 100000 opened, and of 100 to 2000 opened and closed; a block sequence 20000 deep; a block mapping 1500 deep; `__proto__` at the top and inside `sources`; a key holding a dot; a merge key. A character outside the Basic Multilingual Plane counts as two columns (`issuer.extra 5:38`), and `0000-02-29` loads. Neither is a finding here. Both matter to any engine that must match these positions.
 
+## Pass 2's comment, as the PM takes it up
+
+Codex completed Pass 2 ([issuecomment-6568716160](https://github.com/BeniCheni/keel/pull/13#issuecomment-6568716160)), on GPT-6.1 Sol Extra High with no fallback, with the verdict "mergeable after fixes", and pushed one commit, `c527df8`. It accepts all fourteen findings and reports no High open and no vendor disagreement. `c527df8` lands rulings 1, 2, 3 and 5 and closes PM-1 and PM-2. PM-3, PM-4 and findings 11 to 14 stay open, for the ideas file. Its own enumeration of schema bounds is larger than Pass 1's: 26 edits, of which 24 survive and 2 die at `26b661f`, and all 26 die at `747ea72`. That supports finding 3 with a different count, and is not a dispute.
+
+This seat does not give the cold read of `c527df8`; the fresh Claude session does at Pass 2.5. The checks below are what this seat needs for these records and the PR body. Each comes from a run in this session at `c527df8`, in a fresh clone of PR #13, with a fresh `mktemp -d` as `KEEL_DATA_DIR`.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Baseline | `pnpm install --frozen-lockfile && pnpm verify` on v24.22.2 and v26.13.0 | exit 0 on both; core 33 passed (9 files), tooling 122 passed (10 files), all eight `verify:* ok` lines; `git status --porcelain \| wc -l` prints `0` afterwards |
+| CI | `gh run view 41385332658 --json conclusion,headSha,event` | `success` at `c527df8`, event `pull_request` |
+| Diff | `git diff --shortstat origin/main...c527df8` | 64 files, 8461 insertions, 20 deletions |
+| This pass | `git diff --shortstat 747ea72 c527df8` | 7 files, 392 insertions, 10 deletions |
+| Scope | `git diff --name-only 747ea72 c527df8 -- docs CHANGELOG.md package.json pnpm-lock.yaml 'packages/*/package.json' \| wc -l` | `0` |
+| No test weakened | `git diff 747ea72 c527df8 -- '*.test.ts' '*.test.mjs' \| grep -c '^-[^-]'` | `0` |
+| Fixtures | `ls fixtures/synthetic/terms/invalid \| wc -l` | `29`, with `duplicate-ticker.yaml` and `wrong-type-negative-zero.yaml` among them |
+| Locale in core | `git grep -nE 'localeCompare\|toLocale\|Intl\.\|Collator' -- packages/core/src` | one line, the stub in `terms.review.test.ts:12`; none in production code |
+
+Rulings through the loader, on Node v24.22.2, with a temporary Vitest file that edits `minimal.yaml` in memory and is deleted afterwards. Every row gives the same result under `LC_ALL=en_US.UTF-8` and `LC_ALL=haw_US.UTF-8`.
+
+| Ruling or item | Input | Result |
+| --- | --- | --- |
+| 1 | `barrier` and `economics` removed | `barrier` then `economics` |
+| 2 | Candidates `2026-06-03` then `2026-06-01` inside one entry | loads |
+| 2 | Known `2026-06-02`, then a conflict with `2026-06-01` and `2026-06-03` | loads |
+| 2 | Known `2026-06-03`, a conflict, known `2026-06-01` | `schedule-order dates.observation_schedule[2].value 32:16` |
+| 3 | A repeated ticker | `duplicate-ticker underlyings.members[1].ticker 34:15` |
+| 5 | `-0` on `economics.fees`, `call.non_call_months`, `call.level` and a `call.level` candidate | one `wrong-type` at the value, each |
+| 5 | `-1` on `call.level`; `0` on `call.non_call_months` | `out-of-range`; loads |
+| PM-1 | `*nope : 1` appended | one `alias` at `1:1` |
+| PM-2 | A null candidate on `issuer` | one `status-fields` at the value |
+
+Three things for the record:
+
+- **`c527df8` goes one step past the rulings.** `integerFaultPaths` removes a schema diagnostic at any path that has a token fault. So `-0` on `call.level` gives one `wrong-type`, not that plus `out-of-range`. The rule reaches every integer-token fault, not only `-0`. The PM reads this as needed for "exactly one" and in scope. Pass 2.5 gives it a cold read.
+- **Pass 2's mutation table closes this seat's Low on Pass 1's table.** It gives complete edits. Five of its rows contain the word `undefined`, each as source text in an edit, and each row records an exit and a killing test.
+- **Not re-run here:** its 91 post-fix mutants, its 26 historical edits and five before-and-after rows, its 89 own-read assertions, and its private-list check. Pass 2.5 re-runs the mutants it reports.
+
+Slip, this seat: the Pass 2 prompt barred everything under `~/.config/keel/`, a line copied from the builder prompt, and that folder holds the private list Codex is the seat to read. Codex paused that one check and asked. The PM gave Beni a reply limiting the exception to the one file, for that scan, with counts only, and Beni passed it on. Pass 2's comment records the exception. A Pass 2 prompt now names that exception, and a builder or Fable prompt keeps the whole ban.
+
+Privacy, this seat: the only address in Pass 2's comment other than `noreply` ones is Cursor's vendor identity (`gh api repos/BeniCheni/keel/issues/comments/6568716160 --jq .body | grep -o -E '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' | grep -v 'noreply@' | grep -v -c '^cursoragent@cursor\.com$'` prints `0`), and `scanRepo` finds 0 hits in it.
+
+The PM refreshed the PR body once for this comment, at 23:03 EST on 2026-11-01, with `gh pr edit 13 --body-file`. Cursor's 91 lines stay byte-identical (`cmp` of the first 91 lines against the saved body), and `scanRepo` gated the edit: no error and 0 hits on the new text, and a generated address gives 1 email hit. Codex's private-list check came before this edit, so Beni runs that check before merging, over the PR body and the Pass 2.5 comment.
+
+Pass 2's "Deliberately not done" adds nothing to the ideas-file entries listed above.
+
 ## Authorship record
 
-The Pass 0 record, extended with every commit since: `git log --format='%h %an' origin/main..747ea72`.
+The Pass 0 record, extended with every commit since: `git log --format='%h %an' origin/main..c527df8`.
 
 | Commit | Authoring vendor | Cold read by |
 | --- | --- | --- |
 | `26b661f` load mln-terms/0.1 and say which terms are verified | Cursor | Claude Code, Pass 1 (issuecomment-6567988397) |
-| `798099f` import ajv by file so the core entry loads under Node alone | Claude (Pass 1 session) | Codex, Pass 2 |
-| `7eab3da` report an alias the parser cannot resolve instead of throwing | Claude (Pass 1 session) | Codex, Pass 2 |
-| `de83a53` a null value is legal under unknown alone, on every term | Claude (Pass 1 session) | Codex, Pass 2 |
-| `de4b0e8` a source named like an Object.prototype member is source-missing | Claude (Pass 1 session) | Codex, Pass 2 |
-| `66b9b3b` reject a schema marker that a continuation line extends | Claude (Pass 1 session) | Codex, Pass 2 |
-| `82bc58b` an explicit tag on a key is yaml-syntax like a tag on a value | Claude (Pass 1 session) | Codex, Pass 2 |
-| `ca39159` pin every field-contract bound from both sides | Claude (Pass 1 session) | Codex, Pass 2 |
-| `0fd34af` pin the date-pattern code and the century leap rule | Claude (Pass 1 session) | Codex, Pass 2 |
-| `747ea72` a conflict without a candidates key is conflict-candidates | Claude (Pass 1 session) | Codex, Pass 2 |
+| `798099f` import ajv by file so the core entry loads under Node alone | Claude (Pass 1 session) | Codex, Pass 2 (issuecomment-6568716160) |
+| `7eab3da` report an alias the parser cannot resolve instead of throwing | Claude (Pass 1 session) | Codex, Pass 2 (issuecomment-6568716160) |
+| `de83a53` a null value is legal under unknown alone, on every term | Claude (Pass 1 session) | Codex, Pass 2 (issuecomment-6568716160) |
+| `de4b0e8` a source named like an Object.prototype member is source-missing | Claude (Pass 1 session) | Codex, Pass 2 (issuecomment-6568716160) |
+| `66b9b3b` reject a schema marker that a continuation line extends | Claude (Pass 1 session) | Codex, Pass 2 (issuecomment-6568716160) |
+| `82bc58b` an explicit tag on a key is yaml-syntax like a tag on a value | Claude (Pass 1 session) | Codex, Pass 2 (issuecomment-6568716160) |
+| `ca39159` pin every field-contract bound from both sides | Claude (Pass 1 session) | Codex, Pass 2 (issuecomment-6568716160) |
+| `0fd34af` pin the date-pattern code and the century leap rule | Claude (Pass 1 session) | Codex, Pass 2 (issuecomment-6568716160) |
+| `747ea72` a conflict without a candidates key is conflict-candidates | Claude (Pass 1 session) | Codex, Pass 2 (issuecomment-6568716160) |
+| `c527df8` apply owner rulings and pin review regressions | Codex | the fresh Claude session, Pass 2.5 |
 | The commits adding this brief and `pr-13-pass-0.md`, on `docs/pr-13-records` | Claude (PM) | the records-PR cold read |
 
-Any commit Codex pushes at Pass 2 gets its cold read from the fresh Claude session at Pass 2.5, on Fable 5.1 High. The Pass 1 session and this session take no further pass on this PR.
+`c527df8` gets its cold read from the fresh Claude session at Pass 2.5, on Fable 5.1 High. The Pass 1 session and this session take no further pass on this PR.
 
 ## Rulings from Beni
 
