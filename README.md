@@ -4,7 +4,7 @@ A local-first monitor for investments whose value comes from their terms, not fr
 
 keel shows your instruments, what each term says and where that term came from, the next date that matters, and how far the underlyings sit from the call level and the barrier. When there is no evidence of a value, it says so instead of inventing one.
 
-**Status:** pre-alpha. This repository currently holds its rules, review process, slice specs, and the verify gate. `@keel/core` exports an empty public API.
+**Status:** pre-alpha. This repository currently holds its rules, review process, slice specs, and the verify gate. `@keel/core` loads an mln-terms/0.1 file and reports which payoff terms are verified.
 
 **Not advice.** keel is information only. It is not investment, tax or legal advice, and your offering documents govern. See `DISCLAIMER.md`.
 

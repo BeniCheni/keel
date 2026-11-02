@@ -23,13 +23,13 @@ function tsc(source) {
   return result;
 }
 
-test("the core package is @keel/core with no runtime dependencies and a Node 24 floor", () => {
+test("the core package is @keel/core on the Node 24 floor", () => {
   const root = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8"));
   const core = JSON.parse(readFileSync(join(repoRoot, "packages/core/package.json"), "utf8"));
   expect(root.engines.node).toBe(">=24");
   expect(core.name).toBe("@keel/core");
   expect(core.devDependencies.vitest).toBe(root.devDependencies.vitest);
-  expect(core.dependencies ?? {}).toEqual({});
+  expect(core.dependencies).toEqual({ ajv: "8.20.0", yaml: "2.9.1" });
   expect(Object.keys(root.devDependencies).sort()).toEqual(["typescript", "vitest"]);
 });
 

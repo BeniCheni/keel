@@ -1,0 +1,122 @@
+schema: mln-terms/0.1
+id: note-gcbzop
+category: mln
+structure: autocall-snowball-worst-of
+identifiers:
+  cusip:
+    value: ZZZXCVX40
+    status: primary
+    source: supplement
+  isin:
+    value: XSJ5EQ3X2927
+    status: primary
+    source: supplement
+issuer:
+  value: "Example Bank SA"
+  status: primary
+  source: supplement
+dates:
+  trade:
+    value: 2026-03-21
+    status: primary
+    source: supplement
+  settlement:
+    value: 2026-03-24
+    status: primary
+    source: supplement
+  maturity:
+    status: conflict
+    candidates:
+      - value: 2031-07-14
+        status: document
+        source: confirm-a
+      - value: 2031-07-27
+        status: advisor
+        source: email-b
+  first_call_observation:
+    value: 2026-08-01
+    status: primary
+    source: supplement
+underlyings:
+  basket: worst_of
+  members:
+    - ticker: ALFA
+      initial:
+        value: "354.2650"
+        status: primary
+        source: supplement
+    - ticker: BRVO
+      initial:
+        value: "705.2"
+        status: primary
+        source: supplement
+    - ticker: CHRL
+      initial:
+        value: "200.7"
+        status: document
+        source: confirm-a
+    - ticker: DLTA
+      initial:
+        value: "740.05"
+        status: advisor
+        source: email-b
+  performance_rounding:
+    value: null
+    status: unknown
+call:
+  level:
+    value: 12859
+    status: advisor
+    source: email-b
+  non_call_months:
+    value: 55
+    status: primary
+    source: supplement
+  frequency:
+    value: "quarterly"
+    status: primary
+    source: supplement
+premium:
+  rate_per_year:
+    value: 3416
+    status: user
+  accrual:
+    value: compound
+    status: assumed
+    note: "Recorded accrual default."
+barrier:
+  level:
+    value: 5280
+    status: estimate
+    rule: "Named barrier fraction."
+  observation:
+    value: "final"
+    status: primary
+    source: supplement
+  below_barrier:
+    value: "one-for-one-worst"
+    status: primary
+    source: supplement
+economics:
+  issue_price:
+    value: 496190
+    status: primary
+    source: supplement
+  estimated_value:
+    value: 654980
+    status: primary
+    source: supplement
+  fees:
+    value: 26634
+    status: primary
+    source: supplement
+sources:
+  supplement:
+    kind: primary
+    file: sources/supplement.pdf
+  confirm-a:
+    kind: document
+    file: sources/confirm-a.pdf
+  email-b:
+    kind: advisor
+    file: sources/email-b.txt
