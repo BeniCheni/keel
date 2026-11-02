@@ -1,0 +1,96 @@
+schema: mln-terms/0.1
+id: note-min
+category: mln
+structure: autocall-snowball-worst-of
+issuer:
+  value: "Example Bank SA"
+  status: primary
+  source: supplement
+dates:
+  trade:
+    value: 2026-03-02
+    status: primary
+    source: supplement
+  settlement:
+    value: 2026-03-04
+    status: primary
+    source: supplement
+  maturity:
+    value: 2031-03-03
+    status: primary
+    source: supplement
+  first_call_observation:
+    value: 2026-09-01
+    status: primary
+    source: supplement
+underlyings:
+  basket: worst_of
+  members:
+    - ticker: ALFA
+      initial:
+        value: "100.25"
+        status: primary
+        source: supplement
+    - ticker: BRVO
+      initial:
+        value: "80.5"
+        status: primary
+        source: supplement
+    - ticker: CHRL
+      initial:
+        value: "120"
+        status: primary
+        source: supplement
+    - ticker: DLTA
+      initial:
+        value: "95.125"
+        status: primary
+        source: supplement
+  performance_rounding:
+    value: "half-up-4dp"
+    status: primary
+    source: supplement
+call:
+  level:
+    value: 1e3
+    status: primary
+    source: supplement
+  non_call_months:
+    value: 6
+    status: primary
+    source: supplement
+  frequency:
+    value: "quarterly"
+    status: primary
+    source: supplement
+premium:
+  rate_per_year:
+    value: 850
+    status: primary
+    source: supplement
+  accrual:
+    value: "simple"
+    status: primary
+    source: supplement
+barrier:
+  level:
+    value: 6000
+    status: primary
+    source: supplement
+  observation:
+    value: "final"
+    status: primary
+    source: supplement
+  below_barrier:
+    value: "one-for-one-worst"
+    status: primary
+    source: supplement
+economics:
+  issue_price:
+    value: 10000
+    status: primary
+    source: supplement
+sources:
+  supplement:
+    kind: primary
+    file: sources/supplement.pdf
