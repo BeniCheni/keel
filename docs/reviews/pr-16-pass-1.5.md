@@ -166,6 +166,12 @@ For Codex at the next re-read: check both command changes, and whether `19ea2f5`
 
 Codex's third re-read is issuecomment-6591278315, at `19ea2f5`: M2 is closed, the AC10 repair is justified and not overreach, and it has no new findings. Its private-list scan found 0 hits across the diff, the commit messages, the PR fields, the comments and its own comment.
 
+### The Pass 2.5 at `19ea2f5`
+
+Its comment is issuecomment-6591458579, and `pr-16-pass-2.5.md` holds its brief: mergeable by exception, M1 to M4 closed, and a shadow gate of "would escalate". It adds one Low, N1: ruling 17 is in this brief and not in the spec. The PM's read is that the spec's sentence holds, because it says each ruling is written in "where it applies", and ruling 17 confirms records and has no place in the plan. No edit, which keeps the reviewed head. Its question 3 is Beni's.
+
+That session reports posting its PR comment before its tripwire pre-scan had run, and then scanning the posted text: exit 0, no hits. The owner's private-list check has not covered that comment.
+
 ## Authorship record
 
 From `git log --format='%h %an' origin/main..19ea2f5`.
