@@ -16,7 +16,7 @@ const INTEGER_OWNERS = new Set([
   "economics.fees",
 ]);
 
-const PLAIN_INTEGER = /^-?(?:0|[1-9][0-9]*)$/;
+const PLAIN_INTEGER = /^(?:0|-?[1-9][0-9]*)$/;
 const MAX_SAFE = BigInt(Number.MAX_SAFE_INTEGER);
 const SCHEMA_VALUE = "mln-terms/0.1";
 const SCHEMA_LINE = `schema: ${SCHEMA_VALUE}`;
@@ -49,7 +49,8 @@ function carriesMarker(data: unknown): boolean {
 
 function dedupe(errors: Diagnostic[]): Diagnostic[] {
   const sorted = [...errors].sort(
-    (left, right) => left.line - right.line || left.column - right.column || left.path.localeCompare(right.path),
+    (left, right) =>
+      left.line - right.line || left.column - right.column || (left.path < right.path ? -1 : left.path > right.path ? 1 : 0),
   );
   const seen = new Set<string>();
   const out: Diagnostic[] = [];
@@ -88,12 +89,14 @@ export function loadTerms(text: string, fileName: string): LoadResult {
   }
   const aliasSites = index.aliases.length > 0 ? index.aliases : index.anchors;
   for (const site of aliasSites) errors.push(diagnostic(fileName, "alias", site.path, site.pos.line, site.pos.column));
+  const integerFaultPaths = new Set<string>();
   for (const [path, scalar] of index.scalars) {
     if (!isIntegerValuePath(path)) continue;
     // A null token is the schema's to judge: legal under unknown, status-fields under any other status.
     if (scalar.value === null) continue;
     const code = integerCode(scalar.raw);
     if (code === null) continue;
+    integerFaultPaths.add(path);
     errors.push(diagnostic(fileName, code, path, scalar.pos.line, scalar.pos.column));
   }
   let data: unknown;
@@ -107,7 +110,8 @@ export function loadTerms(text: string, fileName: string): LoadResult {
   }
   if (!carriesMarker(data)) errors.push(diagnostic(fileName, "schema-line", "schema", 1, 1));
   const schemaErrors = schemaDiagnostics(data, index, fileName);
-  errors.push(...schemaErrors);
+  // The source-token fault takes precedence over the parsed number's type or range at the same path.
+  errors.push(...schemaErrors.filter((error) => !integerFaultPaths.has(error.path)));
   if (schemaErrors.length === 0) {
     const terms = projectTerms(data);
     const extra = referentialDiagnostics(terms, index, fileName);

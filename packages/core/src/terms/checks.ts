@@ -75,14 +75,9 @@ function positiveDecimal(value: string): boolean {
 }
 
 function knownScheduleDates(term: Term<string>, path: string): Array<{ path: string; value: string }> {
-  if (term.status === "conflict") {
-    const found: Array<{ path: string; value: string }> = [];
-    term.candidates.forEach((candidate, index) => {
-      found.push(...knownScheduleDates(candidate, `${path}.candidates[${index}]`));
-    });
-    return found;
+  if (term.status === "conflict" || term.status === "unknown" || typeof term.value !== "string" || !isRealDate(term.value)) {
+    return [];
   }
-  if (term.status === "unknown" || typeof term.value !== "string" || !isRealDate(term.value)) return [];
   return [{ path: `${path}.value`, value: term.value }];
 }
 

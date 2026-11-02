@@ -15,6 +15,13 @@
       "column": 1
     },
     {
+      "file": "duplicate-ticker.yaml",
+      "code": "duplicate-ticker",
+      "path": "underlyings.members[1].ticker",
+      "line": 34,
+      "column": 15
+    },
+    {
       "file": "duplicate-key.yaml",
       "code": "duplicate-key",
       "path": "call.level",
@@ -89,6 +96,13 @@
       "code": "wrong-type",
       "path": "call.level.value",
       "line": 55,
+      "column": 12
+    },
+    {
+      "file": "wrong-type-negative-zero.yaml",
+      "code": "wrong-type",
+      "path": "call.non_call_months.value",
+      "line": 59,
       "column": 12
     },
     {

@@ -584,6 +584,16 @@ function mutations() {
   return [
     { file: "schema-line.yaml", code: "schema-line", path: "schema", prefix: "# synthetic\n", markStart: true, apply() {} },
     {
+      file: "duplicate-ticker.yaml",
+      code: "duplicate-ticker",
+      path: "underlyings.members[1].ticker",
+      apply(tree) {
+        const members = findEntry(descend(tree, ["underlyings"]), "members").value;
+        const first = findEntry(members.items[0], "ticker").value.text;
+        findEntry(members.items[1], "ticker").value = scalar(first, "error");
+      },
+    },
+    {
       file: "duplicate-key.yaml",
       code: "duplicate-key",
       path: "call.level",
@@ -680,6 +690,14 @@ function mutations() {
       path: "call.level.value",
       apply(tree, bag) {
         markValue(tree, ["call", "level"], rawScalar(bag, "plus", "+9500", "error"));
+      },
+    },
+    {
+      file: "wrong-type-negative-zero.yaml",
+      code: "wrong-type",
+      path: "call.non_call_months.value",
+      apply(tree, bag) {
+        markValue(tree, ["call", "non_call_months"], rawScalar(bag, "negative-zero", "-0", "error"));
       },
     },
     {
