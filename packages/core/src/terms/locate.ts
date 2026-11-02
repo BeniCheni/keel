@@ -88,6 +88,7 @@ function walk(node: Node, path: string, text: string, counter: LineCounter, inde
       const key = String(pair.key.value);
       const next = path === "" ? key : `${path}.${key}`;
       const keyPos = hasRange(pair.key) ? positionAt(counter, pair.key.range[0]) : { line: 1, column: 1 };
+      if (typeof (pair.key as Ranged).tag === "string") index.tags.push({ path: next, pos: keyPos });
       index.keys.set(next, keyPos);
       const count = (seen.get(key) ?? 0) + 1;
       seen.set(key, count);

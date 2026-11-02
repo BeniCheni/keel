@@ -123,3 +123,19 @@ test("an alias the parser cannot resolve is a diagnostic, not a throw", () => {
     expect(exhausted.errors.every((error) => error.code === "alias")).toBe(true);
   }
 });
+
+test("an explicit tag is yaml-syntax on a key as on a value", () => {
+  const minimal = textOf("valid", "minimal.yaml");
+  const onKey = loadTerms(minimal.replace("id: note-min", "!!str id: note-min"), "minimal.yaml");
+  expect(onKey.ok).toBe(false);
+  if (!onKey.ok) {
+    expect(onKey.errors).toEqual([expect.objectContaining({ code: "yaml-syntax", path: "id", line: 2, column: 7 })]);
+  }
+  const onValue = loadTerms(minimal.replace("value: 9500", "value: !!int 9500"), "minimal.yaml");
+  expect(onValue.ok).toBe(false);
+  if (!onValue.ok) {
+    expect(onValue.errors).toEqual([
+      expect.objectContaining({ code: "yaml-syntax", path: "call.level.value", line: 55, column: 18 }),
+    ]);
+  }
+});
