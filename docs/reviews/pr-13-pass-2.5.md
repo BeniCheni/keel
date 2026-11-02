@@ -1,6 +1,6 @@
 # Executive brief: PR #13, Pass 2.5, 2026-11-01 America/New_York
 
-Recorded by the PM on 2026-11-02 (America/New_York). The Pass 2.5 session (Claude, fresh session, Fable 5.1 High) delivered this brief in chat, and its PR comment ([issuecomment-6569021327](https://github.com/BeniCheni/keel/pull/13#issuecomment-6569021327)) says the PM records it. Beni told the PM it had posted, and the PM copied the text from that one message in the session's transcript, by script, reading nothing else there. "This session" and "this seat" below mean that session. The text is unchanged, and the PM's section follows the handoff block. The "Beni's decision" row stays empty until the PR merges.
+Recorded by the PM on 2026-11-02 (America/New_York). The Pass 2.5 session (Claude, fresh session, Fable 5.1 High) delivered this brief in chat, and its PR comment ([issuecomment-6569021327](https://github.com/BeniCheni/keel/pull/13#issuecomment-6569021327)) says the PM records it. Beni told the PM it had posted, and the PM copied the text from that one message in the session's transcript, by script, reading nothing else there. "This session" and "this seat" below mean that session. The text is unchanged except for the "Beni's decision" row, which the PM filled after the merge, and the PM's sections follow the handoff block.
 
 Every number below comes from a command run in this session in a fresh clone at `~/keel-reviews/pr-13-2.5`, head `c527df87a86659e4b3b1903966a4eff699a7d6cc`, with `KEEL_DATA_DIR` an empty `mktemp -d`. A number taken from a PR body or comment is labelled as that vendor's claim. Seat: Claude, fresh session, Fable 5.1 High, no fallback.
 
@@ -72,7 +72,7 @@ None. No figure in this PR comes from a model or an assumption.
 | No sensitive path, dependency or schema change | **no**: `packages/core/**`, `schemas/**`, `tools/tripwire/allowlist.txt`; `yaml` and `ajv`; `schemas/mln-terms/0.1.json` |
 | Every commit cold-read by a non-author vendor (authorship record) | yes: Cursor's by Claude (Pass 1), the nine Claude commits by Codex (Pass 2), `c527df8` by this seat |
 | Gate verdict | would escalate |
-| Beni's decision (filled after) | |
+| Beni's decision (filled after) | Merged on 2026-11-02 at squash `3bceb20`, reviewed head `c527df8`, without the two pinning tests |
 
 ## Questions for Beni
 
@@ -132,3 +132,30 @@ Not re-run here: the rest of the numbers above, which are the Pass 2.5 session's
 On question 1, the PM agrees with the recommendation, for one more reason. A follow-up PR of its own would touch `packages/core/**`, so it would be a sensitive-path PR with full passes, for two tests. The PM carries both tests to the ideas file, to ride the next slice that touches `packages/core`.
 
 Rulings 1 to 5 in question 2 are first-hand: Beni gave them to the PM directly, and `pr-13-pass-1.5.md` records his words. Question 2 stays in the brief as the Pass 2.5 session wrote it.
+
+## Beni's rulings (added by the PM)
+
+Beni ruled on 2026-11-02 (America/New_York):
+
+1. **"Yes, merged as is"**, on "Merge without the two pinning tests, sending them to the ideas file?" That answers questions 1 and 4. The tests are idea 29 in `docs/v0.1.0-ideas.md`.
+2. **"Clean, 0 hits on both"**, on "Was your private-list check clean over the refreshed PR #13 body and the Pass 2.5 comment?" That answers question 3. No Claude seat ran that check.
+
+Question 2 was not put, for the reason in the PM's section above.
+
+## Post-merge checks (added by the PM)
+
+From the PM's session on 2026-11-02, in a fresh clone of `main` at the squash, with a fresh `mktemp -d` as `KEEL_DATA_DIR`.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| `origin/main` is the squash GitHub recorded | `gh pr view 13 --json mergeCommit --jq .mergeCommit.oid`; `git rev-parse origin/main` | both `3bceb2016a8ab5db46fcf1f718d35a085598ec14`; merged at 16:32:28 UTC by Beni, whose own run of the handoff's `test` line also passed |
+| The base did not move, so the trees match | `git rev-parse 'origin/main^{tree}'`; `git rev-parse 'c527df8^{tree}'` | both `42ca02e521b4a0e9cd92d0eea8bb6f1fa9125ca7` |
+| Trailers | `git log -1 --format=%B 3bceb20` | Cursor, Claude and Codex, each spelled out in full |
+| CI on the squash | `gh run view 41482481086 --json conclusion,headSha,event` | `success`, `push`, at `3bceb20` |
+| Verify on the squash | `pnpm install --frozen-lockfile && pnpm verify` on v24.22.2 and v26.13.0 | exit 0 on both; core 33 passed (9 files), tooling 122 passed (10 files), all eight `verify:* ok` lines; `git status --porcelain \| wc -l` prints `0` afterwards |
+| README status sentence | `git show 3bceb20 -- README.md` | Now says `@keel/core` loads an mln-terms/0.1 file and reports which payoff terms are verified, which the suite above supports |
+| Release checks | n/a | Not a release: no tag, and no version moved. Demo mode does not exist before the UI slices |
+
+## Carried to the ideas file (added by the PM)
+
+On PR #14, as ideas 21 to 31: the `localeCompare` sorts left in `tools/`; Pass 1's findings 11 to 14; PM-3 and PM-4; `new Function` at module load; this brief's findings 1 and 2; a sealed appendix in its own file; and exact edits in every mutation table.
