@@ -1,4 +1,4 @@
-import Ajv from "ajv/dist/2020";
+import Ajv from "ajv/dist/2020.js";
 import type { ErrorObject } from "ajv";
 import schema from "../../../../schemas/mln-terms/0.1.json" with { type: "json" };
 import { missingPos, nodePos, type DocIndex } from "./locate.ts";
