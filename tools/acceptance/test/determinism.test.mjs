@@ -5,12 +5,12 @@ import { expect, test } from "vitest";
 import { check, splitTrees, treesOf, verifyDeterminism, verifyRegistered } from "../../fixtures/check.mjs";
 import { NESTED_RUN_TIMEOUT_MS, commitAll, git, repoRoot, run, tempGit, write } from "./helpers.mjs";
 
-test("fixtures:trees prints fixtures when nothing is registered", () => {
+test("fixtures:trees prints the registered terms tree", () => {
   expect(treesOf([])).toEqual(["fixtures"]);
   const result = run("pnpm", ["-s", "fixtures:trees"]);
   expect(result.status).toBe(0);
-  expect(result.stdout).toBe("fixtures\n");
-  expect(splitTrees(result.stdout)).toEqual(["fixtures"]);
+  expect(result.stdout).toBe("fixtures/synthetic/terms\n");
+  expect(splitTrees(result.stdout)).toEqual(["fixtures/synthetic/terms"]);
   expect(splitTrees("\n")).toEqual([""]);
 }, NESTED_RUN_TIMEOUT_MS);
 
