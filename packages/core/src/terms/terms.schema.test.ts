@@ -86,3 +86,17 @@ test("a source name that is also an Object.prototype property is missing, not mi
     ]);
   }
 });
+
+test("a conflict with no candidates key is conflict-candidates at the term", () => {
+  const text = textOf("valid", "minimal.yaml").replace(
+    "  maturity:\n    value: 2031-03-03\n    status: primary\n    source: supplement\n",
+    "  maturity:\n    status: conflict\n",
+  );
+  const result = loadTerms(text, "minimal.yaml");
+  expect(result.ok).toBe(false);
+  if (!result.ok) {
+    expect(result.errors).toEqual([
+      expect.objectContaining({ code: "conflict-candidates", path: "dates.maturity.candidates", line: 18, column: 3 }),
+    ]);
+  }
+});
