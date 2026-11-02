@@ -50,4 +50,37 @@ test("the loader rejects 2027-02-30 and accepts the leap day", () => {
     "minimal.yaml",
   );
   expect(leap.ok).toBe(true);
+
+  // A date that fails the schema pattern is invalid-date too, from the schema rather than the calendar.
+  const unpadded = loadTerms(
+    minimal.replace("  maturity:\n    value: 2031-03-03\n", "  maturity:\n    value: 2031-3-3\n"),
+    "minimal.yaml",
+  );
+  expect(unpadded.ok).toBe(false);
+  if (!unpadded.ok) {
+    expect(unpadded.errors).toEqual([
+      expect.objectContaining({ code: "invalid-date", path: "dates.maturity.value", line: 19, column: 12 }),
+    ]);
+  }
+});
+
+test("the century rule of the Gregorian calendar holds", () => {
+  const minimal = textOf("valid", "minimal.yaml");
+  const century = loadTerms(
+    minimal.replace("  maturity:\n    value: 2031-03-03\n", "  maturity:\n    value: 2100-02-29\n"),
+    "minimal.yaml",
+  );
+  expect(century.ok).toBe(false);
+  if (!century.ok) {
+    expect(century.errors).toEqual([expect.objectContaining({ code: "invalid-date", path: "dates.maturity.value" })]);
+  }
+  const quadricentennial = loadTerms(
+    minimal.replace("  maturity:\n    value: 2031-03-03\n", "  maturity:\n    value: 2400-02-29\n"),
+    "minimal.yaml",
+  );
+  expect(quadricentennial.ok).toBe(true);
+  expect(dateFlags("2100-02-29")).toEqual([]);
+  // 2000-02-29 was a Tuesday and the calendar repeats every 400 years.
+  expect(dateFlags("2400-02-29")).toEqual([]);
+  expect(dateFlags("2000-02-29")).toEqual([]);
 });
