@@ -131,7 +131,8 @@ export function referentialDiagnostics(
     if (term.status === "primary" || term.status === "document" || term.status === "advisor") {
       const sourcePath = `${path}.source`;
       const pos = nodePos(sourcePath, index);
-      const source = terms.sources[term.source];
+      // sources is a plain object, so a name like constructor resolves to a prototype member; only a listed source counts.
+      const source = Object.hasOwn(terms.sources, term.source) ? terms.sources[term.source] : undefined;
       if (!source) errors.push(diagnostic(fileName, "source-missing", sourcePath, pos.line, pos.column));
       else if (source.kind !== term.status) {
         errors.push(diagnostic(fileName, "source-kind", sourcePath, pos.line, pos.column));

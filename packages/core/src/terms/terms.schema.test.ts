@@ -75,3 +75,14 @@ test("the loader reports source paths and referential failures", () => {
     }
   }
 });
+
+test("a source name that is also an Object.prototype property is missing, not mismatched", () => {
+  const text = textOf("valid", "minimal.yaml").replace("  source: supplement\ndates:", "  source: constructor\ndates:");
+  const result = loadTerms(text, "minimal.yaml");
+  expect(result.ok).toBe(false);
+  if (!result.ok) {
+    expect(result.errors).toEqual([
+      expect.objectContaining({ code: "source-missing", path: "issuer.source", line: 8, column: 11 }),
+    ]);
+  }
+});
