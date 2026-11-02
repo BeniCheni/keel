@@ -1,8 +1,8 @@
 # Pass 1.5 brief: PR #16
 
-Written by the PM on 2026-11-02 (America/New_York) after reading Cursor's Pass 1 comment on PR #16 ([issuecomment-6587500288](https://github.com/BeniCheni/keel/pull/16#issuecomment-6587500288); reviewed head `8c0deaf`, verdict "not mergeable"). Cursor pushed nothing, by the Pass 0 brief. The PM's post-Pass-1 head is `b6cbcc98881cfd3f66bfbcc6ad1d8d7d1b9c3617`. Codex receives this brief for Pass 2. Like the Pass 0 brief, it lives on branch `docs/pr-16-records`, not on the PR branch.
+Written by the PM on 2026-11-02 (America/New_York) after reading Cursor's Pass 1 comment on PR #16 ([issuecomment-6587500288](https://github.com/BeniCheni/keel/pull/16#issuecomment-6587500288); reviewed head `8c0deaf`, verdict "not mergeable"). Cursor pushed nothing, by the Pass 0 brief. The PM's post-Pass-1 head is `044690cad4000c1890a815be37c87b7bd8e11ead`. Codex receives this brief for Pass 2. Like the Pass 0 brief, it lives on branch `docs/pr-16-records`, not on the PR branch.
 
-Seventeen of the eighteen findings are accepted as stated, one is accepted and disputed in part, and none goes to Cursor as rework. The PM applied the accepted wording in `b6cbcc9`. One High closes with a CI re-run and Beni's confirmation, and the other closes with that commit. Beni ruled on eleven questions, including all seven Cursor raised.
+Seventeen of the eighteen findings are accepted as stated, one is accepted and disputed in part, and none goes to Cursor as rework. The PM applied the accepted wording in `b6cbcc9` and `044690c`. One High closes with a CI re-run and Beni's confirmation, and the other closes with that commit. Beni ruled on eleven questions, including all seven Cursor raised.
 
 ## How this brief adjudicated
 
@@ -25,7 +25,7 @@ Each "Reproduced" below comes from a run in this session at `8c0deaf`, in a fres
 | 11 | Medium | accept | **Read.** By the spec's own definition. Role counts become 10, 23 and 15. Also applied from Cursor's question 3: 6.8's writing is desktop-only | no |
 | 12 | Medium | accept | **Read.** Section 11's `alert_firings` has `acknowledged_at` | no |
 | 13 | Medium | **accept and dispute** | See "The one dispute" | no |
-| 14 | Medium, marked Build-easier | accept | **Reproduced.** On a planted `spike/ios-core/check-bundle.mjs`, `node tools/boundary/cli.mjs` exits 1 for a comment holding the text `require("@keel/montecarlo")`, and 0 for the word `montecarlo` alone. An escaped string form exits 0. The mark is fair: the builder learns a trap, and the check stays as it is. The PM did not re-run the NUL-byte case | no |
+| 14 | Medium, marked Build-easier | accept | **Reproduced.** On a planted `spike/ios-core/check-bundle.mjs`, `node tools/boundary/cli.mjs` exits 1 for a comment that spells out a `require` call of the Monte Carlo package, and 0 for the word `montecarlo` alone. An escaped string form exits 0. The mark is fair: the builder learns a trap, and the check stays as it is. The PM did not re-run the NUL-byte case | no |
 | 15 | Medium | accept | **Read** for the warm-run point. Xcode 7's note is Cursor's reading. Beni's ruling 6 moves the gate to fresh launches | no |
 | 16 | Low | accept | **Read.** Applied | no |
 | 17 | Low, marked Build-easier | accept | **Read.** It tightens the floor. Each row now needs a command that exits nonzero | no |
@@ -41,6 +41,8 @@ Also applied, from Cursor's plan-challenge notes:
 - A detail page opened from the lock screen waits for unlock.
 
 The PM adds one limit Cursor's note 1 implies: a pass measures the terms loader only, and the spec now says so under "What a pass does not prove".
+
+Slip, this seat: `b6cbcc9` quoted, in the spec itself, the exact text finding 14 warns about. The boundary walk reads docs as well, so `node tools/boundary/cli.mjs` printed `boundary docs/specs/s90-ios-core-spike.md 295`, and three CI cells failed on run 41519459842. The PM had not run `pnpm verify` before that push, because the diff was docs. `044690c` rewords the sentence, and `pnpm verify` exited 0 on v24.22.2 and v26.13.0 before it went up. The spec now says the walk covers docs.
 
 ## The one dispute
 
@@ -69,7 +71,7 @@ Whether a JSContext defines `console` is what decides it, and nobody has run tha
 
 ## Authorship record
 
-From `git log --format='%h %an' origin/main..b6cbcc9`.
+From `git log --format='%h %an' origin/main..044690c`.
 
 | Commit | Authoring vendor | Cold read by |
 | --- | --- | --- |
@@ -78,6 +80,7 @@ From `git log --format='%h %an' origin/main..b6cbcc9`.
 | `8cdd91c` record Beni's ruling on the plan challenge seat | Claude | Cursor, Pass 1; Codex, Pass 2 |
 | `8c0deaf` merge `origin/main` | Claude | Cursor, Pass 1; Codex, Pass 2 |
 | `b6cbcc9` apply Pass 1 findings and Beni's rulings | Claude | Codex, Pass 2 |
+| `044690c` stop quoting the import the boundary check rejects | Claude | Codex, Pass 2 |
 | The commits adding this brief and `pr-16-pass-0.md`, on `docs/pr-16-records` | Claude | the records-PR cold read |
 
 Any commit Codex pushes gets its cold read from the fresh Claude session at Pass 2.5.
@@ -106,7 +109,7 @@ The only address in Cursor's comment other than `noreply` ones is its own vendor
 
 ## Sealed appendix for Pass 2
 
-Pass 1's findings and this brief's dispositions are suspicions to re-derive, not conclusions. Codex reads the whole PR at the head, because it did not take Pass 1 here. It gives the plan a challenge from a vendor that will not build the spike, and gives the cold read of `b6cbcc9`. It reproduces or disproves each Pass 1 finding with its own commands, and runs the owner's private-list check (counts only, readable-file precheck, nonzero exit on a failed scan) over the diff, every commit message, the PR title and body, and every comment. Pass M does not apply.
+Pass 1's findings and this brief's dispositions are suspicions to re-derive, not conclusions. Codex reads the whole PR at the head, because it did not take Pass 1 here. It gives the plan a challenge from a vendor that will not build the spike, and gives the cold read of `b6cbcc9` and `044690c`. It reproduces or disproves each Pass 1 finding with its own commands, and runs the owner's private-list check (counts only, readable-file precheck, nonzero exit on a failed scan) over the diff, every commit message, the PR title and body, and every comment. Pass M does not apply.
 
 Leads for Codex's own read, none of them established:
 
