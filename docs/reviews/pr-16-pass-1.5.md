@@ -97,9 +97,43 @@ The PM's take on what `804720e` changed, without giving it a cold read:
 
 Out-of-scope items for the next ideas batch: a full export envelope with CSV and alert validation, per-series completeness and malformed replacement tests, from Codex's "Deliberately not done". Idea 32 covers part of this.
 
+## Pass 2.5's findings, as the PM takes them up
+
+The first Pass 2.5 is issuecomment-6590526388, at `c4c3e1f`, and `docs/reviews/pr-16-pass-2.5.md` holds its brief. Beni ruled to fix the four Mediums on this PR (ruling 15). The Pass 2.5 seat did not fix them: its prompt told it to push nothing, and `AGENTS.md` bars Pass 2.5 from a session that wrote a fix. The PM made the fix in `8419c84`, in a fresh clone.
+
+| Finding | Severity | Disposition | How the PM checked it | What changed |
+| --- | --- | --- | --- | --- |
+| M1 | Medium | accept | **Reproduced** on Node 24.22.2 and 26.13.0: `loadTerms` on `example-autocall.yaml` with `retrieved_at` on a source, or `as_of` at the top level, gives `ok=false` and `unknown-key`. `git grep -nE 'retrieved_at\|as_of' -- schemas` exits 1. Section 11 of the research lists `retrieved_at` under `sources` and a firing time under `alert_firings` | The spec says what the format holds, and defines the applicable data dates rule by rule, so AC12 has an oracle. The ADR follows and points to the spec |
+| M2 | Medium | accept, with a different command | **Reproduced**, in the table below. The fix prompt's command still passes one case | The claims list records the base, AC8 checks it against `main`, and AC11's first commit is taken from `origin/main` |
+| M3 | Medium | accept | **Read.** The prompt has been in the A4 row since `9e96d5f`, and `025f853` added it to AC12 | By ruling 16: A4 is after import only in both rows, and AC12 drops it. The ADR sentence and the 110 stand |
+| M4 | Medium | accept | **Read** | ADR Consequences and journey row 4.2 now agree with the data path |
+| L1 to L3 | Low | not fixed | Not re-checked | Carried to the next ideas batch |
+
+M2's command, in a scratch repo with `git`, reading exit codes. "Prompt" is `test "$(git rev-parse "<first spike commit>^")" = "$(git rev-parse "$KEEL_SPIKE_BASE")" && git diff --exit-code "$KEEL_SPIKE_BASE" HEAD -- . ':(exclude)spike/ios-core/**'`. "Spec" replaces the first `rev-parse` with `git merge-base origin/main HEAD`.
+
+| Case | Prompt | Spec |
+| --- | --- | --- |
+| Only spike changes, true base | 0 | 0 |
+| Only spike changes, base is `HEAD` | 1 | 1 |
+| Only spike changes, `main` moved after the cut, true base | 0 | 0 |
+| Only spike changes, no `origin/main` in the clone, true base | 0 | 1 |
+| Outside change, true base | 1 | 1 |
+| Outside change, base is `HEAD` | 1 | 1 |
+| Outside change in the first commit, with the base and the first commit both moved up one | **0** | 1 |
+| Outside change, empty base | 1 | 1 |
+| Outside change, bad base | 1 | 1 |
+
+The bold row is why the spec differs from the fix prompt: the prompt's two inputs can both be misreported, so it passes with an outside change. `git merge-base --is-ancestor` in AC11 stays on the first spike commit rather than moving to the base. On a branch cut before the spec and then merged with `main`, AC8's base test passes, and AC11 with `git rev-list --reverse origin/main..HEAD`'s first line exits 1.
+
+One addition goes beyond the fix prompt. A date the terms hold in conflict says so and names each candidate, under hard rule 6, because `example-autocall.yaml`'s maturity has `status: conflict` (`sed -n 26,28p fixtures/synthetic/terms/valid/example-autocall.yaml`), so A5's oracle needed an answer for that case. Which candidate sets A5's fire time stays open, and goes to the next ideas batch.
+
+For Codex at the re-read: AC12 no longer lists A4's prompt, because the prompt no longer exists. Ruling 12's words name the wording rule and do not name A4, and A8's observation-date timer stays in AC12. Check this against ruling 12, along with the AC8 command and the conflict clause.
+
+The fix prompt, as drafted by the Pass 2.5 seat, said Beni had already answered "No" on A4. Its transcript held only "Yes, fix first" at that point, and the same message called A4 open. The PM put the question to him directly, and ruling 16 is that answer.
+
 ## Authorship record
 
-From `git log --format='%h %an' origin/main..c4c3e1f`.
+From `git log --format='%h %an' origin/main..8419c84`.
 
 | Commit | Authoring vendor | Cold read by |
 | --- | --- | --- |
@@ -110,8 +144,9 @@ From `git log --format='%h %an' origin/main..c4c3e1f`.
 | `b6cbcc9` apply Pass 1 findings and Beni's rulings | Claude | Codex, Pass 2 |
 | `044690c` stop quoting the import the boundary check rejects | Claude | Codex, Pass 2 (issuecomment-6588858035) |
 | `804720e` tighten snapshot contracts and spike evidence checks | Codex | the fresh Claude session, Pass 2.5 |
-| `025f853` record Beni's rulings after Pass 2 | Claude | Codex, short re-read |
-| `c4c3e1f` put AC11 and AC12 in order | Claude | Codex, short re-read |
+| `025f853` record Beni's rulings after Pass 2 | Claude | Codex, short re-read (issuecomment-6589253253) |
+| `c4c3e1f` put AC11 and AC12 in order | Claude | Codex, short re-read (issuecomment-6589253253) |
+| `8419c84` fix the four Pass 2.5 Mediums and take A4's prompt out | Claude | Codex, second short re-read, to come |
 | The commits adding this brief and `pr-16-pass-0.md`, on `docs/pr-16-records` | Claude | the records-PR cold read |
 
 Any commit Codex pushes gets its cold read from the fresh Claude session at Pass 2.5.
@@ -139,6 +174,12 @@ After Pass 2, Beni ruled on 2026-11-02 on Codex's three questions, in the option
 12. **"Yes, with obligations (Recommended)"**, on "May the stale-notification High close on this docs PR without a test, because no code can land here?" An exception for this PR only. The spec gains AC12: the spike's harness tests the notification wording rule, and the test fails without it. ADR-0009 requires such a test to land with the real app before any notification text ships, because spike code never merges.
 13. **"No, stays conditional A (Recommended)"**, on "If only the standalone variant passes, does that formally select Path B?"
 14. **"No, keep the two medians (Recommended)"**, on "Should the load gate also require the same launches to meet both limits together?" The paired measurements stay reported.
+
+After Pass 2.5, Beni ruled on 2026-11-02 on its three questions, in the options below:
+
+15. **"Yes, fix first"**, on "Fix the four Mediums on PR #16 before merging?", answered in the Pass 2.5 session.
+16. **"No (Recommended)"**, on "Does A4's date-based prompt notify a closed app?", answered to the PM.
+17. **"Yes (Recommended)"**, on "Do rulings 1 to 14 and the Cursor seat stand as the PM recorded them?", answered to the PM.
 
 ## Privacy
 
