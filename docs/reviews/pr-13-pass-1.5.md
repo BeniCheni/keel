@@ -89,7 +89,7 @@ Beni ruled on 2026-11-01 (America/New_York), on questions the PM put with its re
 4. **"Accept it (Recommended)"**, on "Is two-stage reporting acceptable, where schema faults hide referential faults until they are fixed?" No code change.
 5. **"Reject it (Recommended)"**, on "Should -0 be rejected on integer terms?" `-0` becomes `wrong-type` on all seven integer terms, candidates included. `-1` stays what it is today. Pass 2 adds a `wrong-type-*` fixture for it, like the other token forms.
 
-The PM amends `docs/specs/s01-terms-schema.md` for rulings 2 to 5 on draft PR #14, once Pass 2.5 settles the code, so the spec and the merged loader agree. Until then these rulings govern over the spec's text. Pass 2 edits nothing under `docs/`, as Pass 1 did not: out-of-scope items go in the comment, and the PM carries them.
+The PM amends `docs/specs/s01-terms-schema.md` for rulings 2 to 5 on draft PR #14, once Pass 2.5 settles the code, so the spec and the merged loader agree. Until then these rulings govern over the spec's text. Like Pass 1, Pass 2 edits nothing under `docs/`: out-of-scope items go in the comment, and the PM carries them.
 
 ## PR body
 
