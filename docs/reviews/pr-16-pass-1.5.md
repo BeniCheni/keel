@@ -99,7 +99,7 @@ Out-of-scope items for the next ideas batch: a full export envelope with CSV and
 
 ## Pass 2.5's findings, as the PM takes them up
 
-The first Pass 2.5 is issuecomment-6590526388, at `c4c3e1f`, and `docs/reviews/pr-16-pass-2.5.md` holds its brief. Beni ruled to fix the four Mediums on this PR (ruling 15). The Pass 2.5 seat did not fix them: its prompt told it to push nothing, and `AGENTS.md` bars Pass 2.5 from a session that wrote a fix. The PM made the fix in `8419c84`, in a fresh clone.
+The first Pass 2.5 is issuecomment-6590526388, at `c4c3e1f`, and `docs/reviews/pr-16-pass-2.5.md` holds its brief. Beni ruled to fix the four Mediums on this PR (ruling 15). The Pass 2.5 seat did not fix them: its prompt told it to push nothing, and `AGENTS.md` bars Pass 2.5 from a session that wrote a fix. The PM made the fix in `8419c84`, in a fresh clone, and completed M2 in `19ea2f5` after Codex's re-read found that command could still fail open.
 
 | Finding | Severity | Disposition | How the PM checked it | What changed |
 | --- | --- | --- | --- | --- |
@@ -131,9 +131,42 @@ For Codex at the re-read: AC12 no longer lists A4's prompt, because the prompt n
 
 The fix prompt, as drafted by the Pass 2.5 seat, said Beni had already answered "No" on A4. Its transcript held only "Yes, fix first" at that point, and the same message called A4 open. The PM put the question to him directly, and ruling 16 is that answer.
 
+### Codex's re-read of `8419c84`
+
+Codex's re-read is issuecomment-6590981024. It reports M1, M3 and M4 fixed, finds that dropping A4's prompt does not narrow ruling 12, and finds that the conflict clause is not overreach. It also finds M2 incomplete, at Medium: AC8 at `8419c84` can exit 0 after a Git failure, and "fixes the four Mediums" in the PR body overstates M2's closure. The subject of `8419c84` says the same and cannot be changed.
+
+A second Pass 2.5 session then stopped before it began, because its prompt made an open finding a stop condition. It re-ran nothing, and wrote no gate verdict, brief or PR comment.
+
+The PM accepts the finding. **Reproduced** with Codex's steps in a scratch repo: the command at `8419c84` exits 0, `git diff --quiet "$base" HEAD -- . ':(exclude)spike/ios-core/**'` exits 1, and the command at `19ea2f5` exits 128. Ruling 15 already covers M2, so this needed no new ruling. "Spec" in the table above means the command at `8419c84`, and that table tested an empty and a bad base only with `origin/main` present, which is how it missed this case.
+
+`19ea2f5` uses Codex's proposed form, and these exit codes come from running the spec's own AC8 cell for the last column:
+
+| Case | `8419c84` | `19ea2f5` |
+| --- | --- | --- |
+| Only spike changes, true base | 0 | 0 |
+| Only spike changes, an annotated tag at the true base | 1 | 0 |
+| Only spike changes, base is `HEAD` | 1 | 1 |
+| Outside change, true base | 1 | 1 |
+| Outside change, base moved past it | 1 | 1 |
+| Outside change, base `--quiet` | 1 | 128 |
+| Outside change, empty base | 1 | 128 |
+| Outside change, base `--quiet`, no `origin/main` | **0** | 128 |
+| Outside change, true base, no `origin/main` | 1 | 128 |
+
+The PM also changed AC10, which no review had reported, because testing AC8 turned up the same kind of hole. AC10 said "prints nothing", and a failed `git grep` also prints nothing to standard output. Its `\|` is only a table escape, but a reader copying from the raw file gets a pattern that matches neither identifier. AC10 now uses two `-e` patterns and requires exit 1. Exit codes, with synthetic identifiers planted in a scratch repo:
+
+| Case | As rendered | As in the raw file | `19ea2f5` |
+| --- | --- | --- | --- |
+| Clean | 1 | 1 | 1 |
+| Team ID planted | 0 | **1** | 0 |
+| Device ID planted | 0 | **1** | 0 |
+| Outside a repo | 128 | 128 | 128 |
+
+For Codex at the next re-read: check both command changes, and whether `19ea2f5` changes anything else.
+
 ## Authorship record
 
-From `git log --format='%h %an' origin/main..8419c84`.
+From `git log --format='%h %an' origin/main..19ea2f5`.
 
 | Commit | Authoring vendor | Cold read by |
 | --- | --- | --- |
@@ -146,7 +179,8 @@ From `git log --format='%h %an' origin/main..8419c84`.
 | `804720e` tighten snapshot contracts and spike evidence checks | Codex | the fresh Claude session, Pass 2.5 |
 | `025f853` record Beni's rulings after Pass 2 | Claude | Codex, short re-read (issuecomment-6589253253) |
 | `c4c3e1f` put AC11 and AC12 in order | Claude | Codex, short re-read (issuecomment-6589253253) |
-| `8419c84` fix the four Pass 2.5 Mediums and take A4's prompt out | Claude | Codex, second short re-read, to come |
+| `8419c84` fix the four Pass 2.5 Mediums and take A4's prompt out | Claude | Codex, second short re-read (issuecomment-6590981024) |
+| `19ea2f5` complete M2, and stop AC8 and AC10 reading a Git failure as clean | Claude | Codex, third short re-read, to come |
 | The commits adding this brief and `pr-16-pass-0.md`, on `docs/pr-16-records` | Claude | the records-PR cold read |
 
 Any commit Codex pushes gets its cold read from the fresh Claude session at Pass 2.5.

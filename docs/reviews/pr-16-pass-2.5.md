@@ -2,7 +2,7 @@
 
 Recorded by the PM on 2026-11-02 (America/New_York). The Pass 2.5 session (Claude, fresh session, Opus 5.5 High) delivered this brief in chat, and its PR comment ([issuecomment-6590526388](https://github.com/BeniCheni/keel/pull/16#issuecomment-6590526388)) says the PM records it. It stands below as that session wrote it, except for the "Beni's decision" row in the gate log.
 
-Beni ruled "Yes, fix first" on question 1, so the handoff block below is void: it is pinned to `c4c3e1f`, and the head has moved to `8419c84`. A second Pass 2.5 reads the new head and writes the block he merges from. Questions 2 and 3 are answered first-hand in `pr-16-pass-1.5.md`, rulings 16 and 17.
+Beni ruled "Yes, fix first" on question 1, so the handoff block below is void: it is pinned to `c4c3e1f`, and the head has moved. A later Pass 2.5 reads the new head and writes the block he merges from. A session started for that at `8419c84` stopped before it began, on Codex's open finding, as `pr-16-pass-1.5.md` records. Questions 2 and 3 are answered first-hand in `pr-16-pass-1.5.md`, rulings 16 and 17.
 
 The PM re-ran these of the brief's numbers, and they hold:
 
@@ -160,7 +160,7 @@ The order of magnitude holds. The spec's narrower ranges, such as 93 to 103 ms, 
 | No sensitive path, dependency or schema change | Yes; 3 docs files |
 | Every commit cold-read by a non-author vendor | Yes; `804720e` by this seat, the other 8 by Cursor and Codex per the authorship record and comments |
 | Gate verdict | **Would escalate** |
-| Beni's decision (filled after) | Fix first (ruling 15). His merge decision follows the second Pass 2.5 |
+| Beni's decision (filled after) | Fix first (ruling 15). His merge decision follows the later Pass 2.5 |
 
 ## Questions for Beni
 
