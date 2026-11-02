@@ -101,3 +101,25 @@ test("a repeated ticker and a zero price are loader errors", () => {
     ]);
   }
 });
+
+test("an alias the parser cannot resolve is a diagnostic, not a throw", () => {
+  const minimal = textOf("valid", "minimal.yaml");
+  const unresolved = loadTerms(minimal.replace('value: "Example Bank SA"', "value: *nope"), "minimal.yaml");
+  expect(unresolved.ok).toBe(false);
+  if (!unresolved.ok) {
+    expect(unresolved.errors).toEqual([
+      expect.objectContaining({ code: "alias", path: "issuer.value", line: 6, column: 10 }),
+    ]);
+  }
+
+  let chain = minimal.replace("id: note-min\n", "id: note-min\nz0: &a0 [1]\n");
+  for (let i = 1; i <= 6; i += 1) {
+    chain += `z${i}: &a${i} [${Array.from({ length: 10 }, () => `*a${i - 1}`).join(", ")}]\n`;
+  }
+  const exhausted = loadTerms(chain, "minimal.yaml");
+  expect(exhausted.ok).toBe(false);
+  if (!exhausted.ok) {
+    expect(exhausted.errors.length).toBe(60);
+    expect(exhausted.errors.every((error) => error.code === "alias")).toBe(true);
+  }
+});

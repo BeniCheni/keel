@@ -87,7 +87,15 @@ export function loadTerms(text: string, fileName: string): LoadResult {
     if (code === null) continue;
     errors.push(diagnostic(fileName, code, path, scalar.pos.line, scalar.pos.column));
   }
-  const data = doc.toJS();
+  let data: unknown;
+  try {
+    data = doc.toJS();
+  } catch {
+    // yaml throws here on an alias it cannot resolve and on an alias chain past its count limit.
+    // The alias sites are already diagnostics; a throw with none recorded still names the fault.
+    if (!errors.some((error) => error.code === "alias")) errors.push(diagnostic(fileName, "alias", "", 1, 1));
+    return { ok: false, errors: dedupe(errors) };
+  }
   const schemaErrors = schemaDiagnostics(data, index, fileName);
   errors.push(...schemaErrors);
   if (schemaErrors.length === 0) {
