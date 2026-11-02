@@ -30,7 +30,7 @@ Beni ruled on 2026-11-02 (America/New_York), on questions the PM put with its re
 
 The prompt that set this spike says the free Personal Team, with its 7-day installs, is enough for the spike, and that when to pay for the Developer Program is Beni's call. Nothing here depends on paying. Whether and when to pay stays open for Beni.
 
-Beni also ruled on 2026-11-02, in the option "Take them all (Recommended)", on eleven questions the PM put after Pass 1. He ruled on three more after Pass 2: the stale-notification High closes on this docs PR with the obligations under AC12 and in ADR-0009; a `standalone`-only pass does not select Path B; and no joint per-launch gate applies. Each ruling is written into this spec where it applies, and `docs/reviews/pr-16-pass-1.5.md` lists them.
+Beni also ruled on 2026-11-02, in the option "Take them all (Recommended)", on eleven questions the PM put after Pass 1. He ruled on three more after Pass 2: the stale-notification High closes on this docs PR with the obligations under AC12 and in ADR-0009; a `standalone`-only pass does not select Path B; and no joint per-launch gate applies. After Pass 2.5 he ruled, the same day, that its four Mediums are fixed on this PR before it merges ("Yes, fix first"), and that A4's date-based prompt does not notify a closed app ("No (Recommended)"). Each ruling is written into this spec where it applies, and `docs/reviews/pr-16-pass-1.5.md` lists them.
 
 ## Is story 9.1 enough as the phone's only data path?
 
@@ -84,7 +84,7 @@ In the core column, `loadTerms`, `verificationSummary` and `dateFlags` exist at 
 | 3.5 Date sanity | Must | Read-only | `dateFlags`, which flags weekends only. The holiday calendar comes with the schedule slice | Export: terms | No |
 | 3.6 Change log | Should | Desktop-only | None | **Gap:** change log | No |
 | 4.1 One lifecycle status | Must | Read-only | Engine, with the phone's clock passed in | Export: terms and observations. "Unknown" past the last close | No |
-| 4.2 Worst-of level and distances | Must | Read-only | Engine metrics | Export: terms and observations, with the as-of date | No |
+| 4.2 Worst-of level and distances | Must | Read-only | Engine metrics | Export: terms and observations, with the applicable series dates | No |
 | 4.3 Observation log | Must | Read-only | Engine | Export: terms and observations | No |
 | 4.4 "No verified mark" | Must | Read-only | None | **Gap:** marks. Says "not in this export" until they travel | No |
 | 5.1 Worst-of chart | Must | Read-only | Engine metrics | Export: terms and observations | No |
@@ -95,7 +95,7 @@ In the core column, `loadTerms`, `verificationSummary` and `dateFlags` exist at 
 | 5.6 Takeaway and data table | Must | Read-only | Engine, takeaway text | As the chart it belongs to | No |
 | 6.1 Barrier proximity (A1) | Must | Read-only | Alert rules | Export: terms and observations | Wanted, but it cannot be scheduled ahead: it needs a new close. Shown after import |
 | 6.2 Observation reminders and result (A3) | Must | Primary for reminders; read-only for the result | Schedule, alert rules | Export: terms | Reminders: yes, scheduled ahead. Result: no, it needs a close |
-| 6.3 Call detected and reconciled (A4) | Must | Read-only | Alert rules | Export: terms and observations. **Gap:** positions, logged cash | Wanted, but it cannot be scheduled ahead. A date-based prompt names the observation date in the imported terms and the applicable closes present in that snapshot |
+| 6.3 Call detected and reconciled (A4) | Must | Read-only | Alert rules | Export: terms and observations. **Gap:** positions, logged cash | Wanted, but it cannot be scheduled ahead. Shown after import |
 | 6.4 Stale data (A8) | Must | Primary | Trading-day calendar, with the schedule slice | Last close date from the export | Yes, scheduled ahead as a timer that each import resets |
 | 6.5 Terms still unverified (A9) | Must | Primary | `verificationSummary`, schedule | Export: terms | Yes, scheduled ahead: T-30, T-7 and the weekly digest line |
 | 6.6 Quiet hours and digest | Must | Primary | Alert rules | Phone defaults. **Gap:** desktop settings | Governs every scheduled notification |
@@ -145,7 +145,7 @@ iOS gives the app no timed background run it can rely on (`BGTaskScheduler`'s `e
 | A1 Barrier proximity | Must | No | After import only |
 | A2 Likely call | Could | No | After import only |
 | A3 Observation approaching and result | Must | Reminders yes, result no | T-5 in the digest, T-1 as a notification, result after import |
-| A4 Call detected | Must | No | After import. A scheduled prompt names the observation date in the imported terms and the applicable closes present in that snapshot |
+| A4 Call detected | Must | No | After import only |
 | A5 Maturity approaching | Should | Yes | T-180, T-30, T-5 |
 | A6 Rating or outlook change | Should | Age only | Rating-age timer, only if the export carries a rating date |
 | A7 Large single-name move | Could | No | After import only |
@@ -157,13 +157,13 @@ iOS gives the app no timed background run it can rely on (`BGTaskScheduler`'s `e
 
 Two limits that follow, for the ADR:
 
-- A scheduled notification fires whatever has happened since. A note called on the desktop keeps its T-1 reminders on the phone until the next import cancels them. So each notification's first line says it comes from the imported snapshot and names the applicable data dates, or says that no observation date is present. Its title, subtitle and body describe only that snapshot and dates recorded in it. None claims a current desktop state: an observation still ahead, a note not called, a close missing on the desktop, terms still unverified, or a current rating. A9 says the terms were unverified in that snapshot; A8 names the closes that snapshot contains. An estimated date says it is estimated. The same wording covers a timer that fires early because the device clock moved.
-- The newest observation `as_of_date` is labelled only as the latest observation present, not as the export time or the freshness of every holding. Screens and notifications name the applicable holding and series dates; a newer close for one series cannot freshen another. With no observations, they say no observation date is present. Terms and alerts keep their own dated provenance; an observation date cannot date them. The import screen separately shows when the phone imported the files. The phone never uses a file's modification time, which AirDrop or Finder can change.
+- A scheduled notification fires whatever has happened since. A note called on the desktop keeps its T-1 reminders on the phone until the next import cancels them. So each notification's first line says it comes from the imported snapshot and names the applicable data dates, or says that no observation date is present. The applicable dates depend on the rule. A3's reminders, A5 and A9 name the date in the imported terms that the reminder concerns: the observation date for A3, the maturity date for A5 and the first observation date for A9. A8 names each series' latest close date in the snapshot and says which series have none. A notification says that no observation date is present only when the snapshot holds no observation, and A3, A5 and A9 still name their date from the terms then. Its title, subtitle and body describe only that snapshot and dates recorded in it. None claims a current desktop state: an observation still ahead, a note not called, a close missing on the desktop, terms still unverified, or a current rating. A9 says the terms were unverified in that snapshot; A8 names the closes that snapshot contains. An estimated date says it is estimated. A date the terms hold in conflict says so and names each candidate, under hard rule 6. The same wording covers a timer that fires early because the device clock moved.
+- The newest observation `as_of_date` is labelled only as the latest observation present, not as the export time or the freshness of every holding. Screens and notifications name the applicable holding and series dates; a newer close for one series cannot freshen another. With no observations, they say no observation date is present. At `3bceb20` the terms format has no provenance date: `loadTerms` reports `retrieved_at` on a source, or `as_of` at the top level, as `unknown-key`. Section 11's `alert_firings` table holds an alert's firing time. An observation date cannot date terms. The import screen separately shows when the phone imported the files. The phone never uses a file's modification time, which AirDrop or Finder can change.
 - The pending limit: An Apple staff answer confirms a limit of 64 pending requests per app, without promising which requests survive an overflow ([thread](https://developer.apple.com/forums/thread/811171)). Apple's `UNUserNotificationCenter` page states no number, so Q5 records what the device keeps, and whether a repeating trigger counts as one. Months 6 to 60 are 55 observations, which alone fit under 64. But T-1 and A8's observation-date timer make two requests per observation, 110 before A5 and A9, so the app selects the soonest requests itself within that limit and refills its rolling window on each open and import. It does not rely on the system to choose them. If the phone is not opened before that window ends, no later reminder is promised.
 
 ## Spike questions
 
-Commands assume `export KEEL_DATA_DIR="$(mktemp -d)"` and Node 24.22.2 unless a row says otherwise. `KEEL_SPIKE_BASE` names the frozen `main` SHA from which the spike branch was cut, recorded in the results. Each question's result goes in `docs/specs/s90-ios-core-spike-results.md`, which the PM writes after the review, so that this file stays as registered.
+Commands assume `export KEEL_DATA_DIR="$(mktemp -d)"` and Node 24.22.2 unless a row says otherwise. `KEEL_SPIKE_BASE` names the frozen `main` SHA from which the spike branch was cut. The spike PR's claims list records it before review, the results repeat it, and AC8 checks it against `main` instead of trusting it. The first spike commit in AC11 is the first line of `git rev-list --reverse origin/main..HEAD`, taken in the reviewer's clone. Each question's result goes in `docs/specs/s90-ios-core-spike-results.md`, which the PM writes after the review, so that this file stays as registered.
 
 **Prerequisite.** A full Xcode. This Mac has only the command-line tools today (`xcode-select -p` prints `/Library/Developer/CommandLineTools`). The iPhone needs Developer Mode on.
 
@@ -351,11 +351,11 @@ The spike consumes `@keel/core` as merged at its base SHA. Any core change it sh
 | AC5 | Load times are measured on macOS and on Beni's iPhone, in 5 fresh launches per variant | The Q3 lines; the device lines are Beni's run |
 | AC6 | Q4 and Q6 tables are filled, with a command or a source per row | PR body and results |
 | AC7 | Q5 is run by hand on the device | A checklist in the PR body, with Beni's results |
-| AC8 | The spike touches nothing outside its folder, relative to its frozen base; a Git failure fails the check | `git diff --exit-code "$KEEL_SPIKE_BASE" HEAD -- . ':(exclude)spike/ios-core/**'` exits 0 |
+| AC8 | The spike touches nothing outside its folder, relative to a frozen base that is the branch's fork point from `main`; a Git failure fails the check | `test "$(git merge-base origin/main HEAD)" = "$(git rev-parse "$KEEL_SPIKE_BASE")" && git diff --exit-code "$KEEL_SPIKE_BASE" HEAD -- . ':(exclude)spike/ios-core/**'` exits 0 |
 | AC9 | The repo's gate stays green on the spike branch | `pnpm install --frozen-lockfile && pnpm verify`, on Node 24.22.2 and 26.13.0 |
 | AC10 | No account identifier is committed | `git grep -n -E 'DEVELOPMENT_TEAM *= *[A-Z0-9]{10}\|[0-9A-F]{8}-[0-9A-F]{16}' -- spike/ios-core` prints nothing, plus the owner's private-list check |
 | AC11 | The spike branch was cut after this spec merged | `git merge-base --is-ancestor <this spec's squash> <first spike commit>` exits 0 |
-| AC12 | The notification wording rule has a test that can fail | `swift test --package-path spike/ios-core --filter NotificationWordingTests`. A pure function in the harness builds the title, subtitle and body for A3, A4's prompt, A5, A8 and A9 from a synthetic snapshot. The test asserts the rule under "Two limits that follow", and fails when that rule is removed from the function |
+| AC12 | The notification wording rule has a test that can fail | `swift test --package-path spike/ios-core --filter NotificationWordingTests`. A pure function in the harness builds the title, subtitle and body for A3, A5, A8 and A9 from a synthetic snapshot. The test asserts the rule under "Two limits that follow", and fails when that rule is removed from the function |
 
 ## Mutation floor
 
