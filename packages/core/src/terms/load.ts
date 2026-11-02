@@ -83,6 +83,8 @@ export function loadTerms(text: string, fileName: string): LoadResult {
   for (const site of aliasSites) errors.push(diagnostic(fileName, "alias", site.path, site.pos.line, site.pos.column));
   for (const [path, scalar] of index.scalars) {
     if (!isIntegerValuePath(path)) continue;
+    // A null token is the schema's to judge: legal under unknown, status-fields under any other status.
+    if (scalar.value === null) continue;
     const code = integerCode(scalar.raw);
     if (code === null) continue;
     errors.push(diagnostic(fileName, code, path, scalar.pos.line, scalar.pos.column));

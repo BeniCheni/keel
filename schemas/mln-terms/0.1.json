@@ -146,7 +146,11 @@
             "user"
           ]
         },
-        "value": true,
+        "value": {
+          "not": {
+            "type": "null"
+          }
+        },
         "source": {
           "$ref": "#/$defs/sourceId"
         }
@@ -269,7 +273,11 @@
               "source"
             ],
             "properties": {
-              "value": true,
+              "value": {
+                "not": {
+                  "type": "null"
+                }
+              },
               "source": true
             },
             "allOf": [
@@ -327,7 +335,11 @@
               "value"
             ],
             "properties": {
-              "value": true
+              "value": {
+                "not": {
+                  "type": "null"
+                }
+              }
             },
             "allOf": [
               {
@@ -396,7 +408,11 @@
               "rule"
             ],
             "properties": {
-              "value": true,
+              "value": {
+                "not": {
+                  "type": "null"
+                }
+              },
               "rule": true
             },
             "allOf": [
@@ -455,7 +471,11 @@
               "note"
             ],
             "properties": {
-              "value": true,
+              "value": {
+                "not": {
+                  "type": "null"
+                }
+              },
               "note": true
             },
             "allOf": [

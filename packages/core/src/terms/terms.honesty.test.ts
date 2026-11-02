@@ -224,3 +224,117 @@ test("an absent or empty schedule stays in the total", () => {
   expect(summary.verified).toBe(15);
   expect(summary.unverified).toEqual(["dates.observation_schedule"]);
 });
+
+/** Replaces the body of the n-th term block named `key` with the given lines, at the block's own indent. */
+function replaceTerm(text: string, key: string, occurrence: number, body: string[]): string {
+  const pattern = new RegExp(`^( *)${key}:\\n((?:\\1 {2}.*\\n)+)`, "gm");
+  let seen = 0;
+  let replaced = false;
+  const out = text.replace(pattern, (whole, indent: string) => {
+    if (seen++ !== occurrence) return whole;
+    replaced = true;
+    return `${indent}${key}:\n${body.map((line) => `${indent}  ${line}\n`).join("")}`;
+  });
+  if (!replaced) throw new Error(`no term block ${key}#${occurrence}`);
+  return out;
+}
+
+const TERM_ROWS: Array<{ path: string; key: string; occurrence: number; get: (terms: Terms) => unknown }> = [
+  { path: "issuer", key: "issuer", occurrence: 0, get: (terms) => terms.issuer },
+  { path: "dates.trade", key: "trade", occurrence: 0, get: (terms) => terms.dates.trade },
+  { path: "dates.settlement", key: "settlement", occurrence: 0, get: (terms) => terms.dates.settlement },
+  { path: "dates.maturity", key: "maturity", occurrence: 0, get: (terms) => terms.dates.maturity },
+  {
+    path: "dates.first_call_observation",
+    key: "first_call_observation",
+    occurrence: 0,
+    get: (terms) => terms.dates.first_call_observation,
+  },
+  ...[0, 1, 2, 3].map((index) => ({
+    path: `underlyings.members[${index}].initial`,
+    key: "initial",
+    occurrence: index,
+    get: (terms: Terms) => terms.underlyings.members[index]?.initial,
+  })),
+  {
+    path: "underlyings.performance_rounding",
+    key: "performance_rounding",
+    occurrence: 0,
+    get: (terms) => terms.underlyings.performance_rounding,
+  },
+  { path: "call.level", key: "level", occurrence: 0, get: (terms) => terms.call.level },
+  { path: "call.non_call_months", key: "non_call_months", occurrence: 0, get: (terms) => terms.call.non_call_months },
+  { path: "call.frequency", key: "frequency", occurrence: 0, get: (terms) => terms.call.frequency },
+  { path: "premium.rate_per_year", key: "rate_per_year", occurrence: 0, get: (terms) => terms.premium.rate_per_year },
+  { path: "premium.accrual", key: "accrual", occurrence: 0, get: (terms) => terms.premium.accrual },
+  { path: "barrier.level", key: "level", occurrence: 1, get: (terms) => terms.barrier.level },
+  { path: "barrier.observation", key: "observation", occurrence: 0, get: (terms) => terms.barrier.observation },
+  { path: "barrier.below_barrier", key: "below_barrier", occurrence: 0, get: (terms) => terms.barrier.below_barrier },
+  { path: "economics.issue_price", key: "issue_price", occurrence: 0, get: (terms) => terms.economics.issue_price },
+  {
+    path: "economics.estimated_value",
+    key: "estimated_value",
+    occurrence: 0,
+    get: (terms) => terms.economics.estimated_value,
+  },
+  { path: "economics.fees", key: "fees", occurrence: 0, get: (terms) => terms.economics.fees },
+];
+
+/** minimal.yaml plus the two optional integer terms, so every term path has a block to edit. */
+function minimalWithOptional(): string {
+  return textOf("valid", "minimal.yaml").replace(
+    "sources:\n",
+    "  estimated_value:\n    value: 20\n    status: user\n  fees:\n    value: 3\n    status: user\nsources:\n",
+  );
+}
+
+test("unknown stays null on every term path, integer terms included", () => {
+  const base = minimalWithOptional();
+  expect(TERM_ROWS).toHaveLength(21);
+  for (const row of TERM_ROWS) {
+    const loaded = loadTerms(replaceTerm(base, row.key, row.occurrence, ["value: null", "status: unknown"]), "minimal.yaml");
+    expect(loaded.ok, row.path).toBe(true);
+    if (!loaded.ok) continue;
+    expect(row.get(loaded.terms), row.path).toEqual({ status: "unknown", value: null });
+    expect(loaded.dateFlags[row.path], row.path).toBeUndefined();
+    expect(loaded.warnings, row.path).toEqual([]);
+  }
+});
+
+test("a null value is rejected under every status except unknown", () => {
+  const base = minimalWithOptional();
+  const bodies: Array<[string, string[]]> = [
+    ["primary", ["value: null", "status: primary", "source: supplement"]],
+    ["user", ["value: null", "status: user"]],
+    ["estimate", ["value: null", "status: estimate", 'rule: "Named rule."']],
+    ["assumed", ["value: null", "status: assumed", 'note: "Recorded default."']],
+  ];
+  const sample = ["issuer", "dates.maturity", "underlyings.members[0].initial", "call.level", "call.frequency"];
+  for (const row of TERM_ROWS.filter((candidate) => sample.includes(candidate.path))) {
+    for (const [status, body] of bodies) {
+      const loaded = loadTerms(replaceTerm(base, row.key, row.occurrence, body), "minimal.yaml");
+      expect(loaded.ok, `${status} ${row.path}`).toBe(false);
+      if (loaded.ok) continue;
+      expect(loaded.errors, `${status} ${row.path}`).toEqual([
+        expect.objectContaining({ code: "status-fields", path: `${row.path}.value` }),
+      ]);
+    }
+  }
+
+  const conflict = replaceTerm(base, "maturity", 0, [
+    "status: conflict",
+    "candidates:",
+    "  - value: null",
+    "    status: primary",
+    "    source: supplement",
+    "  - value: 2031-03-04",
+    "    status: user",
+  ]);
+  const loaded = loadTerms(conflict, "minimal.yaml");
+  expect(loaded.ok).toBe(false);
+  if (!loaded.ok) {
+    expect(loaded.errors).toEqual([
+      expect.objectContaining({ code: "status-fields", path: "dates.maturity.candidates[0].value" }),
+    ]);
+  }
+});
