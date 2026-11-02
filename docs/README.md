@@ -15,14 +15,15 @@ Every slice moves through up to four rungs: proposal (the research behind the pr
 | S00.2 Test-registration guard (PR #10) | toward `v0.1.0` (non-release) | none, by Beni's ruling 5 in `reviews/pr-8-pass-2.5.md`, which holds the build brief | none (no UI) | `reviews/pr-10-pass-0.md`, `reviews/pr-10-pass-1.5.md`, `reviews/pr-10-pass-2.5.md` (executive brief) | merged 2026-11-01 at squash `44fa3ae`, reviewed head `5989f81` |
 | Ideas 10 to 20 from the PR #8 and PR #10 reviews (PR #12) | n/a | none | none | `reviews/pr-12-pass-0.md` | merged 2026-11-01 at squash `0f20993`, reviewed head `9966875` (fast-track) |
 | S01 Terms schema 0.1 and loader (PR #13) | toward `v0.1.0` (non-release) | `specs/s01-terms-schema.md` | none (no UI) | `reviews/pr-13-pass-0.md`, `reviews/pr-13-pass-1.5.md`, `reviews/pr-13-pass-2.5.md` (executive brief) | merged 2026-11-02 at squash `3bceb20`, reviewed head `c527df8` |
+| S90 iOS core spike (spec PR #16) | post-`v0.1.0` spike, not a slice toward `v0.1.0` | `specs/s90-ios-core-spike.md` | none (no UI design) | none yet | spec in plan challenge; ADR-0009 Proposed |
 
 Folders:
 
 - `proposals/`: scrubbed copies of the product research. `0001-product-research.md` holds Sections 1 to 4, 8 and 11 (personas, user stories, chart and alert catalogs, UX direction, Milestone 1 specification). The original is private because it names a real holding.
-- `specs/`: one file per slice, `sNN-<slug>.md`, or `sNN.M-<slug>.md` for a follow-up slice Beni numbers that way.
+- `specs/`: one file per slice, `sNN-<slug>.md`, or `sNN.M-<slug>.md` for a follow-up slice Beni numbers that way. A spike keeps its results in a separate `sNN-<slug>-results.md`, so that its pre-registered spec stays as written.
 - `design/`: design briefs and Executive Handoff Briefs. Prototypes themselves stay in the local-only top-level `/design/` folder, which `.gitignore` excludes; `docs/design/` is tracked.
 - `reviews/`: `pr-<N>-pass-0.md`, `pr-<N>-pass-1.5.md`, executive briefs worth keeping, and `gate-activation.md` once Beni ends shadow mode.
-- `adr/`: architecture decision records, `NNNN-<slug>.md`. ADR-0001 to 0008 record the Milestone 1 architecture: Tauri shell, core without I/O, terms as YAML with provenance, SQLite outside the repo, no value without evidence, bring-your-own-key connectors, end-of-day check, Monte Carlo isolated.
+- `adr/`: architecture decision records, `NNNN-<slug>.md`. ADR-0009 (Proposed) records the post-M1 iOS companion and supersedes nothing. ADR-0001 to 0008 record the Milestone 1 architecture: Tauri shell, core without I/O, terms as YAML with provenance, SQLite outside the repo, no value without evidence, bring-your-own-key connectors, end-of-day check, Monte Carlo isolated.
 - `providers/`: one terms review per data connector.
 - `v0.1.0-ideas.md`: ranked candidates. Never a release scope.
 
