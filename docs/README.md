@@ -14,7 +14,7 @@ Every slice moves through up to four rungs: proposal (the research behind the pr
 | Scrubbed product research (PR #9) | n/a | none; adds `proposals/0001-product-research.md` | none | `reviews/pr-9-pass-0.md` | merged 2026-11-01 at squash `7b6eddd`, reviewed head `c0ff7d5` (fast-track) |
 | S00.2 Test-registration guard (PR #10) | toward `v0.1.0` (non-release) | none, by Beni's ruling 5 in `reviews/pr-8-pass-2.5.md`, which holds the build brief | none (no UI) | `reviews/pr-10-pass-0.md`, `reviews/pr-10-pass-1.5.md`, `reviews/pr-10-pass-2.5.md` (executive brief) | merged 2026-11-01 at squash `44fa3ae`, reviewed head `5989f81` |
 | S01 Terms schema 0.1 and loader | toward `v0.1.0` (non-release) | `specs/s01-terms-schema.md` | none (no UI) | `reviews/pr-<N>-*` | spec revised 2026-10-30 after the plan challenge |
-| S90 iOS core spike | post-`v0.1.0` spike, not a slice toward `v0.1.0` | `specs/s90-ios-core-spike.md` | none (no UI design) | none yet | spec in plan challenge; ADR-0009 Proposed |
+| S90 iOS core spike (spec PR #16) | post-`v0.1.0` spike, not a slice toward `v0.1.0` | `specs/s90-ios-core-spike.md` | none (no UI design) | none yet | spec in plan challenge; ADR-0009 Proposed |
 
 Folders:
 
