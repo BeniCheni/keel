@@ -4,7 +4,7 @@ Written by the PM on 2026-11-02 (America/New_York), from a fresh read of the PR.
 
 ## Seat for the cold review
 
-Codex, GPT-6.1 Sol High, because a Claude session wrote every line. The seat has no fallback, so if it is unavailable, stop and escalate.
+Cursor, Grok 4.7 High, by Beni's word on 2026-11-02. Codex, the usual seat, is at its usage limit until after 3:50 PM, and Beni wrote: "Update your cold-read prompts for Cursor & Grok 4.7." `AGENTS.md` asks for one cold review by a vendor that did not write the PR. A Claude session wrote every line, and Cursor wrote none. Cursor did build `26b661f`, the loader's first commit, which item 1 below reads against, so it says so in its comment and does not re-judge that commit. If this seat is unavailable, stop and escalate.
 
 ## Scope
 
@@ -20,11 +20,11 @@ From `git log --no-merges --format='%h %an' origin/main..HEAD`. The PR also hold
 
 | Commit | Authoring vendor | Cold read by |
 | --- | --- | --- |
-| Every commit on the branch, this brief's included | Claude | Codex |
+| Every commit on the branch, this brief's included | Claude | Cursor |
 
 ## Fast-track
 
-Allowed: the diff is docs outside sensitive paths, and this is not a release or numbering fork. One cold review by Codex replaces Passes 1 to 2.5. Fast-track changes review depth only: Beni still merges in shadow mode, and "fast-track" goes in the squash message.
+Allowed: the diff is docs outside sensitive paths, and this is not a release or numbering fork. One cold review by Cursor replaces Passes 1 to 2.5. Fast-track changes review depth only: Beni still merges in shadow mode, and "fast-track" goes in the squash message.
 
 ## What to check, beyond the skill's standing checks
 
@@ -32,7 +32,7 @@ Allowed: the diff is docs outside sensitive paths, and this is not a release or 
 2. **The rulings.** Do the amendments say what Beni ruled, and no more? The words are under "Rulings from Beni" in `docs/reviews/pr-13-pass-1.5.md`, which lands in PR #15.
 3. **Sources.** Does each new row's source exist, in the pass it names? Check against the comments on PR #13 and the briefs on `docs/pr-13-records`.
 4. **Nothing dropped.** Does every item those records route to the ideas file appear in a row? The lists are in "More ideas-file entries for the PM" in `pr-13-pass-1.5.md`, and "Risks and accepted costs" and "Carried to the ideas file" in `pr-13-pass-2.5.md`.
-5. **Overclaims.** Does any row claim more than its record does? Ideas 26, 28 and 32 are the ones to test. Idea 32 cites the S90 spec, which lands in a later PR.
+5. **Overclaims.** Does any row claim more than its record does? Ideas 26, 28, 32 and 33 are the ones to test. Idea 32 cites the S90 spec, which lands in a later PR.
 6. **Line references.** Do the file and line references in the rows match `main` at `3bceb20`?
 7. **Existing rows.** Are ideas 1 to 20 and the "Taken up or ruled out" table unchanged (`git diff origin/main...HEAD -- docs/v0.1.0-ideas.md | grep -c '^-[^-]'`)? Idea 21's rewrite is inside a row this PR adds, so nothing should be removed.
-8. **Private list.** The owner's private-list check, which no Claude seat runs, over the diff, the commit messages, the PR title and body, and every comment.
+8. **Private list.** Not the cold reader's. Beni runs the owner's private-list check himself over the diff, the commit messages, the PR title and body, and every comment, Cursor's included. Neither a Claude seat nor this seat opens that file.
