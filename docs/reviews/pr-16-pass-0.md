@@ -1,6 +1,6 @@
 # Pass 0 brief: PR #16 (S90 iOS core spike spec, phone journey and ADR-0009)
 
-Written by the PM on 2026-11-02 (America/New_York), at `8cdd91c65b403886f0018e994ed4a5a151b68029`. The same Claude session wrote the PR and this brief, so Pass 1 and Pass 2 are its cold reads. This brief lives on branch `docs/pr-16-records`, not on the PR branch.
+Written by the PM on 2026-11-02 (America/New_York), at `8cdd91c65b403886f0018e994ed4a5a151b68029`. The head then moved to `8c0deafc0e1f472cc6fc4c1a6d96b89bfc3eec65`, a merge of `origin/main` that resolves one conflict in `docs/README.md` and changes nothing else in this PR. The same Claude session wrote the PR and this brief, so Pass 1 and Pass 2 are its cold reads. This brief lives on branch `docs/pr-16-records`, not on the PR branch.
 
 ## Seat for Pass 1
 

@@ -15,6 +15,7 @@ Every slice moves through up to four rungs: proposal (the research behind the pr
 | S00.2 Test-registration guard (PR #10) | toward `v0.1.0` (non-release) | none, by Beni's ruling 5 in `reviews/pr-8-pass-2.5.md`, which holds the build brief | none (no UI) | `reviews/pr-10-pass-0.md`, `reviews/pr-10-pass-1.5.md`, `reviews/pr-10-pass-2.5.md` (executive brief) | merged 2026-11-01 at squash `44fa3ae`, reviewed head `5989f81` |
 | Ideas 10 to 20 from the PR #8 and PR #10 reviews (PR #12) | n/a | none | none | `reviews/pr-12-pass-0.md` | merged 2026-11-01 at squash `0f20993`, reviewed head `9966875` (fast-track) |
 | S01 Terms schema 0.1 and loader (PR #13) | toward `v0.1.0` (non-release) | `specs/s01-terms-schema.md` | none (no UI) | `reviews/pr-13-pass-0.md`, `reviews/pr-13-pass-1.5.md`, `reviews/pr-13-pass-2.5.md` (executive brief) | merged 2026-11-02 at squash `3bceb20`, reviewed head `c527df8` |
+| Ideas 21 to 33 and the S01 spec amendments (PR #14) | n/a | amends `specs/s01-terms-schema.md` | none | `reviews/pr-14-pass-0.md` | merged 2026-11-02 at squash `2ed7b44`, reviewed head `0837d66` (fast-track) |
 
 Folders:
 
