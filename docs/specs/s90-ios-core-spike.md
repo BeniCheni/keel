@@ -30,7 +30,7 @@ Beni ruled on 2026-11-02 (America/New_York), on questions the PM put with its re
 
 The prompt that set this spike says the free Personal Team, with its 7-day installs, is enough for the spike, and that when to pay for the Developer Program is Beni's call. Nothing here depends on paying. Whether and when to pay stays open for Beni.
 
-Beni also ruled on 2026-11-02, in the option "Take them all (Recommended)", on eleven questions the PM put after Pass 1. Each is written into this spec where it applies, and `docs/reviews/pr-16-pass-1.5.md` lists them.
+Beni also ruled on 2026-11-02, in the option "Take them all (Recommended)", on eleven questions the PM put after Pass 1. He ruled on three more after Pass 2: the stale-notification High closes on this docs PR with the obligations under AC12 and in ADR-0009; a `standalone`-only pass does not select Path B; and no joint per-launch gate applies. Each ruling is written into this spec where it applies, and `docs/reviews/pr-16-pass-1.5.md` lists them.
 
 ## Is story 9.1 enough as the phone's only data path?
 
@@ -311,10 +311,11 @@ Registered here before any spike code exists. The spike branch is cut from a `ma
 
 Pre-registered edge cases:
 
-- If only `standalone` passes, the unedited core has not met the rule at that SHA. The results report Path A as conditional on that core change landing through the normal workflow, and Beni rules on it as a close call.
+- If only `standalone` passes, the unedited core has not met the rule at that SHA. The results report Path A as conditional on that core change landing through the normal workflow, and Beni rules on it as a close call. It does not select Path B.
 - A host shim may define host globals the bundle calls, such as `console`, and nothing else. A shim that changes a result is a core change. So is any other change needed in core. Clause 1 then fails at that SHA, and the results say what would fix it, so Beni can weigh it as a close call.
 - A second locale that cannot be run in an engine fails clause 1, as under Q2.
 - A divergence on a reported edge case, and a worst run, are reported and do not gate.
+- The two medians gate separately, and no joint per-launch gate applies. The paired measurements are reported, so Beni can see a result where the medians pass and few launches meet both limits.
 - A harness that cannot fail, or a skipped comparison, is not a pass. Q1 failing means Q2 cannot pass.
 - The path-neutral items under Q5 do not count for either path.
 - Q4's size informs Beni's reading of a close call. It does not override a clear result either way.
@@ -353,6 +354,7 @@ The spike consumes `@keel/core` as merged at its base SHA. Any core change it sh
 | AC8 | The spike touches nothing outside its folder, relative to its frozen base; a Git failure fails the check | `git diff --exit-code "$KEEL_SPIKE_BASE" HEAD -- . ':(exclude)spike/ios-core/**'` exits 0 |
 | AC9 | The repo's gate stays green on the spike branch | `pnpm install --frozen-lockfile && pnpm verify`, on Node 24.22.2 and 26.13.0 |
 | AC10 | No account identifier is committed | `git grep -n -E 'DEVELOPMENT_TEAM *= *[A-Z0-9]{10}\|[0-9A-F]{8}-[0-9A-F]{16}' -- spike/ios-core` prints nothing, plus the owner's private-list check |
+| AC12 | The notification wording rule has a test that can fail | `swift test --package-path spike/ios-core --filter NotificationWordingTests`. A pure function in the harness builds the title, subtitle and body for A3, A4's prompt, A5, A8 and A9 from a synthetic snapshot. The test asserts the rule under "Two limits that follow", and fails when that rule is removed from the function |
 | AC11 | The spike branch was cut after this spec merged | `git merge-base --is-ancestor <this spec's squash> <first spike commit>` exits 0 |
 
 ## Mutation floor
@@ -365,7 +367,8 @@ The harness is the claim, so it must be shown able to fail. Listed in the PR bod
 - adding a `node:fs` import to the bundle's entry;
 - adding `montecarlo` to the bundle;
 - running both "locales" under one locale;
-- running a variant on fewer than 31 fixtures.
+- running a variant on fewer than 31 fixtures;
+- dropping the snapshot first line from a notification built by the harness.
 
 The spike PR's claims list gives one command per row, and each of those commands exits nonzero. AC4 is the first row's. The others are names until that PR. Each command first proves the unmodified comparison passes, introduces only its named mutation, and checks for the intended mismatch or coverage failure. A missing tool, a setup error or an unrelated nonzero exit is not a killed mutant. After restoration, the comparison must pass again.
 
