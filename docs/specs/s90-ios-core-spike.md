@@ -1,6 +1,6 @@
 # S90: iOS core spike
 
-- Status: spec drafted 2026-11-02 by the PM (Claude). It goes to Codex as Pass 1, the plan challenge, before any spike code exists.
+- Status: spec drafted 2026-11-02 by the PM (Claude). It goes through the plan challenge before any spike code exists: Cursor takes Pass 1 by Beni's word of 2026-11-02, while Codex is at its usage limit, and Codex reads the whole spec at Pass 2 before it merges.
 - Release: post-`v0.1.0` spike. Not a slice toward `v0.1.0`, and no change to the Milestone 1 slice plan.
 - Builder: Cursor, Grok 4.7 High, in one draft PR on branch `s90/ios-core-spike`.
 - Sensitive paths touched: none. The spike consumes `@keel/core` as merged and edits nothing outside `spike/ios-core/`.
@@ -26,6 +26,7 @@ Beni ruled on 2026-11-02 (America/New_York), on questions the PM put with its re
 | Timing | "In parallel now (Recommended)" | The spike runs beside M1. M1 PRs keep priority in the review queue, and spike PRs wait behind them |
 | Number | "S90 (Recommended)" | This file, and branch `s90/ios-core-spike` |
 | Spike code | "Throwaway branch (Recommended)" | Spec, ADR and results merge. The spike branch stays pushed and is never merged, and the results name its SHA. No Swift job lands on M1 PRs, and no check or sensitive path changes |
+| Plan challenge seat | "Use Cursor there too", on "Should PR #16's plan challenge wait for Codex?" | Cursor takes Pass 1 on the spec PR and pushes nothing. `AGENTS.md` names Codex for this pass, so this holds for this PR only. Codex gives Pass 2 before the spec merges |
 
 The prompt that set this spike says the free Personal Team, with its 7-day installs, is enough for the spike, and that when to pay for the Developer Program is Beni's call. Nothing here depends on paying. Three things stay open for Beni: the thresholds under "Decision rule", which he sets before spike code starts; whether and when to pay; and the reading of hard rule 12 under "Open questions".
 
@@ -346,7 +347,7 @@ The harness is the claim, so it must be shown able to fail. Listed in the PR bod
 
 ## Seats
 
-Cursor builds in one draft PR. The spec PR gets Codex as Pass 1, the plan challenge. The spike PR runs through `/keel-pr-review`, with no sensitive path touched: Pass 1 is Claude Code on Opus 5.5 High, Pass 2 is Codex on GPT-6.1 Sol High, and Pass 2.5 is a fresh Claude session on Opus 5.5 High. After Pass 2.5, Beni closes the PR unmerged and the branch stays. The PM then writes the results and any ADR change in a docs PR.
+Cursor builds in one draft PR. On the spec PR, Pass 1 is Cursor by the ruling above, and Pass 2 is Codex, so that a vendor that will not build the spike challenges the plan before it binds. The spike PR runs through `/keel-pr-review`, with no sensitive path touched: Pass 1 is Claude Code on Opus 5.5 High, Pass 2 is Codex on GPT-6.1 Sol High, and Pass 2.5 is a fresh Claude session on Opus 5.5 High. After Pass 2.5, Beni closes the PR unmerged and the branch stays. The PM then writes the results and any ADR change in a docs PR.
 
 ## Open questions
 
