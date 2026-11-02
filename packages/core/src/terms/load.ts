@@ -18,7 +18,8 @@ const INTEGER_OWNERS = new Set([
 
 const PLAIN_INTEGER = /^-?(?:0|[1-9][0-9]*)$/;
 const MAX_SAFE = BigInt(Number.MAX_SAFE_INTEGER);
-const SCHEMA_LINE = "schema: mln-terms/0.1";
+const SCHEMA_VALUE = "mln-terms/0.1";
+const SCHEMA_LINE = `schema: ${SCHEMA_VALUE}`;
 
 function isIntegerValuePath(path: string): boolean {
   if (!path.endsWith(".value")) return false;
@@ -38,6 +39,12 @@ function schemaLineOk(text: string): boolean {
   const line = end === -1 ? text : text.slice(0, end);
   const stripped = line.endsWith("\r") ? line.slice(0, -1) : line;
   return stripped === SCHEMA_LINE;
+}
+
+/** True when the parsed root is a mapping whose schema value is the marker and nothing more (a continuation line would extend it). */
+function carriesMarker(data: unknown): boolean {
+  if (typeof data !== "object" || data === null || Array.isArray(data)) return false;
+  return (data as Record<string, unknown>).schema === SCHEMA_VALUE;
 }
 
 function dedupe(errors: Diagnostic[]): Diagnostic[] {
@@ -98,6 +105,7 @@ export function loadTerms(text: string, fileName: string): LoadResult {
     if (!errors.some((error) => error.code === "alias")) errors.push(diagnostic(fileName, "alias", "", 1, 1));
     return { ok: false, errors: dedupe(errors) };
   }
+  if (!carriesMarker(data)) errors.push(diagnostic(fileName, "schema-line", "schema", 1, 1));
   const schemaErrors = schemaDiagnostics(data, index, fileName);
   errors.push(...schemaErrors);
   if (schemaErrors.length === 0) {

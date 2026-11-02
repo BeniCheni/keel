@@ -338,3 +338,14 @@ test("a null value is rejected under every status except unknown", () => {
     ]);
   }
 });
+
+test("the schema marker is the whole value on line 1, never a literal the loader supplies", () => {
+  const text = textOf("valid", "minimal.yaml").replace("schema: mln-terms/0.1\n", "schema: mln-terms/0.1\n  extra\n");
+  const result = loadTerms(text, "minimal.yaml");
+  expect(result.ok).toBe(false);
+  if (!result.ok) {
+    expect(result.errors).toEqual([
+      expect.objectContaining({ code: "schema-line", path: "schema", line: 1, column: 1 }),
+    ]);
+  }
+});
