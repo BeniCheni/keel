@@ -1,6 +1,6 @@
 # S01: Terms schema 0.1 and strict loader
 
-- Status: revised 2026-10-30 by the PM (Claude) after the Codex plan challenge on PR #1 (Pass 1 findings 10 to 14; dispositions in `docs/reviews/pr-1-pass-1.5.md`).
+- Status: revised 2026-10-30 by the PM (Claude) after the Codex plan challenge on PR #1 (Pass 1 findings 10 to 14; dispositions in `docs/reviews/pr-1-pass-1.5.md`). Amended 2026-11-02 by the PM for Beni's rulings of 2026-11-01 on PR #13 (`docs/reviews/pr-13-pass-1.5.md`), to match the merged loader.
 - Release: non-release slice toward `v0.1.0`. Starts only after S00 is merged.
 - Builder: Cursor, Grok 4.7 Extra High (sensitive-path slice).
 - Sensitive paths touched: `schemas/**`, `packages/core/**`, `tools/tripwire/allowlist.txt`.
@@ -63,7 +63,7 @@ Unknown keys are errors at every level. Plain fields are not terms.
 | `identifiers.isin` | no | term | string `^[A-Z]{2}[0-9A-Z]{9}[0-9]$` |
 | `issuer` | yes | term | string, 1 to 200 characters |
 | `dates.trade`, `dates.settlement`, `dates.maturity`, `dates.first_call_observation` | yes | term | ISO date `YYYY-MM-DD`, a real Gregorian date |
-| `dates.observation_schedule` | no | list of 1 to 400 terms | each an ISO date; known values strictly increasing |
+| `dates.observation_schedule` | no | list of 1 to 400 terms | each an ISO date; known values strictly increasing. A conflict entry has no known value and takes no part in the order check |
 | `underlyings.basket` | yes | plain | `worst_of` |
 | `underlyings.members` | yes | list of 1 to 10 | each `{ ticker, initial }`; `ticker` plain, `^[A-Z][A-Z0-9.]{0,9}$`, unique |
 | `underlyings.members[i].initial` | yes | term | decimal string `^(0|[1-9][0-9]{0,9})(\.[0-9]{1,6})?$`, greater than zero |
@@ -83,16 +83,20 @@ Unknown keys are errors at every level. Plain fields are not terms.
 
 ### Schema versus loader
 
-The JSON Schema (`schemas/mln-terms/0.1.json`, draft 2020-12) enforces structure, required fields, types, enums, ranges, patterns (including the path grammar and source IDs), unknown keys, and the per-status companions as discriminated definitions. The loader runs the schema and maps each schema failure to an error code (a path-grammar failure is `source-path`, a range failure `out-of-range`, and so on). The loader alone enforces what JSON Schema cannot see: YAML lexical rules (line 1, duplicate keys, anchors and aliases, positions), that each `source` exists and its kind matches the status, real Gregorian dates, schedule order, and the CUSIP check-digit warning.
+The JSON Schema (`schemas/mln-terms/0.1.json`, draft 2020-12) enforces structure, required fields, types, enums, ranges, patterns (including the path grammar and source IDs), unknown keys, and the per-status companions as discriminated definitions. The loader runs the schema and maps each schema failure to an error code (a path-grammar failure is `source-path`, a range failure `out-of-range`, and so on). The loader alone enforces what JSON Schema cannot see: YAML lexical rules (line 1, duplicate keys, anchors and aliases, positions), that each `source` exists and its kind matches the status, real Gregorian dates, schedule order, ticker uniqueness, and the CUSIP check-digit warning.
+
+An integer field accepts one token form: `0`, or an optional minus and digits with no leading zero. Any other numeric form, `-0` included, is `wrong-type`, and a magnitude above `Number.MAX_SAFE_INTEGER` is `out-of-range`. A token fault replaces any schema fault at the same path.
+
+Referential checks run only after the schema passes. A file with both kinds of fault reports its schema faults, and the referential faults once those are fixed.
 
 ## Scope
 
 1. **Schema** as above.
 2. **Loader.** `loadTerms(text: string, fileName: string)` in `packages/core/src/terms/`. Pure: it takes text and never reads files. It returns either `{ ok: true, terms, warnings, dateFlags }` or `{ ok: false, errors }`.
    - `terms` holds only values that came from the file. Absent optional fields stay absent; nothing is defaulted.
-   - `warnings` and `errors` are diagnostics `{ code, path, line, column, message }`, in document order. `message` is a sentence a person can act on.
+   - `warnings` and `errors` are diagnostics `{ code, path, line, column, message }`, in document order. Diagnostics at the same line and column are ordered by path in code-unit order, never by locale. `message` is a sentence a person can act on.
    - `dateFlags` maps a term path to its flags.
-   - Error codes: `yaml-syntax`, `schema-line`, `duplicate-key`, `alias`, `unknown-key`, `missing-required`, `wrong-type`, `out-of-range`, `invalid-date`, `unknown-status`, `status-fields`, `conflict-candidates`, `source-missing`, `source-kind`, `source-path`, `schedule-order`. Warning code: `cusip-check-digit`.
+   - Error codes: `yaml-syntax`, `schema-line`, `duplicate-key`, `alias`, `unknown-key`, `missing-required`, `wrong-type`, `out-of-range`, `invalid-date`, `unknown-status`, `status-fields`, `conflict-candidates`, `source-missing`, `source-kind`, `source-path`, `schedule-order`, `duplicate-ticker`. Warning code: `cusip-check-digit`.
 3. **Paths** in diagnostics, flags and the summary are written as dotted keys with zero-based list indices, for example `underlyings.members[2].initial`.
 4. **Verification summary.** `verificationSummary(terms)` returns `{ verified, total, unverified }`. Every payoff term is critical, so there is one list. The payoff paths, in this fixed order:
    1. `dates.maturity`
