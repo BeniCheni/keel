@@ -1,0 +1,2143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mln-terms/0.1",
+  "title": "mln-terms/0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "id",
+    "category",
+    "structure",
+    "issuer",
+    "dates",
+    "underlyings",
+    "call",
+    "premium",
+    "barrier",
+    "economics",
+    "sources"
+  ],
+  "properties": {
+    "schema": {
+      "const": "mln-terms/0.1"
+    },
+    "id": {
+      "$ref": "#/$defs/sourceId"
+    },
+    "category": {
+      "const": "mln"
+    },
+    "structure": {
+      "const": "autocall-snowball-worst-of"
+    },
+    "identifiers": {
+      "$ref": "#/$defs/identifiers"
+    },
+    "issuer": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/term"
+        },
+        {
+          "allOf": [
+            {
+              "if": {
+                "type": "object",
+                "required": [
+                  "value"
+                ],
+                "properties": {
+                  "value": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              },
+              "then": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "$ref": "#/$defs/textValue"
+                  }
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "candidates": {
+                  "type": "array",
+                  "items": {
+                    "if": {
+                      "type": "object",
+                      "required": [
+                        "value"
+                      ],
+                      "properties": {
+                        "value": {
+                          "not": {
+                            "type": "null"
+                          }
+                        }
+                      }
+                    },
+                    "then": {
+                      "type": "object",
+                      "properties": {
+                        "value": {
+                          "$ref": "#/$defs/textValue"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "dates": {
+      "$ref": "#/$defs/dates"
+    },
+    "underlyings": {
+      "$ref": "#/$defs/underlyings"
+    },
+    "call": {
+      "$ref": "#/$defs/call"
+    },
+    "premium": {
+      "$ref": "#/$defs/premium"
+    },
+    "barrier": {
+      "$ref": "#/$defs/barrier"
+    },
+    "economics": {
+      "$ref": "#/$defs/economics"
+    },
+    "sources": {
+      "$ref": "#/$defs/sources"
+    }
+  },
+  "$defs": {
+    "sourceId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+    },
+    "sourcePath": {
+      "type": "string",
+      "pattern": "^(?=.{1,255}$)(?:(?!\\.\\.?(/|$))[A-Za-z0-9._-]+)(?:/(?:(?!\\.\\.?(/|$))[A-Za-z0-9._-]+))*$"
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "value"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "primary",
+            "document",
+            "advisor",
+            "user"
+          ]
+        },
+        "value": true,
+        "source": {
+          "$ref": "#/$defs/sourceId"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "const": "user"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "not": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "properties": {
+                "source": true
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "enum": [
+                  "primary",
+                  "document",
+                  "advisor"
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "required": [
+              "source"
+            ],
+            "properties": {
+              "source": true
+            }
+          }
+        }
+      ]
+    },
+    "term": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "primary",
+            "document",
+            "advisor",
+            "user",
+            "estimate",
+            "assumed",
+            "unknown",
+            "conflict"
+          ]
+        },
+        "value": true,
+        "source": {
+          "$ref": "#/$defs/sourceId"
+        },
+        "rule": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "candidates": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "#/$defs/candidate"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "enum": [
+                  "primary",
+                  "document",
+                  "advisor"
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "required": [
+              "value",
+              "source"
+            ],
+            "properties": {
+              "value": true,
+              "source": true
+            },
+            "allOf": [
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "rule"
+                  ],
+                  "properties": {
+                    "rule": true
+                  }
+                }
+              },
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "note"
+                  ],
+                  "properties": {
+                    "note": true
+                  }
+                }
+              },
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "candidates"
+                  ],
+                  "properties": {
+                    "candidates": true
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "const": "user"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "required": [
+              "value"
+            ],
+            "properties": {
+              "value": true
+            },
+            "allOf": [
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "source"
+                  ],
+                  "properties": {
+                    "source": true
+                  }
+                }
+              },
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "rule"
+                  ],
+                  "properties": {
+                    "rule": true
+                  }
+                }
+              },
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "note"
+                  ],
+                  "properties": {
+                    "note": true
+                  }
+                }
+              },
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "candidates"
+                  ],
+                  "properties": {
+                    "candidates": true
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "const": "estimate"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "required": [
+              "value",
+              "rule"
+            ],
+            "properties": {
+              "value": true,
+              "rule": true
+            },
+            "allOf": [
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "source"
+                  ],
+                  "properties": {
+                    "source": true
+                  }
+                }
+              },
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "note"
+                  ],
+                  "properties": {
+                    "note": true
+                  }
+                }
+              },
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "candidates"
+                  ],
+                  "properties": {
+                    "candidates": true
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "const": "assumed"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "required": [
+              "value",
+              "note"
+            ],
+            "properties": {
+              "value": true,
+              "note": true
+            },
+            "allOf": [
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "source"
+                  ],
+                  "properties": {
+                    "source": true
+                  }
+                }
+              },
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "rule"
+                  ],
+                  "properties": {
+                    "rule": true
+                  }
+                }
+              },
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "candidates"
+                  ],
+                  "properties": {
+                    "candidates": true
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "const": "unknown"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "required": [
+              "value"
+            ],
+            "properties": {
+              "value": {
+                "type": "null"
+              }
+            },
+            "allOf": [
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "source"
+                  ],
+                  "properties": {
+                    "source": true
+                  }
+                }
+              },
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "rule"
+                  ],
+                  "properties": {
+                    "rule": true
+                  }
+                }
+              },
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "note"
+                  ],
+                  "properties": {
+                    "note": true
+                  }
+                }
+              },
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "candidates"
+                  ],
+                  "properties": {
+                    "candidates": true
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "const": "conflict"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "required": [
+              "candidates"
+            ],
+            "properties": {
+              "candidates": true
+            },
+            "allOf": [
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": true
+                  }
+                }
+              },
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "source"
+                  ],
+                  "properties": {
+                    "source": true
+                  }
+                }
+              },
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "rule"
+                  ],
+                  "properties": {
+                    "rule": true
+                  }
+                }
+              },
+              {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "note"
+                  ],
+                  "properties": {
+                    "note": true
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "textValue": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "cusipValue": {
+      "type": "string",
+      "pattern": "^[0-9A-Z]{9}$"
+    },
+    "isinValue": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}[0-9A-Z]{9}[0-9]$"
+    },
+    "dateValue": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "decimalValue": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,9})(\\.[0-9]{1,6})?$"
+    },
+    "roundingValue": {
+      "type": "string",
+      "pattern": "^(none|(?:half-up|half-even|truncate)-[0-6]dp)$"
+    },
+    "levelValue": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20000
+    },
+    "monthsValue": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 120
+    },
+    "frequencyValue": {
+      "enum": [
+        "monthly",
+        "quarterly",
+        "semiannual",
+        "annual"
+      ]
+    },
+    "rateValue": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10000
+    },
+    "accrualValue": {
+      "enum": [
+        "simple",
+        "compound"
+      ]
+    },
+    "barrierLevelValue": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000
+    },
+    "observationValue": {
+      "enum": [
+        "final",
+        "daily-close",
+        "continuous"
+      ]
+    },
+    "belowValue": {
+      "enum": [
+        "one-for-one-worst",
+        "physical-delivery"
+      ]
+    },
+    "priceValue": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "feeValue": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "identifiers": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cusip": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/term"
+            },
+            {
+              "allOf": [
+                {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/cusipValue"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/cusipValue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "isin": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/term"
+            },
+            {
+              "allOf": [
+                {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/isinValue"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/isinValue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "dates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trade",
+        "settlement",
+        "maturity",
+        "first_call_observation"
+      ],
+      "properties": {
+        "trade": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/term"
+            },
+            {
+              "allOf": [
+                {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/dateValue"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/dateValue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "settlement": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/term"
+            },
+            {
+              "allOf": [
+                {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/dateValue"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/dateValue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "maturity": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/term"
+            },
+            {
+              "allOf": [
+                {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/dateValue"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/dateValue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "first_call_observation": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/term"
+            },
+            {
+              "allOf": [
+                {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/dateValue"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/dateValue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observation_schedule": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 400,
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/term"
+              },
+              {
+                "allOf": [
+                  {
+                    "if": {
+                      "type": "object",
+                      "required": [
+                        "value"
+                      ],
+                      "properties": {
+                        "value": {
+                          "not": {
+                            "type": "null"
+                          }
+                        }
+                      }
+                    },
+                    "then": {
+                      "type": "object",
+                      "properties": {
+                        "value": {
+                          "$ref": "#/$defs/dateValue"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "candidates": {
+                        "type": "array",
+                        "items": {
+                          "if": {
+                            "type": "object",
+                            "required": [
+                              "value"
+                            ],
+                            "properties": {
+                              "value": {
+                                "not": {
+                                  "type": "null"
+                                }
+                              }
+                            }
+                          },
+                          "then": {
+                            "type": "object",
+                            "properties": {
+                              "value": {
+                                "$ref": "#/$defs/dateValue"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    "underlyings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "basket",
+        "members",
+        "performance_rounding"
+      ],
+      "properties": {
+        "basket": {
+          "const": "worst_of"
+        },
+        "members": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "ticker",
+              "initial"
+            ],
+            "properties": {
+              "ticker": {
+                "type": "string",
+                "pattern": "^[A-Z][A-Z0-9.]{0,9}$"
+              },
+              "initial": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/term"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/decimalValue"
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "candidates": {
+                            "type": "array",
+                            "items": {
+                              "if": {
+                                "type": "object",
+                                "required": [
+                                  "value"
+                                ],
+                                "properties": {
+                                  "value": {
+                                    "not": {
+                                      "type": "null"
+                                    }
+                                  }
+                                }
+                              },
+                              "then": {
+                                "type": "object",
+                                "properties": {
+                                  "value": {
+                                    "$ref": "#/$defs/decimalValue"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "performance_rounding": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/term"
+            },
+            {
+              "allOf": [
+                {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/roundingValue"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/roundingValue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "call": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level",
+        "non_call_months",
+        "frequency"
+      ],
+      "properties": {
+        "level": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/term"
+            },
+            {
+              "allOf": [
+                {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/levelValue"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/levelValue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "non_call_months": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/term"
+            },
+            {
+              "allOf": [
+                {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/monthsValue"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/monthsValue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "frequency": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/term"
+            },
+            {
+              "allOf": [
+                {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/frequencyValue"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/frequencyValue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "premium": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rate_per_year",
+        "accrual"
+      ],
+      "properties": {
+        "rate_per_year": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/term"
+            },
+            {
+              "allOf": [
+                {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/rateValue"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/rateValue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "accrual": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/term"
+            },
+            {
+              "allOf": [
+                {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/accrualValue"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/accrualValue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "barrier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level",
+        "observation",
+        "below_barrier"
+      ],
+      "properties": {
+        "level": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/term"
+            },
+            {
+              "allOf": [
+                {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/barrierLevelValue"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/barrierLevelValue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observation": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/term"
+            },
+            {
+              "allOf": [
+                {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/observationValue"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/observationValue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "below_barrier": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/term"
+            },
+            {
+              "allOf": [
+                {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/belowValue"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/belowValue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "economics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issue_price"
+      ],
+      "properties": {
+        "issue_price": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/term"
+            },
+            {
+              "allOf": [
+                {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/priceValue"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/priceValue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "estimated_value": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/term"
+            },
+            {
+              "allOf": [
+                {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/priceValue"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/priceValue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "fees": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/term"
+            },
+            {
+              "allOf": [
+                {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/feeValue"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "if": {
+                          "type": "object",
+                          "required": [
+                            "value"
+                          ],
+                          "properties": {
+                            "value": {
+                              "not": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        },
+                        "then": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "$ref": "#/$defs/feeValue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "file"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "primary",
+              "document",
+              "advisor"
+            ]
+          },
+          "file": {
+            "$ref": "#/$defs/sourcePath"
+          }
+        }
+      }
+    }
+  }
+}

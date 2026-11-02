@@ -1,0 +1,200 @@
+{
+  "name": "terms",
+  "version": 1,
+  "seed": "keel-s01-terms-1",
+  "valid": [
+    "example-autocall.yaml",
+    "minimal.yaml"
+  ],
+  "invalid": [
+    {
+      "file": "schema-line.yaml",
+      "code": "schema-line",
+      "path": "schema",
+      "line": 1,
+      "column": 1
+    },
+    {
+      "file": "duplicate-key.yaml",
+      "code": "duplicate-key",
+      "path": "call.level",
+      "line": 58,
+      "column": 3
+    },
+    {
+      "file": "alias.yaml",
+      "code": "alias",
+      "path": "barrier.level",
+      "line": 76,
+      "column": 10
+    },
+    {
+      "file": "unknown-key-nested.yaml",
+      "code": "unknown-key",
+      "path": "call.levle",
+      "line": 66,
+      "column": 3
+    },
+    {
+      "file": "unknown-key-top.yaml",
+      "code": "unknown-key",
+      "path": "extra",
+      "line": 97,
+      "column": 1
+    },
+    {
+      "file": "missing-required-top.yaml",
+      "code": "missing-required",
+      "path": "issuer",
+      "line": 1,
+      "column": 1
+    },
+    {
+      "file": "missing-required-nested.yaml",
+      "code": "missing-required",
+      "path": "call.frequency",
+      "line": 53,
+      "column": 1
+    },
+    {
+      "file": "wrong-type-float.yaml",
+      "code": "wrong-type",
+      "path": "call.level.value",
+      "line": 55,
+      "column": 12
+    },
+    {
+      "file": "wrong-type-exponent.yaml",
+      "code": "wrong-type",
+      "path": "call.level.value",
+      "line": 55,
+      "column": 12
+    },
+    {
+      "file": "wrong-type-hex.yaml",
+      "code": "wrong-type",
+      "path": "call.level.value",
+      "line": 55,
+      "column": 12
+    },
+    {
+      "file": "wrong-type-octal.yaml",
+      "code": "wrong-type",
+      "path": "call.level.value",
+      "line": 55,
+      "column": 12
+    },
+    {
+      "file": "wrong-type-plus.yaml",
+      "code": "wrong-type",
+      "path": "call.level.value",
+      "line": 55,
+      "column": 12
+    },
+    {
+      "file": "out-of-range-magnitude.yaml",
+      "code": "out-of-range",
+      "path": "economics.issue_price.value",
+      "line": 90,
+      "column": 12
+    },
+    {
+      "file": "out-of-range-level.yaml",
+      "code": "out-of-range",
+      "path": "call.level.value",
+      "line": 55,
+      "column": 12
+    },
+    {
+      "file": "invalid-date.yaml",
+      "code": "invalid-date",
+      "path": "dates.maturity.value",
+      "line": 19,
+      "column": 12
+    },
+    {
+      "file": "unknown-status.yaml",
+      "code": "unknown-status",
+      "path": "issuer.status",
+      "line": 7,
+      "column": 11
+    },
+    {
+      "file": "status-fields-unknown.yaml",
+      "code": "status-fields",
+      "path": "underlyings.performance_rounding.value",
+      "line": 50,
+      "column": 12
+    },
+    {
+      "file": "status-fields-estimate.yaml",
+      "code": "status-fields",
+      "path": "barrier.level.rule",
+      "line": 76,
+      "column": 3
+    },
+    {
+      "file": "conflict-candidates.yaml",
+      "code": "conflict-candidates",
+      "path": "dates.maturity.candidates",
+      "line": 20,
+      "column": 5
+    },
+    {
+      "file": "source-missing.yaml",
+      "code": "source-missing",
+      "path": "issuer.source",
+      "line": 8,
+      "column": 11
+    },
+    {
+      "file": "source-kind.yaml",
+      "code": "source-kind",
+      "path": "issuer.source",
+      "line": 8,
+      "column": 11
+    },
+    {
+      "file": "source-path-dotdot.yaml",
+      "code": "source-path",
+      "path": "sources.supplement.file",
+      "line": 96,
+      "column": 11
+    },
+    {
+      "file": "source-path-slash.yaml",
+      "code": "source-path",
+      "path": "sources.supplement.file",
+      "line": 96,
+      "column": 11
+    },
+    {
+      "file": "source-path-drive.yaml",
+      "code": "source-path",
+      "path": "sources.supplement.file",
+      "line": 96,
+      "column": 11
+    },
+    {
+      "file": "source-path-unc.yaml",
+      "code": "source-path",
+      "path": "sources.supplement.file",
+      "line": 96,
+      "column": 11
+    },
+    {
+      "file": "source-path-backslash.yaml",
+      "code": "source-path",
+      "path": "sources.supplement.file",
+      "line": 96,
+      "column": 11
+    },
+    {
+      "file": "schedule-order.yaml",
+      "code": "schedule-order",
+      "path": "dates.observation_schedule[1].value",
+      "line": 30,
+      "column": 14
+    }
+  ]
+}
