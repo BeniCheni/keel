@@ -88,22 +88,22 @@ In the core column, `loadTerms`, `verificationSummary` and `dateFlags` exist at 
 | 4.3 Observation log | Must | Read-only | Engine | Export: terms and observations | No |
 | 4.4 "No verified mark" | Must | Read-only | None | **Gap:** marks. Says "not in this export" until they travel | No |
 | 5.1 Worst-of chart | Must | Read-only | Engine metrics | Export: terms and observations | No |
-| 5.2 Payoff diagram with a slider | Must | Read-only; the slider writes nothing | Engine | Export: terms, per notional. **Gap:** positions, only for figures that use quantity or cost | No |
+| 5.2 Payoff diagram with a slider | Must | Primary; hypothetical inputs are local and are not saved | Engine | Export: terms, per notional. **Gap:** positions, only for figures that use quantity or cost | No |
 | 5.3 Observation calendar | Must | Read-only | Schedule, engine | Export: terms and observations | No |
 | 5.4 Payout by call month | Should | Read-only | Engine | Export: terms, per notional. **Gap:** positions, only for figures that use quantity or cost | No |
 | 5.5 Evidence-of-value timeline | Should | Read-only | None | **Gap:** marks | No |
 | 5.6 Takeaway and data table | Must | Read-only | Engine, takeaway text | As the chart it belongs to | No |
 | 6.1 Barrier proximity (A1) | Must | Read-only | Alert rules | Export: terms and observations | Wanted, but it cannot be scheduled ahead: it needs a new close. Shown after import |
 | 6.2 Observation reminders and result (A3) | Must | Primary for reminders; read-only for the result | Schedule, alert rules | Export: terms | Reminders: yes, scheduled ahead. Result: no, it needs a close |
-| 6.3 Call detected and reconciled (A4) | Must | Read-only | Alert rules | Export: terms and observations. **Gap:** positions, logged cash | Wanted, but it cannot be scheduled ahead. A date-based prompt can say the observation passed and no close is imported |
+| 6.3 Call detected and reconciled (A4) | Must | Read-only | Alert rules | Export: terms and observations. **Gap:** positions, logged cash | Wanted, but it cannot be scheduled ahead. A date-based prompt names the observation date in the imported terms and the applicable closes present in that snapshot |
 | 6.4 Stale data (A8) | Must | Primary | Trading-day calendar, with the schedule slice | Last close date from the export | Yes, scheduled ahead as a timer that each import resets |
 | 6.5 Terms still unverified (A9) | Must | Primary | `verificationSummary`, schedule | Export: terms | Yes, scheduled ahead: T-30, T-7 and the weekly digest line |
 | 6.6 Quiet hours and digest | Must | Primary | Alert rules | Phone defaults. **Gap:** desktop settings | Governs every scheduled notification |
 | 6.7 Headless check | Must | Desktop-only | None on the phone | None | No: the app controls no scheduler. Scheduling ahead stands in for date-based rules only |
 | 6.8 Pre-commitment note | Should | Read-only; writing the note is desktop-only | None | Export: alerts, if it carries notes. **Gap** until specified | In the body only if lock-screen rules allow it |
 | 6.9 Maturity and rating alerts (A5, A6) | Should | Primary for A5; read-only for A6 | Schedule, alert rules | Export: terms. **Gap:** ratings | A5: yes, scheduled ahead. A6: a rating-age timer, only if the export carries a rating date |
-| 7.1 Shock one name | Must | Read-only; writes nothing | Engine | Export: terms and last close, per notional. **Gap:** positions, only for figures that use quantity or cost | No |
-| 7.2 Shock all four | Must | Read-only; writes nothing | Engine | Export: terms and last close, per notional. **Gap:** positions, only for figures that use quantity or cost | No |
+| 7.1 Shock one name | Must | Primary; hypothetical inputs are local and are not saved | Engine | Export: terms and last close, per notional. **Gap:** positions, only for figures that use quantity or cost | No |
+| 7.2 Shock all four | Must | Primary; hypothetical inputs are local and are not saved | Engine | Export: terms and last close, per notional. **Gap:** positions, only for figures that use quantity or cost | No |
 | 8.1 Attach documents | Must | Desktop-only | None | **Gap:** documents stay on the desktop | No |
 | 8.2 Provenance cites document and page | Should | Read-only; citation only | `loadTerms` | Export: terms. **Gap:** page, and the file itself | No |
 | 9.1 Export with round-trip import | Must | Primary for import; export is desktop-only | `loadTerms`, CSV parsing | Files app | No |
@@ -117,7 +117,7 @@ In the core column, `loadTerms`, `verificationSummary` and `dateFlags` exist at 
 | 11.3 CI blocks real-looking data | Must | Desktop-only | None | None. Coverage of new paths is Q6 | No |
 | 11.4 ADRs, roadmap, changelog | Must | Desktop-only | None | None. ADR-0009 is this spike's | No |
 
-Role counts, by the first word in each row's role: 10 primary, 23 read-only, 15 desktop-only (the PR body has the command). No story needs the phone to write back to the desktop. The ones that want a notification and cannot have one scheduled ahead are 6.1, 6.3, the result half of 6.2, and A6's rating changes in 6.9. Those stay on the desktop, and story 6.11 (phone push) is Later.
+Role counts, by the first word in each row's role: 13 primary, 20 read-only, 15 desktop-only (the PR body has the command). No story needs the phone to write back to the desktop. The ones that want a notification and cannot have one scheduled ahead are 6.1, 6.3, the result half of 6.2, and A6's rating changes in 6.9. Those stay on the desktop, and story 6.11 (phone push) is Later.
 
 ### The floor, element by element
 
@@ -145,7 +145,7 @@ iOS gives the app no timed background run it can rely on (`BGTaskScheduler`'s `e
 | A1 Barrier proximity | Must | No | After import only |
 | A2 Likely call | Could | No | After import only |
 | A3 Observation approaching and result | Must | Reminders yes, result no | T-5 in the digest, T-1 as a notification, result after import |
-| A4 Call detected | Must | No | After import. "Observation passed, no close imported" can be scheduled |
+| A4 Call detected | Must | No | After import. A scheduled prompt names the observation date in the imported terms and the applicable closes present in that snapshot |
 | A5 Maturity approaching | Should | Yes | T-180, T-30, T-5 |
 | A6 Rating or outlook change | Should | Age only | Rating-age timer, only if the export carries a rating date |
 | A7 Large single-name move | Could | No | After import only |
@@ -157,13 +157,13 @@ iOS gives the app no timed background run it can rely on (`BGTaskScheduler`'s `e
 
 Two limits that follow, for the ADR:
 
-- A scheduled notification fires whatever has happened since. A note called on the desktop keeps its T-1 reminders on the phone until the next import cancels them. So each notification's first line says it comes from the imported snapshot and names that snapshot's as-of date. It states the date the snapshot holds. It never states that an observation is still ahead, that the note is not called, or that a close is missing on the desktop. An estimated date says it is estimated. The same wording covers a timer that fires early because the device clock moved.
-- The as-of date is the newest observation `as_of_date` in the imported files. The import screen also shows when the phone imported them. The phone never uses a file's modification time, which AirDrop or Finder can change.
-- The pending limit: Apple forum answers report a limit of 64 per app, keeping the soonest ([thread](https://developer.apple.com/forums/thread/811171)). Apple's `UNUserNotificationCenter` page states no number, so Q5 records what the device keeps, and whether a repeating trigger counts as one. Months 6 to 60 are 55 observations, which alone fit under 64. But T-1 and A8's observation-date timer make two requests per observation, 110 before A5 and A9, so the app schedules a rolling window and refills it on each open and import.
+- A scheduled notification fires whatever has happened since. A note called on the desktop keeps its T-1 reminders on the phone until the next import cancels them. So each notification's first line says it comes from the imported snapshot and names the applicable data dates, or says that no observation date is present. Its title, subtitle and body describe only that snapshot and dates recorded in it. None claims a current desktop state: an observation still ahead, a note not called, a close missing on the desktop, terms still unverified, or a current rating. A9 says the terms were unverified in that snapshot; A8 names the closes that snapshot contains. An estimated date says it is estimated. The same wording covers a timer that fires early because the device clock moved.
+- The newest observation `as_of_date` is labelled only as the latest observation present, not as the export time or the freshness of every holding. Screens and notifications name the applicable holding and series dates; a newer close for one series cannot freshen another. With no observations, they say no observation date is present. Terms and alerts keep their own dated provenance; an observation date cannot date them. The import screen separately shows when the phone imported the files. The phone never uses a file's modification time, which AirDrop or Finder can change.
+- The pending limit: An Apple staff answer confirms a limit of 64 pending requests per app, without promising which requests survive an overflow ([thread](https://developer.apple.com/forums/thread/811171)). Apple's `UNUserNotificationCenter` page states no number, so Q5 records what the device keeps, and whether a repeating trigger counts as one. Months 6 to 60 are 55 observations, which alone fit under 64. But T-1 and A8's observation-date timer make two requests per observation, 110 before A5 and A9, so the app selects the soonest requests itself within that limit and refills its rolling window on each open and import. It does not rely on the system to choose them. If the phone is not opened before that window ends, no later reminder is promised.
 
 ## Spike questions
 
-Commands assume `export KEEL_DATA_DIR="$(mktemp -d)"` and Node 24.22.2 unless a row says otherwise. Each question's result goes in `docs/specs/s90-ios-core-spike-results.md`, which the PM writes after the review, so that this file stays as registered.
+Commands assume `export KEEL_DATA_DIR="$(mktemp -d)"` and Node 24.22.2 unless a row says otherwise. `KEEL_SPIKE_BASE` names the frozen `main` SHA from which the spike branch was cut, recorded in the results. Each question's result goes in `docs/specs/s90-ios-core-spike-results.md`, which the PM writes after the review, so that this file stays as registered.
 
 **Prerequisite.** A full Xcode. This Mac has only the command-line tools today (`xcode-select -p` prints `/Library/Developer/CommandLineTools`). The iPhone needs Developer Mode on.
 
@@ -241,13 +241,13 @@ xcrun devicectl device install app --device "$KEEL_SPIKE_UDID" spike/ios-core/.b
 xcrun devicectl device process launch --device "$KEEL_SPIKE_UDID" --console "$KEEL_SPIKE_BUNDLE_ID"
 ```
 
-No Swift or Xcode command in this spec has been run, because this Mac has no full Xcode. These three device lines are the PM's reading of Apple's tools. The builder confirms or replaces them and records what ran, keeping what they are for: a Release build with `ENABLE_TESTABILITY` at its Release default, a newly launched process, and no debugger attached. A Debug run is not a substitute. Xcode 7's release notes, as Cursor read them, say Enable Testability prohibits optimizations.
+No Swift or Xcode command in this spec has been run, because this Mac has no full Xcode. These three device lines are the PM's reading of Apple's tools, not a confirmed Personal Team command sequence. The builder confirms or replaces them and records what ran, keeping what they are for: a Release build with `ENABLE_TESTABILITY` at its Release default, a newly launched process, and no debugger attached. A Debug run is not a substitute. Apple's archived Xcode 7 release notes warn that Enable Testability prevents optimizations that depend on not exporting internal symbols. That is narrower than disabling all optimization and is not a measurement of the current compiler.
 
-**Gated, per variant:** five fresh launches of the harness app. In each, create a JSContext and evaluate the bundle, which includes `ajv.compile` for the `compile` variant, then make the first `loadTerms` call on `example-autocall.yaml`. Report the median of the five for each.
+**Gated, per variant:** five fresh launches of the harness app. In each, create a JSContext and evaluate the bundle, which includes `ajv.compile` for the `compile` variant, then make the first `loadTerms` call on `example-autocall.yaml`. Report the median of the five for each. Retain the paired measurements for each launch and evidence that it was a new process; reactivating an existing process does not count as a fresh launch. These timings start at JSContext creation, not at tapping the app icon.
 
 **Reported, not gated:** the worst of those five, plus 20 more JSContexts and 20 more `loadTerms` calls in one process, each with its median and worst. The 20 share a process, so their median is a warm number. The results also say whether the device's run differs from a macOS JSContext, because "no JIT in-app" is a premise here that the spike tests rather than states.
 
-**Beni runs the device lines.** Only his iPhone can. The results quote his log, and Pass 1, Pass 2 and Pass 2.5 mark those numbers as Beni's run rather than as re-run.
+**Beni runs the device lines.** Only his iPhone can. The results quote only sanitized measurement records from his log, excluding signing, provisioning and installation output and account identifiers, and Pass 1, Pass 2 and Pass 2.5 mark those numbers as Beni's run rather than as re-run.
 
 ### Q4 Swift-port cost
 
@@ -272,9 +272,9 @@ The harness is an app with bare controls, run by hand on Beni's iPhone. It is a 
 
 | Subject | Read 2026-11-02 | Verify on the device |
 | --- | --- | --- |
-| Import through Files | SwiftUI's `fileImporter` gives a security-scoped URL | Pick the synthetic export from On My iPhone, after AirDrop. Copy it into the sandbox. Reject a malformed file with `loadTerms`'s line and column |
-| Storage in the sandbox | `Application Support`, with a backup exclusion and file protection | `isExcludedFromBackup` reads back true. The file is unreadable while locked under `complete` protection, and scheduled notifications still fire. A detail page opened from the lock screen waits for unlock before it can read the snapshot |
-| Local notifications scheduled ahead | `UNCalendarNotificationTrigger`. The pages read name no paid capability for it | One fires 2 minutes out with the app force-quit and the phone locked. `pendingNotificationRequests` after requesting 70: how many are kept, and which |
+| Import through Files | SwiftUI's `fileImporter` gives a security-scoped URL | Pick the synthetic export from On My iPhone, after AirDrop. Copy it into the sandbox, balancing security-scoped access. For this terms-only stand-in, reject a malformed terms file with `loadTerms`'s line and column and preserve the previous copy. This does not validate observations, alerts or a complete desktop export |
+| Storage in the sandbox | `Application Support`, with a backup exclusion and file protection | `isExcludedFromBackup` reads back true after the copy and after replacing it on a later import; copying or replacing a file must not silently reset it. The file is unreadable while locked under `complete` protection, and scheduled notifications still fire. A detail page opened from the lock screen waits for unlock before it can read the snapshot |
+| Local notifications scheduled ahead | `UNCalendarNotificationTrigger`. The pages read name no paid capability for it | One fires 2 minutes out with the app force-quit and the phone locked. `pendingNotificationRequests` after requesting 70: how many are kept, and which. Separately check whether a repeating trigger occupies one pending slot. Record authorization and notification settings; a delivery denied by those settings is not evidence against either core path |
 | Personal Team | Up to 3 devices, 10 App IDs and 3 apps per device. App IDs, device registrations and profiles expire after 7 days, and the app must be rebuilt and reinstalled ([Apple](https://developer.apple.com/support/compare-memberships/)) | Do pending notifications and sandbox data survive a reinstall over the old build? Do notifications fire after the profile expires? |
 | Keychain | No key is needed: no connector runs on the phone | One add, read and delete under the Personal Team, then nothing uses it |
 | App Review: bundled JavaScript | Guideline 2.5.2 bars downloading, installing or executing code that introduces or changes features ([guidelines](https://developer.apple.com/app-store/review/guidelines/)). Developer Program License 3.3.1(B) limits downloaded code and allows interpreted code under conditions ([agreement](https://developer.apple.com/support/terms/apple-developer-program-license-agreement/)). Neither names bundled JavaScript run through JavaScriptCore as a problem. The PM reads this as no blocker for Path A, while the bundle ships inside the app and nothing downloads | The builder re-reads both on the day of the results and says if the text moved. App Review has the final word, and this spike submits nothing |
@@ -329,7 +329,7 @@ Pre-registered edge cases:
 | Median over 5 fresh launches, to create a JSContext and evaluate the bundle | 500 ms | 400 to 600 ms |
 | Median over the same 5 launches, of the first `loadTerms` on `example-autocall.yaml` | 50 ms | 40 to 60 ms |
 
-Why these: the app runs the core off the main thread, at import and when opening, so the load is a delay a person may see and is not first-frame time. The only anchor so far is V8, not JavaScriptCore, on an Apple M4 with Node 24.22.2, labelled ESTIMATE as a guide to scale. Over three runs each, at a tree equal to `3bceb20`'s: importing the core entry takes 93 to 103 ms with the JIT and 129 to 131 ms interpreter-only, and `loadTerms` on `example-autocall.yaml` has a median of 0.94 to 1.05 ms with the JIT and 2.33 to 2.44 ms without, with a worst of 8.3 to 10.4 ms and 9.3 to 9.6 ms. The script is under "Anchor".
+Why these: the app runs the core off the main thread, at import and when opening, so the load is a delay a person may see and is not first-frame time. The only anchor so far is V8, not JavaScriptCore, on an Apple M4 with Node 24.22.2, labelled ESTIMATE as a guide to scale. Over three runs each, at a tree equal to `3bceb20`'s: importing the core entry takes 93 to 103 ms with the JIT and 129 to 131 ms with the JavaScript compiler flags under "Anchor", and `loadTerms` on `example-autocall.yaml` has a median of 0.94 to 1.05 ms with the JIT and 2.33 to 2.44 ms with those flags, with a worst of 8.3 to 10.4 ms and 9.3 to 9.6 ms. The script is under "Anchor".
 
 ## Non-goals
 
@@ -350,7 +350,7 @@ The spike consumes `@keel/core` as merged at its base SHA. Any core change it sh
 | AC5 | Load times are measured on macOS and on Beni's iPhone, in 5 fresh launches per variant | The Q3 lines; the device lines are Beni's run |
 | AC6 | Q4 and Q6 tables are filled, with a command or a source per row | PR body and results |
 | AC7 | Q5 is run by hand on the device | A checklist in the PR body, with Beni's results |
-| AC8 | The spike touches nothing outside its folder | `git diff --name-only origin/main...HEAD \| grep -v '^spike/ios-core/' \| wc -l` prints `0` |
+| AC8 | The spike touches nothing outside its folder, relative to its frozen base; a Git failure fails the check | `git diff --exit-code "$KEEL_SPIKE_BASE" HEAD -- . ':(exclude)spike/ios-core/**'` exits 0 |
 | AC9 | The repo's gate stays green on the spike branch | `pnpm install --frozen-lockfile && pnpm verify`, on Node 24.22.2 and 26.13.0 |
 | AC10 | No account identifier is committed | `git grep -n -E 'DEVELOPMENT_TEAM *= *[A-Z0-9]{10}\|[0-9A-F]{8}-[0-9A-F]{16}' -- spike/ios-core` prints nothing, plus the owner's private-list check |
 | AC11 | The spike branch was cut after this spec merged | `git merge-base --is-ancestor <this spec's squash> <first spike commit>` exits 0 |
@@ -367,7 +367,7 @@ The harness is the claim, so it must be shown able to fail. Listed in the PR bod
 - running both "locales" under one locale;
 - running a variant on fewer than 31 fixtures.
 
-The spike PR's claims list gives one command per row, and each of those commands exits nonzero. AC4 is the first row's. The others are names until that PR.
+The spike PR's claims list gives one command per row, and each of those commands exits nonzero. AC4 is the first row's. The others are names until that PR. Each command first proves the unmodified comparison passes, introduces only its named mutation, and checks for the intended mismatch or coverage failure. A missing tool, a setup error or an unrelated nonzero exit is not a killed mutant. After restoration, the comparison must pass again.
 
 ## Dependencies
 
@@ -393,13 +393,13 @@ Read 2026-11-02, each to be re-read by the builder on the day of the results:
 - [Apple Developer Program License Agreement](https://developer.apple.com/support/terms/apple-developer-program-license-agreement/)
 - [Compare memberships](https://developer.apple.com/support/compare-memberships/)
 - [Apple Developer Program](https://developer.apple.com/programs/)
-- [Developer forum thread on the 64-request limit](https://developer.apple.com/forums/thread/811171). The PM read it through a search result, and it returned HTTP 403 to Cursor, so treat it as a lead
+- [Developer forum thread on the 64-request limit](https://developer.apple.com/forums/thread/811171). Read directly at Pass 2: the Apple staff answer confirms the pending count, not an overflow-retention order; Q5 still measures device behaviour
 
 Cursor also read these on 2026-11-02, and the PM did not: the JSContext documentation, `UNUserNotificationCenter`, `FileProtectionType.complete`, privacy manifest files, Using background tasks, the export-compliance help pages, the Xcode 7 release notes and TN2339.
 
 ## Anchor
 
-The script behind the ESTIMATE under "Decision rule". Run it from a clone with `pnpm install --frozen-lockfile` done, as `node anchor.mjs "$PWD"`, and as `node --no-opt --no-maglev --no-sparkplug anchor.mjs "$PWD"`. `--jitless` cannot be used, because Node's TypeScript stripping needs WebAssembly.
+The script behind the ESTIMATE under "Decision rule". Run it from a clone with `pnpm install --frozen-lockfile` done, as `node anchor.mjs "$PWD"`, and as `node --no-opt --no-maglev --no-sparkplug anchor.mjs "$PWD"`. Those flags do not make the process interpreter-only: V8 can still compile regular expressions. They are an ESTIMATE of the effect of disabling those JavaScript compilers, not an iPhone no-JIT measurement. `--jitless` cannot be used, because Node's TypeScript stripping needs WebAssembly.
 
 ```js
 import { readFileSync, readdirSync } from "node:fs";
