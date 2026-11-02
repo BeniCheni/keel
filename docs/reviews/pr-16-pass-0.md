@@ -1,12 +1,14 @@
 # Pass 0 brief: PR #16 (S90 iOS core spike spec, phone journey and ADR-0009)
 
-Written by the PM on 2026-11-02 (America/New_York), at `9d16c9b736d57445ed3f4e7dbbe7e2f597a3a869`. The same Claude session wrote the PR and this brief, so Codex's Pass 1 is the cold read. This brief lives on branch `docs/pr-16-records`, not on the PR branch.
+Written by the PM on 2026-11-02 (America/New_York), at `8cdd91c65b403886f0018e994ed4a5a151b68029`. The same Claude session wrote the PR and this brief, so Pass 1 and Pass 2 are its cold reads. This brief lives on branch `docs/pr-16-records`, not on the PR branch.
 
 ## Seat for Pass 1
 
-Codex, GPT-6.1 Sol High, because a Claude session wrote every line. This pass is the plan challenge. The seat has no fallback, so if it is unavailable, stop and escalate.
+Cursor, Grok 4.7 Extra High, by Beni's word on 2026-11-02, in the words "Use Cursor there too", on the question "Should PR #16's plan challenge wait for Codex?" Codex was at its usage limit until after 3:50 PM. `AGENTS.md` names Codex for this pass, and Beni ruled after the PM told him so, so this holds for this PR only. This pass is the plan challenge. If this seat is unavailable, stop and escalate.
 
-Later seats: Pass 1.5 is the PM. On a Claude-authored PR, Codex's Pass 2 covers only Claude-authored commits after Pass 1, and a fresh Claude session on Opus 5.5 High takes Pass 2.5, including the cold read of any Codex commit. Beni merges.
+Cursor will also build this spike, so this read is not neutral. It says so in its comment and labels any finding that would make the build easier. It pushes nothing: the PM applies what it accepts at Pass 1.5. So the commits on this PR stay Claude's, and Cursor authors nothing in the plan it builds from.
+
+Later seats: Pass 1.5 is the PM. Pass 2 is Codex, GPT-6.1 Sol High, reading the whole PR, not only the commits after Pass 1, because it did not take Pass 1 here. That gives the plan a challenge from a vendor that will not build the spike. A fresh Claude session on Opus 5.5 High takes Pass 2.5, including the cold read of any Codex commit. Beni merges.
 
 ## Scope
 
@@ -22,7 +24,7 @@ From `git log --format='%h %an' origin/main..HEAD`.
 
 | Commit | Authoring vendor | Cold read by |
 | --- | --- | --- |
-| Every commit on the branch | Claude | Codex, Pass 1 |
+| Every commit on the branch | Claude | Cursor, Pass 1, then Codex, Pass 2 |
 
 Any Codex fix commit gets its cold read from the fresh Claude session at Pass 2.5.
 
@@ -32,7 +34,7 @@ Not allowed: `AGENTS.md` sends every spec through the plan challenge, and Beni's
 
 ## What to check, beyond the skill's standing checks
 
-Each is a question, not a finding. Edit nothing outside this PR's three files.
+Each is a question, not a finding. Push nothing and edit nothing. Beni runs the owner's private-list check himself over this PR, so report it as not run by you. Codex can repeat it at Pass 2.
 
 1. **Can the decision rule be gamed or left undecided?** It was written to bind the spike before code exists. Find a result that passes it without proving what it should, and an outcome it does not settle. Test the "Pre-registered edge cases" against each other. Is a threshold on a median the right gate, given what a person feels? Beni's prompt fixed the rule's three clauses, so challenge what the PM added around them.
 2. **Story 9.1.** The spec says 9.1 works as transport and fails as content. Walk `docs/proposals/0001-product-research.md`'s stories and its Section 11 tables yourself. What else does the phone need that 9.1 does not carry? Is any "gap" not really one? Does the spec read "terms, observations and alerts" too narrowly or too widely?
@@ -49,7 +51,7 @@ Each is a question, not a finding. Edit nothing outside this PR's three files.
 13. **Scope.** Does anything here change the M1 slice plan? Does the throwaway-branch ruling fit `AGENTS.md`'s workflow, including who closes the PR and how results land?
 14. **Numbers.** Every figure in the PR body and the spec has a command. Run them. The anchor figures are V8, labelled ESTIMATE: is that label enough?
 
-Out of scope: writing spike code. List out-of-scope items in your comment, and the PM carries them. Edit nothing under `docs/` except this PR's three files.
+Out of scope: writing spike code. List out-of-scope items in your comment, and the PM carries them.
 
 ## Sealed appendix: claims to verify independently
 
