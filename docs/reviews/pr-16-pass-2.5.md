@@ -184,7 +184,7 @@ The order of magnitude holds, but the spec's narrower ranges, such as 93 to 103 
 | No sensitive path, dependency or schema change | Yes; 3 docs files |
 | Every commit cold-read by a non-author vendor | Yes, per the authorship record and comments: `804720e` by the first Pass 2.5, the other 10 by Cursor and Codex |
 | Gate verdict | **Would escalate** |
-| Beni's decision (filled after) | |
+| Beni's decision (filled after) | Merged on 2026-11-02 at squash `db4ab3f`, reviewed head `19ea2f5`. The PM told Beni that merging would be recorded as yes to all three questions below, and no answer came back as no |
 
 ## Questions for Beni
 
@@ -217,6 +217,37 @@ EOF
 ```
 
 The third green check, demo mode starting with zero outbound requests, is N/A because no demo mode exists before the UI slices. Check by eye that the README renders. The merge is Beni's; this seat stops here.
+
+## Post-merge checks (added by the PM)
+
+From the PM's session on 2026-11-02, in a fresh clone of `main` at the squash, with a fresh `mktemp -d` as `KEEL_DATA_DIR`.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| `origin/main` is the squash GitHub recorded | `gh pr view 16 --json mergeCommit --jq .mergeCommit.oid`; `git rev-parse origin/main` | both `db4ab3f0f708213887efca649fd8ac88e44a6ea5`; merged at 23:57:28 UTC by Beni, whose own run of the handoff's `test` line also passed |
+| The base did not move, so the trees match | `git rev-parse 'origin/main^{tree}'`; `git rev-parse '19ea2f5^{tree}'` | both `b90eae009e39eb50545ad019d096c4c7658fd4f1` |
+| Trailers | `git log -1 --format=%B db4ab3f` | Claude, Codex and Cursor, each spelled out in full |
+| CI on the squash | `gh run view 41549309290 --json conclusion,headSha,event` | `success`, `push`, at `db4ab3f` |
+| Verify on the squash | `pnpm install --frozen-lockfile && pnpm verify` on v24.22.2, v26.13.0 and v24.15.0 | exit 0 on all three; core 33 passed (9 files), tooling 122 passed (10 files) |
+| Last private-list scan | Beni's own run of the PM's counts-only command over issuecomment-6591458579 and this brief, before the merge | `0`, as Beni reported it. The PM did not open the list |
+| README | `git diff --name-only 2ed7b44 db4ab3f` | Not among the 3 files changed |
+| Release checks | n/a | Not a release: no tag, and no version moved. Demo mode does not exist before the UI slices |
+
+**The red run.** Beni's own run of the handoff's last step, in `~/code/keel-pm` on v24.15.0, exited 1 at `verify:tooling`, with 18 test files where the fresh clone has 10. The merge was not the cause. A leftover Git worktree, `.claude/worktrees/keel-pm-handoff-review-603af6`, held a second copy of `tools/`, and `tools/vitest.config.mjs` has no exclude for it, so `test:tooling drops a leading --` found 2 files where it expects 1. In a fresh clone, a copy of `tools/` under `.claude/worktrees/` fails that same test, plus six inside the copy, which holds only `tools/` and `package.json`. Removing the copy turns it green. The PM told Beni to run the block from that working copy without checking what was under it.
+
+On Beni's word, the PM removed the worktree with `git worktree remove`, without force. It had no uncommitted changes, it was detached at `2be9b6b`, and that commit stays on local branch `docs/pr-13-records`. `pnpm verify` in that copy then exited 0, with 122 tooling tests in 10 files.
+
+## Carried to the ideas file (added by the PM)
+
+PR #17 adds these, for Beni to weigh, and commits no one to any of them:
+
+- L1 to L3 from the first Pass 2.5 (idea 34).
+- Which candidate date sets A5's fire time when maturity is held in conflict (idea 35).
+- The tooling config's missing exclude, and where the handoff's last step runs (idea 36).
+- The full export envelope and its validation, from Codex's Pass 2 (idea 37).
+- A warning before the phone's reminders run out (idea 38).
+- A path for a High on a docs-only PR (idea 39).
+- Posting a PR comment only after its scan passes (idea 40).
 
 # Executive brief: PR #16, first Pass 2.5, at `c4c3e1f`, 2026-11-02 America/New_York
 
