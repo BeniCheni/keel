@@ -1,6 +1,6 @@
 # S90: iOS core spike
 
-- Status: spec drafted 2026-11-02 by the PM (Claude). It goes through the plan challenge before any spike code exists: Cursor takes Pass 1 by Beni's word of 2026-11-02, while Codex is at its usage limit, and Codex reads the whole spec at Pass 2 before it merges. Revised the same day after Pass 1, with Beni's rulings; dispositions are in `docs/reviews/pr-16-pass-1.5.md`.
+- Status: spec drafted 2026-11-02 by the PM (Claude). It goes through the plan challenge before any spike code exists: Cursor takes Pass 1 by Beni's word of 2026-11-02, while Codex is at its usage limit, and Codex reads the whole spec at Pass 2 before it merges. Revised the same day after Pass 1, with Beni's rulings; dispositions are in `docs/reviews/pr-16-pass-1.5.md`. Amended 2026-11-03, before any spike code, in Q1's command and check, the mutation floor and AC11; `docs/reviews/pr-19-pass-0.md` says why.
 - Release: post-`v0.1.0` spike. Not a slice toward `v0.1.0`, and no change to the Milestone 1 slice plan.
 - Builder: Cursor, Grok 4.7 High, in one draft PR on branch `s90/ios-core-spike`.
 - Sensitive paths touched: none. The spike consumes `@keel/core` as merged and edits nothing outside `spike/ios-core/`.
@@ -31,6 +31,8 @@ Beni ruled on 2026-11-02 (America/New_York), on questions the PM put with its re
 The prompt that set this spike says the free Personal Team, with its 7-day installs, is enough for the spike, and that when to pay for the Developer Program is Beni's call. Nothing here depends on paying. Whether and when to pay stays open for Beni.
 
 Beni also ruled on 2026-11-02, in the option "Take them all (Recommended)", on eleven questions the PM put after Pass 1. He ruled on three more after Pass 2: the stale-notification High closes on this docs PR with the obligations under AC12 and in ADR-0009; a `standalone`-only pass does not select Path B; and no joint per-launch gate applies. After Pass 2.5 he ruled, the same day, that its four Mediums are fixed on this PR before it merges ("Yes, fix first"), and that A4's date-based prompt does not notify a closed app ("No (Recommended)"). Each ruling is written into this spec where it applies, and `docs/reviews/pr-16-pass-1.5.md` lists them.
+
+On 2026-11-03, after the PM ran Q1's checks on the real libraries, Beni ruled "Yes, amend first": Q1's command and check, the mutation floor and AC11 change before the spike starts. No threshold or decision clause changes.
 
 ## Is story 9.1 enough as the phone's only data path?
 
@@ -174,14 +176,16 @@ Commands assume `export KEEL_DATA_DIR="$(mktemp -d)"` and Node 24.22.2 unless a 
 Can `@keel/core`, including `ajv` 8.20.0 and `yaml` 2.9.1, build into one script with no Node built-ins and load into a JSContext from a Swift test target that runs on macOS?
 
 ```bash
-pnpm --dir spike/ios-core --ignore-workspace install --frozen-lockfile && node spike/ios-core/build.mjs && node spike/ios-core/check-bundle.mjs
+pnpm install --frozen-lockfile && pnpm --dir spike/ios-core --ignore-workspace install --frozen-lockfile && node spike/ios-core/build.mjs && node spike/ios-core/check-bundle.mjs
 ```
 
 ```bash
 swift test --package-path spike/ios-core --filter BundleLoadTests
 ```
 
-`check-bundle.mjs` exits nonzero on `require(`, a `node:` specifier, a reference to `process`, or the string `montecarlo`, and prints the bundle's bytes. `BundleLoadTests` fails on any JSContext exception and asserts that `dateFlags`, `loadTerms` and `verificationSummary` are functions.
+`check-bundle.mjs` exits nonzero on a `require` call, a `node:` specifier or a reference to the global `process` left in the built code, and on the string `montecarlo`, and prints the bundle's bytes. `BundleLoadTests` fails on any JSContext exception and asserts that `dateFlags`, `loadTerms` and `verificationSummary` are functions.
+
+**It reads the code, not the text.** A plain search cannot be this check. In the `compile` bundle at this spec's base, built with esbuild 0.28.2, `require(` is on 5 lines, `process` on 4 and `node:` on 1, and none is a use: they are `ajv`'s code-generation strings, esbuild's helper function `__require`, `ajv`'s `code.process` option and the object key `node: null`. esbuild can tell a use from text with no new dependency: its metafile lists any import left external, and `define` replaces only a real reference. How the check does it is the builder's choice, and the mutation floor tests it. `docs/reviews/pr-19-pass-0.md` has the commands, and a probe that shows this on both variants. No static check sees a name built at run time. Only Q2's runs in a JSContext can show that, on the paths they exercise.
 
 Known traps, each run in Node with the real libraries, and none yet in a JSContext:
 
@@ -354,7 +358,7 @@ The spike consumes `@keel/core` as merged at its base SHA. Any core change it sh
 | AC8 | The spike touches nothing outside its folder, relative to a frozen base that is the branch's fork point from `main`; a Git failure fails the check | `fork="$(git merge-base origin/main HEAD)" && base="$(git rev-parse --verify --end-of-options "${KEEL_SPIKE_BASE}^{commit}")" && test "$fork" = "$base" && git diff --exit-code "$base" HEAD -- . ':(exclude)spike/ios-core/**'` exits 0 |
 | AC9 | The repo's gate stays green on the spike branch | `pnpm install --frozen-lockfile && pnpm verify`, on Node 24.22.2 and 26.13.0 |
 | AC10 | No account identifier is committed; a Git failure fails the check | `git grep -n -E -e 'DEVELOPMENT_TEAM *= *[A-Z0-9]{10}' -e '[0-9A-F]{8}-[0-9A-F]{16}' -- spike/ios-core` exits 1, plus the owner's private-list check |
-| AC11 | The spike branch was cut after this spec merged | `git merge-base --is-ancestor <this spec's squash> <first spike commit>` exits 0 |
+| AC11 | The spike branch was cut after this spec's latest version merged; a Git failure fails the check | `git merge-base --is-ancestor "$(git log -1 --format=%H origin/main -- docs/specs/s90-ios-core-spike.md)" <first spike commit>` exits 0 |
 | AC12 | The notification wording rule has a test that can fail | `swift test --package-path spike/ios-core --filter NotificationWordingTests`. A pure function in the harness builds the title, subtitle and body for A3, A5, A8 and A9 from a synthetic snapshot. The test asserts the rule under "Two limits that follow", and fails when that rule is removed from the function |
 
 ## Mutation floor
@@ -365,6 +369,8 @@ The harness is the claim, so it must be shown able to fail. Listed in the PR bod
 - reordering two diagnostics in one output;
 - changing one diagnostic's column;
 - adding a `node:fs` import to the bundle's entry;
+- leaving a `require` call in the bundle's entry;
+- leaving a reference to the global `process` in the bundle's entry;
 - adding `montecarlo` to the bundle;
 - running both "locales" under one locale;
 - running a variant on fewer than 31 fixtures;
