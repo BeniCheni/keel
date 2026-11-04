@@ -1,6 +1,6 @@
 # S90: iOS core spike
 
-- Status: spec drafted 2026-11-02 by the PM (Claude). It goes through the plan challenge before any spike code exists: Cursor takes Pass 1 by Beni's word of 2026-11-02, while Codex is at its usage limit, and Codex reads the whole spec at Pass 2 before it merges. Revised the same day after Pass 1, with Beni's rulings; dispositions are in `docs/reviews/pr-16-pass-1.5.md`. Amended 2026-11-03 and 2026-11-04, before any spike code, in Q1's command and check, the mutation floor, AC11 and the spike's lockfile, and in two sentences on Xcode; `docs/reviews/pr-19-pass-0.md` says why.
+- Status: spec drafted 2026-11-02 by the PM (Claude). It goes through the plan challenge before any spike code exists: Cursor takes Pass 1 by Beni's word of 2026-11-02, while Codex is at its usage limit, and Codex reads the whole spec at Pass 2 before it merges. Revised the same day after Pass 1, with Beni's rulings; dispositions are in `docs/reviews/pr-16-pass-1.5.md`. Amended 2026-11-03 and 2026-11-04, before any spike code, in Q1's command and check, the mutation floor, AC11 and the spike's lockfile, and in two sentences on Xcode; `docs/reviews/pr-19-pass-0.md` says why. Amended again on 2026-11-04, after the spike's first commit and before any device number, in Q2's locale check, the mutation floor and AC11; `docs/reviews/pr-22-pass-0.md` says why.
 - Release: post-`v0.1.0` spike. Not a slice toward `v0.1.0`, and no change to the Milestone 1 slice plan.
 - Builder: Cursor, Grok 4.7 High, in one draft PR on branch `s90/ios-core-spike`.
 - Sensitive paths touched: none. The spike consumes `@keel/core` as merged and edits nothing outside `spike/ios-core/`.
@@ -33,6 +33,8 @@ The prompt that set this spike says the free Personal Team, with its 7-day insta
 Beni also ruled on 2026-11-02, in the option "Take them all (Recommended)", on eleven questions the PM put after Pass 1. He ruled on three more after Pass 2: the stale-notification High closes on this docs PR with the obligations under AC12 and in ADR-0009; a `standalone`-only pass does not select Path B; and no joint per-launch gate applies. After Pass 2.5 he ruled, the same day, that its four Mediums are fixed on this PR before it merges ("Yes, fix first"), and that A4's date-based prompt does not notify a closed app ("No (Recommended)"). Each ruling is written into this spec where it applies, and `docs/reviews/pr-16-pass-1.5.md` lists them.
 
 On 2026-11-03, after the PM ran Q1's checks on the real libraries, Beni ruled "Yes, amend first": Q1's command and check, the mutation floor and AC11 change before the spike starts. No threshold or decision clause changes.
+
+On 2026-11-04, after the spike's first commit showed JavaScriptCore resolving `haw` to `en`, and before any device number existed, Beni ruled "Yes, amend first", on "Amend Q2's locale check before the device runs?" Q2's locale check, the mutation floor and AC11 change. No threshold or decision clause changes. This came after spike code, so unlike the decision rule it is not pre-registered, and the results say so.
 
 ## Is story 9.1 enough as the phone's only data path?
 
@@ -212,11 +214,14 @@ The first exits 0 only if every comparison is byte-identical, and prints fixture
 
 - **Node side:** runs `packages/core/src/index.ts` directly, unbundled, so that a bundling difference counts as a difference.
 - **Output:** one line per file, `JSON.stringify({ file, result, summary })`, where `summary` is `verificationSummary(result.terms)` when `result.ok`.
-- **Comparison:** `cmp`, in both engines, under `en_US` and `haw_US`, and for each bundle variant in Q3.
-- **Locale check:** each run records `new Intl.Collator().resolvedOptions().locale`. If the two runs in one engine report the same locale, that engine's run fails: a test under one locale twice is not a test under two. Apple's JSContext API lists no locale setter, so the builder finds the route: launch arguments, or the Region setting in macOS or on the iPhone. If no second locale can be run in an engine, clause 1 fails.
-- **On the iPhone:** the harness app runs the same fixtures under both locales for each variant and logs a SHA-256 of each output, and `run-parity.sh --compare-device <log>` compares them with Node's. A difference fails clause 1. This is Beni's run.
+- **Comparison:** `cmp`, for each bundle variant in Q3. Node runs under `en_US`, `haw_US` and `sv_SE`. JavaScriptCore runs under `en_US` and `sv_SE`. Every output must be byte-identical.
+- **Locale check:** each run records `new Intl.Collator().resolvedOptions().locale`. A run fails if its locale does not start with the language it asked for, so `en` does not count as `sv_SE`. If the two runs in one engine report the same locale, that engine's run fails: a test under one locale twice is not a test under two. Apple's JSContext API lists no locale setter. Launch arguments work on macOS, and the Region setting is the other route, in macOS or on the iPhone. If no second locale can be run in an engine, clause 1 fails.
+- **Why not `haw_US` in JavaScriptCore:** launch arguments for `haw` resolve to `en` there, on macOS 27.2, while `sv`, `de`, `lt`, `et`, `cs`, `tr`, `ja` and `en-GB` resolve as asked. The Region setting was not tried. JavaScriptCore still makes a `haw` run, and each resolved locale is reported, on macOS and on the iPhone. It does not gate.
+- **Reversed comparator:** a second locale is not enough. With `localeCompare` put back in `dedupe`, the 31 fixtures show no difference under any locale, even `haw_US` in Node. On the tie input below, `haw_US` in Node catches it, and `sv_SE` does not, because PR #13's sweep found that only `haw` reorders these keys. So in JavaScriptCore, on macOS and on the iPhone, one more run replaces `String.prototype.localeCompare`, `Intl.Collator` and the `toLocale` methods, before the bundle is evaluated, with versions that give a different answer from the real ones. Its output must be byte-identical to the others. This is a test run, not a host shim: no other parity run and no timing has it.
+- **Tie input:** `minimal.yaml` with `call`, `barrier` and `economics` removed in memory, the edit `terms.review.test.ts` makes. It gates in every comparison, beside the 31 fixtures.
+- **On the iPhone:** the harness app runs the same inputs under both locales and the reversed comparator for each variant and logs a SHA-256 of each output, and `run-parity.sh --compare-device <log>` compares them with Node's. A difference fails clause 1. This is Beni's run.
 
-`load.ts` no longer sorts with `localeCompare`: Beni's ruling replaced it inside PR #13, at `c527df8`, after `dedupe` gave a different order under `LC_ALL=haw_US.UTF-8`. At `3bceb20`, `git grep -n localeCompare -- packages` prints only a test stub, and neither library's loaded code calls a locale API (`grep -rlE 'localeCompare|toLocale|Intl\.' node_modules/.pnpm/yaml@2.9.1/node_modules/yaml/browser/dist node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist | wc -l` prints `0`). The two-locale test stays: it is the check that nothing else depends on locale.
+`load.ts` no longer sorts with `localeCompare`: Beni's ruling replaced it inside PR #13, at `c527df8`, after `dedupe` gave a different order under `LC_ALL=haw_US.UTF-8`. At `3bceb20`, `git grep -n localeCompare -- packages` prints only a test stub, and neither library's loaded code calls a locale API (`grep -rlE 'localeCompare|toLocale|Intl\.' node_modules/.pnpm/yaml@2.9.1/node_modules/yaml/browser/dist node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist | wc -l` prints `0`). The locale runs and the reversed-comparator run stay as a check on these inputs: they show whether the output changed there, and they cannot prove that nothing anywhere depends on locale.
 
 **Reported, not gating:** the same comparison on inputs edited in memory, because earlier reviews found them to be edge cases. A complex key, an alias as a key, a leading BOM, CRLF line endings, a character outside the Basic Multilingual Plane before a fault (columns count UTF-16 units here), `0000-02-29`, flow nesting to 2000 and block nesting to 1000. A divergence is reported in the results and put to Beni. It does not by itself make a close call.
 
@@ -350,7 +355,7 @@ The spike consumes `@keel/core` as merged at its base SHA. Any core change it sh
 | --- | --- | --- |
 | AC1 | The bundle builds in both variants and passes its checks | The Q1 `pnpm` line |
 | AC2 | The bundle loads in a JSContext on macOS | `swift test --package-path spike/ios-core --filter BundleLoadTests` |
-| AC3 | Parity runs on all 31 fixtures, 2 locales, 2 engines and 2 variants, and on the iPhone, and reports every difference | `sh spike/ios-core/run-parity.sh`; `sh spike/ios-core/run-parity.sh --compare-device <log>` |
+| AC3 | Parity runs on all 31 fixtures and the tie input, in 2 engines and 2 variants, under each engine's locales and the reversed comparator, and on the iPhone, and reports every difference | `sh spike/ios-core/run-parity.sh`; `sh spike/ios-core/run-parity.sh --compare-device <log>` |
 | AC4 | The parity harness can fail | `sh spike/ios-core/run-parity.sh --inject-diff` exits 1 |
 | AC5 | Load times are measured on macOS and on Beni's iPhone, in 5 fresh launches per variant | The Q3 lines; the device lines are Beni's run |
 | AC6 | Q4 and Q6 tables are filled, with a command or a source per row | PR body and results |
@@ -358,7 +363,7 @@ The spike consumes `@keel/core` as merged at its base SHA. Any core change it sh
 | AC8 | The spike touches nothing outside its folder, relative to a frozen base that is the branch's fork point from `main`; a Git failure fails the check | `fork="$(git merge-base origin/main HEAD)" && base="$(git rev-parse --verify --end-of-options "${KEEL_SPIKE_BASE}^{commit}")" && test "$fork" = "$base" && git diff --exit-code "$base" HEAD -- . ':(exclude)spike/ios-core/**'` exits 0 |
 | AC9 | The repo's gate stays green on the spike branch | `pnpm install --frozen-lockfile && pnpm verify`, on Node 24.22.2 and 26.13.0 |
 | AC10 | No account identifier is committed; a Git failure fails the check | `git grep -n -E -e 'DEVELOPMENT_TEAM *= *[A-Z0-9]{10}' -e '[0-9A-F]{8}-[0-9A-F]{16}' -- spike/ios-core` exits 1, plus the owner's private-list check |
-| AC11 | The spike branch was cut after this spec's latest version merged; a Git failure fails the check | `git merge-base --is-ancestor "$(git log -1 --format=%H origin/main -- docs/specs/s90-ios-core-spike.md)" <first spike commit>` exits 0 |
+| AC11 | The spike branch holds this spec as of `82e4909`, and the only later version on `main` is the amendment of 2026-11-04; a Git failure fails the check | `git merge-base --is-ancestor 82e49091477d53a16d7179f5a418dc3e41ff4395 <first spike commit> && test "$(git rev-list --count 82e49091477d53a16d7179f5a418dc3e41ff4395..origin/main -- docs/specs/s90-ios-core-spike.md)" = 1` exits 0 |
 | AC12 | The notification wording rule has a test that can fail | `swift test --package-path spike/ios-core --filter NotificationWordingTests`. A pure function in the harness builds the title, subtitle and body for A3, A5, A8 and A9 from a synthetic snapshot. The test asserts the rule under "Two limits that follow", and fails when that rule is removed from the function |
 
 ## Mutation floor
@@ -374,6 +379,7 @@ The harness is the claim, so it must be shown able to fail. Listed in the PR bod
 - reaching `process` through an alias of the global object in the bundle's entry;
 - adding `montecarlo` to the bundle;
 - running both "locales" under one locale;
+- putting `localeCompare` back in `dedupe` through a build plugin, with core unedited, which the reversed-comparator run must catch;
 - running a variant on fewer than 31 fixtures;
 - dropping the snapshot first line from a notification built by the harness.
 
