@@ -23,7 +23,7 @@ Before writing Cursor's build prompt, the PM ran Q1's checks on the real librari
 
 | # | Clause as merged | What happens | Change |
 | --- | --- | --- | --- |
-| 1 | `check-bundle.mjs` exits nonzero on `require(`, a `node:` specifier or a reference to `process` | Read as a plain search, it fails the merged core on text that is not a use. The decision rule says "Q1 failing means Q2 cannot pass", so Path A could fail for a false reason. If the builder loosened the check on its own, a registered check would change after the fact | Q1 tests for real uses, and the mutation floor gains two mutants |
+| 1 | `check-bundle.mjs` exits nonzero on `require(`, a `node:` specifier or a reference to `process` | Read as a plain search, it fails the merged core on text that is not a use. The decision rule says "Q1 failing means Q2 cannot pass", so Path A could fail for a false reason. If the builder loosened the check on its own, a registered check would change after the fact | Q1 tests for real uses, and the mutation floor gains three mutants |
 | 2 | Q1's command starts with the spike's install | In a fresh clone the bundle cannot resolve `yaml` or `ajv/dist/2020.js`, and exits 1 | The root install comes first |
 | 3 | AC11 names `<this spec's squash>` | After this amendment, a branch cut before it still exits 0 against the old squash | AC11 follows the spec's latest version on `main`, and a Git failure fails it |
 
@@ -43,11 +43,11 @@ Allowed: the diff is docs outside sensitive paths, and this is not a release or 
 
 ## What to check, beyond the skill's standing checks
 
-1. **Scope.** Does the spec change only in its status line, one new ruling paragraph, Q1's command and paragraph, two mutants, AC11 and the two sentences on Xcode? `git diff origin/main...HEAD -- docs/adr` should print nothing. `awk '/^## Decision rule/,/^## Non-goals/' docs/specs/s90-ios-core-spike.md | shasum` should print `0b1d5259a12c2752195776adb7be3ebbf737086c` at this head, the same as `git show origin/main:docs/specs/s90-ios-core-spike.md | awk '/^## Decision rule/,/^## Non-goals/' | shasum`.
-2. **The plain-search figures.** In a scratch clone after `pnpm install --frozen-lockfile`, run `pnpm dlx esbuild@0.28.2 packages/core/src/index.ts --bundle --platform=neutral --format=iife --global-name=KeelCore --main-fields=module,main --log-level=error --outfile=/tmp/c.js`. Then `grep -cF 'require(' /tmp/c.js`, `grep -cE '\bprocess\b' /tmp/c.js` and `grep -cF 'node:' /tmp/c.js` should print `5`, `4` and `1`. Read those lines. Is any of them a real use?
+1. **Scope.** Does the spec change only in its status line, one new ruling paragraph, Q1's command and paragraph, three mutants, AC11, one lockfile clause under Dependencies and the two sentences on Xcode? `git diff origin/main...HEAD -- docs/adr` should print nothing. `awk '/^## Decision rule/,/^## Non-goals/' docs/specs/s90-ios-core-spike.md | shasum` should print `0b1d5259a12c2752195776adb7be3ebbf737086c` at this head, the same as `git show origin/main:docs/specs/s90-ios-core-spike.md | awk '/^## Decision rule/,/^## Non-goals/' | shasum`.
+2. **The plain-search figures.** In a scratch clone after `pnpm install --frozen-lockfile`, run `pnpm dlx esbuild@0.28.2 packages/core/src/index.ts --bundle --platform=neutral --format=iife --global-name=KeelCore --main-fields=module,main --log-level=error --outfile=/tmp/c.js`. Then `grep -cF 'require(' /tmp/c.js`, `grep -cE '\bprocess\b' /tmp/c.js` and `grep -cF 'node:' /tmp/c.js` should print `5`, `4` and `1`, and `grep -cE '\bself\b' /tmp/c.js` should print `40`. Read those lines. Is any of them a real use?
 3. **The root install.** In a fresh clone with no install, the same esbuild line should exit 1 with `Could not resolve "yaml"`.
-4. **Can the new check be built, and is it strong enough?** Run the probe below. Is there a real use it misses, beyond a name built at run time? Does the new wording lose anything the old one caught?
-5. **The floor.** Each mutant's command first proves the unmodified comparison passes. Does that, with the two new mutants, rule out a plain search?
+4. **Can the new check be built, and is it strong enough?** Run the probe below. Is there a real use it misses, beyond the limits the spec states? Does the new wording lose anything the old one caught?
+5. **The floor.** Each mutant's command first proves the unmodified comparison passes. Does that, with the three new mutants, rule out a plain search?
 6. **AC11.** Run the script below. Does the new form hold in every case, and fail closed?
 7. **Direction.** Does anything here make Path A easier to select than the rule as registered, other than removing a false failure? Thresholds and decision clauses should be untouched.
 8. **Private list.** Not this seat's. Beni runs the owner's private-list check himself, counts only, over the diff, the commit messages, the PR title and body and every comment, Cursor's included. Cursor does not open that file, and reports the check as not run by it.
@@ -88,7 +88,7 @@ const base = {
   metafile: true,
   logLevel: "silent",
 };
-const marked = { ...base, define: { process: MARK, "globalThis.process": MARK, "globalThis.require": MARK } };
+const marked = { ...base, define: { process: MARK, globalThis: MARK, global: MARK, self: MARK, window: MARK } };
 
 function standalone() {
   const Ajv = fromCore("ajv/dist/2020.js").default;
@@ -127,7 +127,7 @@ function check(r) {
 function plain(text) {
   const lines = text.split("\n");
   const hits = (re) => lines.filter((l) => re.test(l)).length;
-  return { "require(": hits(/require\(/), process: hits(/\bprocess\b/), "node:": hits(/node:/) };
+  return { "require(": hits(/require\(/), process: hits(/\bprocess\b/), "node:": hits(/node:/), self: hits(/\bself\b/) };
 }
 
 const bundles = {};
@@ -141,7 +141,8 @@ for (const [name, plugins] of [["compile", []], ["standalone", [standalone()]]])
 
 const entry = 'export * from "./index.ts";\n';
 const planted = [
-  ["text only", entry + "export const s = 'require(\"a\") node:fs process'; export const o = { process: 1, node: 2 };\n"],
+  ["text only", entry + "export const s = 'require(\"a\") node:fs process globalThis global self window'; export const o = { process: 1, node: 2, global: 3, self: 4, window: 5 };\n"],
+  ["local bindings named self and global", entry + "export function f() { const self = 1; const global = 2; return self + global; }\n"],
   ["process", entry + "export const p = process.env.X;\n"],
   ["typeof process", entry + "export const p = typeof process;\n"],
   ["globalThis.process", entry + "export const p = globalThis.process.env.X;\n"],
@@ -151,10 +152,20 @@ const planted = [
   ["typeof require", entry + "export const r = typeof require;\n"],
   ["require.resolve", entry + 'export const r = require.resolve("x");\n'],
   ["globalThis.require", entry + 'export const r = globalThis.require("x");\n'],
+  ["global.process", entry + "export const p = global.process;\n"],
+  ["self.process", entry + "export const p = self.process;\n"],
+  ["window.process", entry + "export const p = window.process;\n"],
+  ["alias of globalThis, process", entry + "const g = globalThis; export const p = g.process;\n"],
+  ["alias of globalThis, require", entry + 'const g = globalThis; export const r = g.require("x");\n'],
+  ["alias of globalThis, require, external", entry + 'const g = globalThis; export const r = g.require("x");\n', ["x"]],
+  ["destructured from globalThis", entry + "const { process: p } = globalThis; export { p };\n"],
   ["node:fs", 'import fs from "node:fs";\n' + entry + "export const f = fs;\n"],
   ["node:fs, external", 'import fs from "node:fs";\n' + entry + "export const f = fs;\n", ["node:fs"]],
   ["montecarlo word", entry + "export const m = 'montecarlo';\n"],
-  ["name built at run time", entry + 'export const p = globalThis["pro" + "cess"];\n'],
+  ["name built at run time, on globalThis", entry + 'export const p = globalThis["pro" + "cess"];\n'],
+  ["new Function returning this", entry + 'export const p = new Function("return this")().process;\n'],
+  ["a sloppy function's this", entry + "export const p = (function () { return this; })().process;\n"],
+  ["indirect eval", entry + 'export const p = (0, eval)("this").process;\n'],
 ];
 for (const [label, contents, external = []] of planted) {
   try {
@@ -189,22 +200,26 @@ for (const [name, text] of Object.entries(bundles)) {
 console.log("locale", new Intl.Collator().resolvedOptions().locale);
 ```
 
-What it printed, on Node 24.22.2 at `378dab7`:
+What it printed, on Node 24.22.2 at `662dde3`, with the clone's root as the working directory:
 
 | Line | Result |
 | --- | --- |
-| `compile` plain search | `require(` 5, `process` 4, `node:` 1 |
-| `standalone` plain search | `require(` 2, `process` 0, `node:` 1 |
+| `compile` plain search | `require(` 5, `process` 4, `node:` 1, `self` 40 |
+| `standalone` plain search | `require(` 2, `process` 0, `node:` 1, `self` 0 |
 | Reference check, both variants | Not flagged, no external imports; 608362 and 615302 bytes |
-| Text only | Not flagged |
-| `process`, `typeof process`, `globalThis.process` | Flagged |
+| Text only; local bindings named `self` and `global` | Not flagged |
+| `process`, `typeof process`, `globalThis.process`, `global.process`, `self.process`, `window.process` | Flagged |
 | `require` call marked external, `require` alias, `typeof require`, `require.resolve`, `globalThis.require` | Flagged |
+| An alias of `globalThis` followed by `.process` or by a `require` call, with `x` marked external or not; `process` destructured from `globalThis` | Flagged |
 | `node:fs` marked external, the word `montecarlo` | Flagged |
+| `globalThis["pro" + "cess"]` | Flagged, on the bare `globalThis` |
 | `require` call and `node:fs` import, not marked external | The build fails: `Could not resolve` |
-| Name built at run time | Not flagged. A plain search misses it too, because the word is not in the text |
+| `.process` after `new Function("return this")()`, a sloppy function's `this` or an indirect `eval` | Not flagged |
 | Each variant the same as Node on 31 fixtures | `true`, under `en-US` and under `haw-US` |
 
 The last row ran in a bare V8 context, not JavaScriptCore, so it says nothing about clause 1. It shows only that swapping `schema-map.ts`'s compile through a build plugin needs no core edit. The `standalone` bundle is not the smaller one, at 615302 bytes against 608362.
+
+The byte counts follow the working directory, because esbuild's path comments and binding names follow the path: from `spike/ios-core` the same run prints 609904 and 615788. Cursor's run printed 608356 and 615296. The PM did not reproduce those two numbers and reads them as the same effect.
 
 ## The AC11 script
 
@@ -248,6 +263,22 @@ echo "no origin/main: now=$(ac11)"
 | Cut before the amendment | **0** | 1 |
 | `main` moved by an unrelated commit after the cut | 0 | 0 |
 | No `origin/main` | not run | 128 |
+
+## After the cold read
+
+Cursor gave the cold read at `662dde3` ([issuecomment-6622204075](https://github.com/BeniCheni/keel/pull/19#issuecomment-6622204075)), verdict "not mergeable", with one Medium and two Lows. The PM reproduced all three in a fresh clone of that head on Node 24.22.2, and accepts them.
+
+| Finding | Reproduced by | Change |
+| --- | --- | --- |
+| M1, Medium: a check for `process` and `require` alone passes real references through an alias of the global object, which the old plain search caught | The probe's forms, with its `define` set back to `process`, `globalThis.process` and `globalThis.require`: all not flagged | The check also flags the global object's names, and the floor gains a mutant. Neither real bundle holds one |
+| Low: the brief's byte counts do not reproduce | The note under the probe's table | The table names its working directory |
+| Low: the spike's frozen install exits 1 with no lockfile | `pnpm --dir spike/ios-core --ignore-workspace install --frozen-lockfile` exits 1 with `ERR_PNPM_NO_LOCKFILE`, then exits 0 after a plain install writes `pnpm-lock.yaml`. `node tools/tripwire/cli.mjs` exits 0 with both files staged | Dependencies names the lockfile |
+
+M1 corrects the PM. This brief's probe and the spec named a name built at run time as the only thing out of reach, and neither tested an alias. Cursor marked M1 Build-easier because the wording as it stood made the check easier to pass. The fix makes it stricter.
+
+The wider check still gives up one thing a plain search had: `.process` on an object the check cannot identify, such as the result of `new Function("return this")()`. It looks the same as `ajv`'s `code.process`, which is why a plain search cannot pass the real bundle. The spec states that limit, and Q2's runs in a JSContext are the test for it.
+
+Cursor re-reads the fix commit at the same seat and effort. Then Beni runs the private-list check and merges.
 
 ## Left for the build prompt
 

@@ -1,6 +1,6 @@
 # S90: iOS core spike
 
-- Status: spec drafted 2026-11-02 by the PM (Claude). It goes through the plan challenge before any spike code exists: Cursor takes Pass 1 by Beni's word of 2026-11-02, while Codex is at its usage limit, and Codex reads the whole spec at Pass 2 before it merges. Revised the same day after Pass 1, with Beni's rulings; dispositions are in `docs/reviews/pr-16-pass-1.5.md`. Amended 2026-11-03, before any spike code, in Q1's command and check, the mutation floor and AC11, and in two sentences on Xcode; `docs/reviews/pr-19-pass-0.md` says why.
+- Status: spec drafted 2026-11-02 by the PM (Claude). It goes through the plan challenge before any spike code exists: Cursor takes Pass 1 by Beni's word of 2026-11-02, while Codex is at its usage limit, and Codex reads the whole spec at Pass 2 before it merges. Revised the same day after Pass 1, with Beni's rulings; dispositions are in `docs/reviews/pr-16-pass-1.5.md`. Amended 2026-11-03 and 2026-11-04, before any spike code, in Q1's command and check, the mutation floor, AC11 and the spike's lockfile, and in two sentences on Xcode; `docs/reviews/pr-19-pass-0.md` says why.
 - Release: post-`v0.1.0` spike. Not a slice toward `v0.1.0`, and no change to the Milestone 1 slice plan.
 - Builder: Cursor, Grok 4.7 High, in one draft PR on branch `s90/ios-core-spike`.
 - Sensitive paths touched: none. The spike consumes `@keel/core` as merged and edits nothing outside `spike/ios-core/`.
@@ -183,9 +183,9 @@ pnpm install --frozen-lockfile && pnpm --dir spike/ios-core --ignore-workspace i
 swift test --package-path spike/ios-core --filter BundleLoadTests
 ```
 
-`check-bundle.mjs` exits nonzero on a `require` call, a `node:` specifier or a reference to the global `process` left in the built code, and on the string `montecarlo`, and prints the bundle's bytes. `BundleLoadTests` fails on any JSContext exception and asserts that `dateFlags`, `loadTerms` and `verificationSummary` are functions.
+`check-bundle.mjs` exits nonzero on a `require` call, a `node:` specifier, a reference to the global `process` or a reference by name to the global object (`globalThis`, `global`, `self` or `window`) left in the built code, and on the string `montecarlo`, and prints the bundle's bytes. `BundleLoadTests` fails on any JSContext exception and asserts that `dateFlags`, `loadTerms` and `verificationSummary` are functions.
 
-**It reads the code, not the text.** A plain search cannot be this check. In the `compile` bundle at this spec's base, built with esbuild 0.28.2, `require(` is on 5 lines, `process` on 4 and `node:` on 1, and none is a use: they are `ajv`'s code-generation strings, esbuild's helper function `__require`, `ajv`'s `code.process` option and the object key `node: null`. esbuild can tell a use from text with no new dependency: its metafile lists any import left external, and `define` replaces only a real reference. How the check does it is the builder's choice, and the mutation floor tests it. `docs/reviews/pr-19-pass-0.md` has the commands, and a probe that shows this on both variants. No static check sees a name built at run time. Only Q2's runs in a JSContext can show that, on the paths they exercise.
+**It reads the code, not the text.** A plain search cannot be this check. In the `compile` bundle at this spec's base, built with esbuild 0.28.2, `require(` is on 5 lines, `process` on 4 and `node:` on 1, and none is a use: they are `ajv`'s code-generation strings, esbuild's helper function `__require`, `ajv`'s `code.process` option and the object key `node: null`. esbuild can tell a use from text with no new dependency: its metafile lists any import left external, and `define` replaces only a real reference. The global object's names are in the check because an alias otherwise gets past it: `const g = globalThis` followed by `g.process`, `global.process` and `const { process: p } = globalThis` are real references that a check for `process` and `require` alone misses. Neither variant holds a real reference to any of those names, and `self`, on 40 lines of the `compile` bundle, is never the global there. How the check does it is the builder's choice, and the mutation floor tests it. `docs/reviews/pr-19-pass-0.md` has the commands, and a probe that shows this on both variants. No static check sees code built at run time or the global object reached through a function's `this`, and a property named `process` on an object the check cannot identify looks the same as `ajv`'s `code.process`. Only Q2's runs in a JSContext can show those, on the paths they exercise.
 
 Known traps, each run in Node with the real libraries, and none yet in a JSContext:
 
@@ -371,6 +371,7 @@ The harness is the claim, so it must be shown able to fail. Listed in the PR bod
 - adding a `node:fs` import to the bundle's entry;
 - leaving a `require` call in the bundle's entry;
 - leaving a reference to the global `process` in the bundle's entry;
+- reaching `process` through an alias of the global object in the bundle's entry;
 - adding `montecarlo` to the bundle;
 - running both "locales" under one locale;
 - running a variant on fewer than 31 fixtures;
@@ -380,7 +381,7 @@ The spike PR's claims list gives one command per row, and each of those commands
 
 ## Dependencies
 
-`esbuild` (MIT, `gh api repos/evanw/esbuild --jq .license.spdx_id`), pinned exact in `spike/ios-core/package.json`, on the spike branch only. Beni approved it on 2026-11-02 for the spike branch only, as hard rule 8 requires. JavaScriptCore is a system framework. No Swift package is added: Q4 is a desk study.
+`esbuild` (MIT, `gh api repos/evanw/esbuild --jq .license.spdx_id`), pinned exact in `spike/ios-core/package.json`, with that folder's own `pnpm-lock.yaml` committed, on the spike branch only. Beni approved it on 2026-11-02 for the spike branch only, as hard rule 8 requires. JavaScriptCore is a system framework. No Swift package is added: Q4 is a desk study.
 
 ## Seats
 
