@@ -1,0 +1,7 @@
+{
+  "seed": "keel-s90-standin-1",
+  "valid": "fixtures/synthetic/terms/valid/example-autocall.yaml",
+  "invalid": "fixtures/synthetic/terms/invalid/source-kind.yaml",
+  "exportSha256": "01c07c030c5f80c40c35f33f2048ac3d3e30a93a2c5ce6a2efef507725802c1c",
+  "malformedSha256": "14fbe04b008b0c9aa77e165195791070bfc3d55b4fac1894882d77775c805ef5"
+}

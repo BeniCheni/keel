@@ -1,0 +1,7 @@
+.build/
+xcuserdata/
+DerivedData/
+dist/
+*.xcworkspace
+.swiftpm/
+standin/*.yaml
