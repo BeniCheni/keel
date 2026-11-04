@@ -1,6 +1,6 @@
 # S90: iOS core spike
 
-- Status: spec drafted 2026-11-02 by the PM (Claude). It goes through the plan challenge before any spike code exists: Cursor takes Pass 1 by Beni's word of 2026-11-02, while Codex is at its usage limit, and Codex reads the whole spec at Pass 2 before it merges. Revised the same day after Pass 1, with Beni's rulings; dispositions are in `docs/reviews/pr-16-pass-1.5.md`. Amended 2026-11-03, before any spike code, in Q1's command and check, the mutation floor and AC11; `docs/reviews/pr-19-pass-0.md` says why.
+- Status: spec drafted 2026-11-02 by the PM (Claude). It goes through the plan challenge before any spike code exists: Cursor takes Pass 1 by Beni's word of 2026-11-02, while Codex is at its usage limit, and Codex reads the whole spec at Pass 2 before it merges. Revised the same day after Pass 1, with Beni's rulings; dispositions are in `docs/reviews/pr-16-pass-1.5.md`. Amended 2026-11-03, before any spike code, in Q1's command and check, the mutation floor and AC11, and in two sentences on Xcode; `docs/reviews/pr-19-pass-0.md` says why.
 - Release: post-`v0.1.0` spike. Not a slice toward `v0.1.0`, and no change to the Milestone 1 slice plan.
 - Builder: Cursor, Grok 4.7 High, in one draft PR on branch `s90/ios-core-spike`.
 - Sensitive paths touched: none. The spike consumes `@keel/core` as merged and edits nothing outside `spike/ios-core/`.
@@ -167,7 +167,7 @@ Two limits that follow, for the ADR:
 
 Commands assume `export KEEL_DATA_DIR="$(mktemp -d)"` and Node 24.22.2 unless a row says otherwise. `KEEL_SPIKE_BASE` names the frozen `main` SHA from which the spike branch was cut. The spike PR's claims list records it before review, the results repeat it, and AC8 checks it against `main` instead of trusting it. The first spike commit in AC11 is the first line of `git rev-list --reverse origin/main..HEAD`, taken in the reviewer's clone. Each question's result goes in `docs/specs/s90-ios-core-spike-results.md`, which the PM writes after the review, so that this file stays as registered.
 
-**Prerequisite.** A full Xcode. This Mac has only the command-line tools today (`xcode-select -p` prints `/Library/Developer/CommandLineTools`). The iPhone needs Developer Mode on.
+**Prerequisite.** A full Xcode, on this Mac since 2026-11-03 (`xcode-select -p` prints `/Applications/Xcode.app/Contents/Developer`). The iPhone needs Developer Mode on.
 
 **Identifiers stay out.** The Apple ID, team ID and device UDID are account identifiers under hard rule 1. They come from `KEEL_SPIKE_TEAM` and `KEEL_SPIKE_UDID` in the environment and are never committed. The results record the device model and iOS version only.
 
@@ -245,7 +245,7 @@ xcrun devicectl device install app --device "$KEEL_SPIKE_UDID" spike/ios-core/.b
 xcrun devicectl device process launch --device "$KEEL_SPIKE_UDID" --console "$KEEL_SPIKE_BUNDLE_ID"
 ```
 
-No Swift or Xcode command in this spec has been run, because this Mac has no full Xcode. These three device lines are the PM's reading of Apple's tools, not a confirmed Personal Team command sequence. The builder confirms or replaces them and records what ran, keeping what they are for: a Release build with `ENABLE_TESTABILITY` at its Release default, a newly launched process, and no debugger attached. A Debug run is not a substitute. Apple's archived Xcode 7 release notes warn that Enable Testability prevents optimizations that depend on not exporting internal symbols. That is narrower than disabling all optimization and is not a measurement of the current compiler.
+No Swift or Xcode command in this spec has been run: this Mac had no full Xcode when they were written. These three device lines are the PM's reading of Apple's tools, not a confirmed Personal Team command sequence. The builder confirms or replaces them and records what ran, keeping what they are for: a Release build with `ENABLE_TESTABILITY` at its Release default, a newly launched process, and no debugger attached. A Debug run is not a substitute. Apple's archived Xcode 7 release notes warn that Enable Testability prevents optimizations that depend on not exporting internal symbols. That is narrower than disabling all optimization and is not a measurement of the current compiler.
 
 **Gated, per variant:** five fresh launches of the harness app. In each, create a JSContext and evaluate the bundle, which includes `ajv.compile` for the `compile` variant, then make the first `loadTerms` call on `example-autocall.yaml`. Report the median of the five for each. Retain the paired measurements for each launch and evidence that it was a new process; reactivating an existing process does not count as a fresh launch. These timings start at JSContext creation, not at tapping the app icon.
 

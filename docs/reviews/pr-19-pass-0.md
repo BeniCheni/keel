@@ -4,7 +4,9 @@ Written by the PM on 2026-11-03 (America/New_York), from a fresh read of the PR.
 
 ## Seat for the cold review
 
-Codex, GPT-6.1 Sol High. `AGENTS.md` asks for one cold review by a vendor that did not write the PR, and a Claude session wrote every line. Codex read this spec at Pass 2 on PR #16, so it says so in its comment where a change concerns its own earlier read. The seat has no fallback: if it is unavailable, stop and escalate.
+Cursor, Grok 4.7 Extra High, by Beni's word on 2026-11-03, in the words "Can we pivot to Cursor?", because he wants to use Cursor's tokens before 2026-11-05. Cursor held this seat on PR #14, and this is the effort it used for PR #16's plan challenge. `AGENTS.md` asks for one cold review by a vendor that did not write the PR, and a Claude session wrote every line. It also names Codex for a spec's plan challenge, and the PM told Beni so, so this holds for this PR only. If this seat is unavailable, stop and escalate.
+
+Cursor will build this spike, so this read is not neutral. PR #16 kept Codex so that a vendor that will not build the spike challenged the plan before it bound, and this amendment changes a check Cursor's build has to pass. So Cursor says so in its comment, labels any finding that would make the build easier, and pushes nothing: the PM applies what it accepts. The independent read comes later, when Codex tests the amended check at Pass 2 on the spike PR.
 
 ## Scope
 
@@ -17,7 +19,7 @@ Codex, GPT-6.1 Sol High. `AGENTS.md` asks for one cold review by a vendor that d
 
 ## Why this PR exists
 
-Before writing Cursor's build prompt, the PM ran Q1's checks on the real libraries and found three problems. Beni ruled "Yes, amend first" on 2026-11-03, on the question "Amend the S90 spec before Cursor starts?". That ruling was given in the PM's session, so Codex cannot see it, and Beni's merge confirms it.
+Before writing Cursor's build prompt, the PM ran Q1's checks on the real libraries and found three problems. Beni ruled "Yes, amend first" on 2026-11-03, on the question "Amend the S90 spec before Cursor starts?". That ruling was given in the PM's session, so Cursor cannot see it, and Beni's merge confirms it.
 
 | # | Clause as merged | What happens | Change |
 | --- | --- | --- | --- |
@@ -25,28 +27,30 @@ Before writing Cursor's build prompt, the PM ran Q1's checks on the real librari
 | 2 | Q1's command starts with the spike's install | In a fresh clone the bundle cannot resolve `yaml` or `ajv/dist/2020.js`, and exits 1 | The root install comes first |
 | 3 | AC11 names `<this spec's squash>` | After this amendment, a branch cut before it still exits 0 against the old squash | AC11 follows the spec's latest version on `main`, and a Git failure fails it |
 
+Two more sentences change, and they are facts, not clauses. The spec said this Mac has no full Xcode, and that stopped being true on 2026-11-03: `xcode-select -p` prints `/Applications/Xcode.app/Contents/Developer`. So the build authority no longer states an unmet prerequisite.
+
 ## Authorship record
 
 From `git log --format='%h %an' origin/main..HEAD`.
 
 | Commit | Authoring vendor | Cold read by |
 | --- | --- | --- |
-| Every commit on the branch, this brief's included | Claude | Codex |
+| Every commit on the branch, this brief's included | Claude | Cursor |
 
 ## Fast-track
 
-Allowed: the diff is docs outside sensitive paths, and this is not a release or numbering fork. One cold review by Codex replaces Passes 1 to 2.5, as it did for the S01 amendments on PR #14. Fast-track changes review depth only: Beni still merges in shadow mode, and "fast-track" goes in the squash message.
+Allowed: the diff is docs outside sensitive paths, and this is not a release or numbering fork. One cold review by a vendor that wrote none of the PR replaces Passes 1 to 2.5, as Cursor's did for the S01 amendments on PR #14. Fast-track changes review depth only: Beni still merges in shadow mode, and "fast-track" goes in the squash message.
 
 ## What to check, beyond the skill's standing checks
 
-1. **Scope.** Does the spec change only in its status line, one new ruling paragraph, Q1's command and paragraph, two mutants and AC11? `git diff origin/main...HEAD -- docs/adr` should print nothing. `awk '/^## Decision rule/,/^## Non-goals/' docs/specs/s90-ios-core-spike.md | shasum` should print `0b1d5259a12c2752195776adb7be3ebbf737086c` at this head, the same as `git show origin/main:docs/specs/s90-ios-core-spike.md | awk '/^## Decision rule/,/^## Non-goals/' | shasum`.
+1. **Scope.** Does the spec change only in its status line, one new ruling paragraph, Q1's command and paragraph, two mutants, AC11 and the two sentences on Xcode? `git diff origin/main...HEAD -- docs/adr` should print nothing. `awk '/^## Decision rule/,/^## Non-goals/' docs/specs/s90-ios-core-spike.md | shasum` should print `0b1d5259a12c2752195776adb7be3ebbf737086c` at this head, the same as `git show origin/main:docs/specs/s90-ios-core-spike.md | awk '/^## Decision rule/,/^## Non-goals/' | shasum`.
 2. **The plain-search figures.** In a scratch clone after `pnpm install --frozen-lockfile`, run `pnpm dlx esbuild@0.28.2 packages/core/src/index.ts --bundle --platform=neutral --format=iife --global-name=KeelCore --main-fields=module,main --log-level=error --outfile=/tmp/c.js`. Then `grep -cF 'require(' /tmp/c.js`, `grep -cE '\bprocess\b' /tmp/c.js` and `grep -cF 'node:' /tmp/c.js` should print `5`, `4` and `1`. Read those lines. Is any of them a real use?
 3. **The root install.** In a fresh clone with no install, the same esbuild line should exit 1 with `Could not resolve "yaml"`.
 4. **Can the new check be built, and is it strong enough?** Run the probe below. Is there a real use it misses, beyond a name built at run time? Does the new wording lose anything the old one caught?
 5. **The floor.** Each mutant's command first proves the unmodified comparison passes. Does that, with the two new mutants, rule out a plain search?
 6. **AC11.** Run the script below. Does the new form hold in every case, and fail closed?
 7. **Direction.** Does anything here make Path A easier to select than the rule as registered, other than removing a false failure? Thresholds and decision clauses should be untouched.
-8. **Private list.** This seat runs the owner's private-list check, counts only, over the diff, the commit messages, the PR title and body, every comment and its own proposed comment.
+8. **Private list.** Not this seat's. Beni runs the owner's private-list check himself, counts only, over the diff, the commit messages, the PR title and body and every comment, Cursor's included. Cursor does not open that file, and reports the check as not run by it.
 
 ## The probe
 
