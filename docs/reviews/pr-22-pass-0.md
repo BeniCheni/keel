@@ -207,6 +207,12 @@ mk; BASE="$(git rev-parse HEAD)"; spike "$BASE"; first="$(git rev-parse HEAD)"; 
 
 So AC11 exits 1 until this PR merges, and a further amendment has to edit AC11 again.
 
+## After the cold read
+
+Codex gave the cold read at `fd8c60f` ([issuecomment-6640941944](https://github.com/BeniCheni/keel/pull/22#issuecomment-6640941944)), verdict "mergeable after fixes", with one Medium. Its private-list check found 0 hits. The PM accepts the Medium: the amendment kept the sentence calling the two-locale test "the check that nothing else depends on locale" (`git show fd8c60f:docs/specs/s90-ios-core-spike.md | grep -c 'the check that nothing else depends on locale'` prints `1`), while its new bullet says a second locale is not enough, and rows 7 and 8 above show both JavaScriptCore locales missing a real `localeCompare` dependency. The sentence now states what the runs can show on these inputs and what they cannot prove.
+
+Codex re-reads the fix commit. Then Beni merges.
+
 ## Left for the builder
 
 These go in Cursor's follow-up prompt, not the spec. Each is a fact about PR #21 at `ff4fc35`:
