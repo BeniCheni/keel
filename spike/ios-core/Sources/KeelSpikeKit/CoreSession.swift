@@ -28,12 +28,20 @@ public final class CoreSession {
     public let globals: HostGlobals
     private let context: JSContext
 
-    public init(bundleSource: String) throws {
+    /// `reversedComparator` is a parity test run. It is not a host shim, and `shims` stays empty.
+    public init(bundleSource: String, reversedComparator: Bool = false) throws {
         guard let context = JSContext() else { throw CoreError.noContext }
         self.context = context
         self.shims = []
         self.globals = Self.readGlobals(context)
         context.exceptionHandler = { _, _ in }
+        if reversedComparator {
+            context.evaluateScript(Self.reversedComparator)
+            if context.exception != nil {
+                context.exception = nil
+                throw CoreError.exception
+            }
+        }
         context.evaluateScript(bundleSource)
         if context.exception != nil {
             context.exception = nil
@@ -99,6 +107,39 @@ public final class CoreSession {
             process: kind("process")
         )
     }
+
+    private static let reversedComparator = """
+    (function () {
+      var rev = function (a, b) {
+        a = String(a);
+        b = String(b);
+        return a < b ? 1 : a > b ? -1 : 0;
+      };
+      String.prototype.localeCompare = function (other) { return rev(this, other); };
+      var RealCollator = Intl.Collator;
+      function ReversedCollator(locales, options) {
+        var collator = new RealCollator(locales, options);
+        Object.defineProperty(collator, "compare", { configurable: true, get: function () { return rev; } });
+        return collator;
+      }
+      ReversedCollator.prototype = RealCollator.prototype;
+      ReversedCollator.supportedLocalesOf = function (locales, options) {
+        return RealCollator.supportedLocalesOf(locales, options);
+      };
+      Intl.Collator = ReversedCollator;
+      var names = ["toLocaleString", "toLocaleLowerCase", "toLocaleUpperCase", "toLocaleDateString", "toLocaleTimeString"];
+      [String.prototype, Number.prototype, Date.prototype, Array.prototype].forEach(function (proto) {
+        names.forEach(function (name) {
+          if (typeof proto[name] !== "function") return;
+          var real = proto[name];
+          proto[name] = function () {
+            var value = real.apply(this, arguments);
+            return "\\u0001" + String(value);
+          };
+        });
+      });
+    })();
+    """
 
     private static let helper = """
     function keelSpikeLine(text, file) {

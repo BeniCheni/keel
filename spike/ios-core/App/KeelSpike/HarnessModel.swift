@@ -36,6 +36,10 @@ final class HarnessModel: NSObject, ObservableObject, UNUserNotificationCenterDe
             emit("KEEL_SPIKE v1 error subject=variant")
             return
         }
+        if launchValue("-KeelProbe") != nil {
+            emitLocales(files)
+            return
+        }
         if let sample = try? Timing.measure(bundleSource: source, exampleText: files.example) {
             emit(
                 "KEEL_SPIKE v1 timing variant=\(variant) kind=fresh pid=\(ProcessInfo.processInfo.processIdentifier) contextMs=\(formatMilliseconds(sample.contextMs)) loadTermsMs=\(formatMilliseconds(sample.loadTermsMs))"
@@ -43,20 +47,58 @@ final class HarnessModel: NSObject, ObservableObject, UNUserNotificationCenterDe
         } else {
             emit("KEEL_SPIKE v1 error subject=timing")
         }
+        emitParity(files)
+    }
+
+    private func emitLocales(_ files: SpikeFiles) {
         for name in ["compile", "standalone"] {
-            guard let bundle = try? files.source(variant: name), let session = try? CoreSession(bundleSource: bundle) else {
+            guard let bundle = try? files.source(variant: name),
+                  let session = try? CoreSession(bundleSource: bundle),
+                  let locale = try? session.locale()
+            else {
+                emit("KEEL_SPIKE v1 error subject=locale")
+                continue
+            }
+            emit("KEEL_SPIKE v1 locale engine=jscontext variant=\(name) locale=\(locale)")
+        }
+    }
+
+    private func emitParity(_ files: SpikeFiles) {
+        let inputs = parityInputs(files)
+        for name in ["compile", "standalone"] {
+            guard let bundle = try? files.source(variant: name) else {
                 emit("KEEL_SPIKE v1 error subject=parity")
                 continue
             }
-            let locale = (try? session.locale()) ?? "unknown"
-            for fixture in files.fixtures {
-                guard let line = try? session.line(text: fixture.text, file: fixture.file) else {
+            for reversed in [false, true] {
+                guard let session = try? CoreSession(bundleSource: bundle, reversedComparator: reversed) else {
                     emit("KEEL_SPIKE v1 error subject=parity")
                     continue
                 }
-                emit(parityRecord(variant: name, locale: locale, file: fixture.file, jsonLine: line))
+                let locale = (try? session.locale()) ?? "unknown"
+                let comparator = reversed ? "reversed" : "identity"
+                if !reversed {
+                    emit("KEEL_SPIKE v1 locale engine=jscontext variant=\(name) locale=\(locale)")
+                }
+                for fixture in inputs {
+                    guard let line = try? session.line(text: fixture.text, file: fixture.file) else {
+                        emit("KEEL_SPIKE v1 error subject=parity")
+                        continue
+                    }
+                    emit(parityRecord(variant: name, locale: locale, comparator: comparator, file: fixture.file, jsonLine: line))
+                }
             }
         }
+    }
+
+    private func parityInputs(_ files: SpikeFiles) -> [FixtureFile] {
+        guard let minimal = files.fixtures.first(where: { $0.file.hasSuffix("/valid/minimal.yaml") }),
+              let tie = try? TieInput.text(from: minimal.text)
+        else {
+            emit("KEEL_SPIKE v1 error subject=tie")
+            return files.fixtures
+        }
+        return files.fixtures + [FixtureFile(file: TieInput.file, text: tie)]
     }
 
     func saveNextVariant() {

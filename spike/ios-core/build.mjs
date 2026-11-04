@@ -6,8 +6,9 @@ const root = process.argv[2] ? process.argv[2] : join(import.meta.dirname, "../.
 const dist = join(root, "spike/ios-core/dist");
 mkdirSync(dist, { recursive: true });
 
+const dedupeLocaleCompare = process.env.KEEL_SPIKE_DEDUPE === "localeCompare";
 for (const variant of ["compile", "standalone"]) {
-  const built = await bundleVariant(root, variant);
+  const built = await bundleVariant(root, variant, { dedupeLocaleCompare });
   if (!built.ok) {
     process.stderr.write(`build failed variant=${variant} ${built.error}\n`);
     process.exit(1);

@@ -24,6 +24,13 @@ final class BundleLoadTests: XCTestCase {
             let invalid = try XCTUnwrap(files.fixtures.first { $0.file.contains("/invalid/") })
             let rejected = try session.line(text: invalid.text, file: invalid.file)
             XCTAssertTrue(rejected.contains("\"ok\":false"))
+            let reversed = try CoreSession(bundleSource: try files.source(variant: variant), reversedComparator: true)
+            XCTAssertEqual(reversed.shims, [], "reversed shims \(variant)")
+            let reversedLine = try reversed.line(
+                text: files.example,
+                file: "fixtures/synthetic/terms/valid/example-autocall.yaml"
+            )
+            XCTAssertTrue(reversedLine.contains("\"ok\":true"))
         }
     }
 }

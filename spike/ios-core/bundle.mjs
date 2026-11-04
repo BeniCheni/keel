@@ -55,6 +55,21 @@ function standalonePlugin(root) {
   };
 }
 
+function dedupeLocaleComparePlugin() {
+  const needle = "(left.path < right.path ? -1 : left.path > right.path ? 1 : 0)";
+  const replacement = "left.path.localeCompare(right.path)";
+  return {
+    name: "dedupe-localecompare",
+    setup(build) {
+      build.onLoad({ filter: /\/load\.ts$/ }, (args) => {
+        const src = readFileSync(args.path, "utf8");
+        if (!src.includes(needle)) throw new Error("the dedupe swap did not apply");
+        return { contents: src.replace(needle, replacement), loader: "ts" };
+      });
+    },
+  };
+}
+
 function externalizeUnresolved() {
   return {
     name: "externalize-unresolved",
@@ -84,6 +99,7 @@ export async function bundleVariant(root, variant, options = {}) {
   const esbuild = createRequire(join(root, "spike/ios-core/package.json"))("esbuild");
   const plugins = [];
   if (variant === "standalone") plugins.push(standalonePlugin(root));
+  if (options.dedupeLocaleCompare) plugins.push(dedupeLocaleComparePlugin());
   plugins.push(externalizeUnresolved());
   const planted = options.planted ?? "";
   const entryDir = coreDir(root);

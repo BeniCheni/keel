@@ -6,9 +6,10 @@ Before the first launch, trust the developer profile on the phone: Settings > Ge
 
 Order:
 
-1. Q3 fresh launches and the Q2 device parity, first.
-2. Q5, after those timings and hashes are on disk.
-3. The profile-expiry check last, on day 8 or later. A Personal Team install lasts 7 days.
+1. Before any timing, one launch under `(sv)` `sv_SE` and one under `(haw)` `haw_US`, each with `-KeelProbe 1`. Read the locale lines. If the `sv` locale does not start with `sv`, stop and tell the PM before going further. The `haw` launch is recorded and does not gate.
+2. Q3 fresh launches and the Q2 device parity. Five fresh launches per variant, all under `en-US`. One further launch under `sv_SE` records the Swedish hashes. Each of those launches logs identity and reversed hashes for both variants, including the tie input. The probe launches are not part of the five.
+3. Q5, after those timings and hashes are on disk.
+4. The profile-expiry check last, on day 8 or later. A Personal Team install lasts 7 days.
 
 ## Build, install, launch
 
@@ -25,16 +26,23 @@ Install matches `devicectl device install app --help`: `--device` and the app pa
 xcrun devicectl device install app --device "$KEEL_SPIKE_UDID" spike/ios-core/.build/ios/Build/Products/Release-iphoneos/KeelSpike.app
 ```
 
-Launch adds `--terminate-existing` so the process is new. A reactivation does not count as a fresh launch. `devicectl device process launch --help` shows that flag, `--console`, and command-line arguments after `--`. The shared scheme builds Release and its debugger identifier is empty. Take five fresh launches per variant, all under `en-US`, so those five share a locale. Take one further launch under `haw` for the parity hashes. Each launch prints both variants' hashes. Record the locale on the line. Leave that text as printed.
+Launch adds `--terminate-existing` so the process is new. A reactivation does not count as a fresh launch. `devicectl device process launch --help` shows that flag, `--console`, and command-line arguments after `--`. The shared scheme builds Release and its debugger identifier is empty. The probe launches come before any timing. `-KeelProbe 1` prints locale lines and returns without a timing sample.
+
+```bash
+xcrun devicectl device process launch --device "$KEEL_SPIKE_UDID" --terminate-existing --console "$KEEL_SPIKE_BUNDLE_ID" -- -AppleLanguages "(sv)" -AppleLocale sv_SE -KeelProbe 1 -KeelVariant compile
+xcrun devicectl device process launch --device "$KEEL_SPIKE_UDID" --terminate-existing --console "$KEEL_SPIKE_BUNDLE_ID" -- -AppleLanguages "(haw)" -AppleLocale haw_US -KeelProbe 1 -KeelVariant compile
+```
+
+If the `sv` lines do not show a locale starting with `sv`, stop and tell the PM. Then take five fresh launches per variant, all under `en-US`, so those five share a locale. Take one further launch under `sv_SE` so the Swedish hashes are in the log. Each non-probe launch prints both variants, the identity comparator and the reversed comparator, including the tie input. Record the locale on the line. Leave that text as printed. The `haw` probe is the haw run. It does not gate.
 
 ```bash
 xcrun devicectl device process launch --device "$KEEL_SPIKE_UDID" --terminate-existing --console "$KEEL_SPIKE_BUNDLE_ID" -- -AppleLanguages "(en-US)" -AppleLocale en_US -KeelVariant compile
 ```
 
-Repeat that line with `-KeelVariant standalone` for the other five. For the `haw` hashes:
+Repeat that line with `-KeelVariant standalone` for the other five. For the Swedish hashes:
 
 ```bash
-xcrun devicectl device process launch --device "$KEEL_SPIKE_UDID" --terminate-existing --console "$KEEL_SPIKE_BUNDLE_ID" -- -AppleLanguages "(haw)" -AppleLocale haw_US -KeelVariant compile
+xcrun devicectl device process launch --device "$KEEL_SPIKE_UDID" --terminate-existing --console "$KEEL_SPIKE_BUNDLE_ID" -- -AppleLanguages "(sv)" -AppleLocale sv_SE -KeelVariant compile
 ```
 
 ## Lines to keep
@@ -46,11 +54,13 @@ KEEL_SPIKE v1 process pid=<pid>
 KEEL_SPIKE v1 timing variant=compile kind=fresh pid=<pid> contextMs=<ms> loadTermsMs=<ms>
 KEEL_SPIKE v1 timing variant=compile kind=warm-context count=20 medianMs=<ms> worstMs=<ms>
 KEEL_SPIKE v1 timing variant=compile kind=warm-load count=20 medianMs=<ms> worstMs=<ms>
-KEEL_SPIKE v1 parity variant=compile locale=<locale> file=<file> sha256=<hex>
+KEEL_SPIKE v1 locale engine=jscontext variant=compile locale=<locale>
+KEEL_SPIKE v1 parity variant=compile locale=<locale> comparator=identity file=<file> sha256=<hex>
+KEEL_SPIKE v1 parity variant=compile locale=<locale> comparator=reversed file=<file> sha256=<hex>
 KEEL_SPIKE v1 q5 subject=import result=stored backup-excluded=true protection=<protection>
 ```
 
-`variant` is `compile` or `standalone`. The warm lines come from the warm-set control, after the fresh launches, and they are outside the fresh clock. `sh spike/ios-core/run-parity.sh --compare-device <log>` reads only the parity lines.
+`variant` is `compile` or `standalone`. `comparator` is `identity` or `reversed`. The reversed comparator is a test run on that launch. It is not a host shim. The warm lines come from the warm-set control, after the fresh launches, and they are outside the fresh clock. `sh spike/ios-core/run-parity.sh --compare-device <log>` reads the parity lines, requires `en` and `sv` for both variants and both comparators, reports a haw locale when one is present, and does not require haw.
 
 ```bash
 export KEEL_DATA_DIR="$(mktemp -d)"

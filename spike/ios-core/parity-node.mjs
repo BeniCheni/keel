@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
+import { TIE_FILE, tieText } from "./tie.mjs";
 
 const root = process.argv[2];
 const list = process.argv[3];
@@ -8,7 +9,9 @@ const files = readFileSync(list, "utf8").split("\n").filter((line) => line.lengt
 const locale = new Intl.Collator().resolvedOptions().locale;
 process.stdout.write(`KEEL_SPIKE v1 locale engine=node variant=core locale=${locale}\n`);
 for (const file of files) {
-  const text = readFileSync(isAbsolute(file) ? file : join(root, file), "utf8");
+  const text = file === TIE_FILE
+    ? tieText(readFileSync(join(root, "fixtures/synthetic/terms/valid/minimal.yaml"), "utf8"))
+    : readFileSync(isAbsolute(file) ? file : join(root, file), "utf8");
   let line;
   try {
     const result = core.loadTerms(text, file);

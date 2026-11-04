@@ -7,6 +7,7 @@ struct HostArgs {
     var variant = "compile"
     var list = ""
     var edges = ""
+    var reversed = false
 }
 
 enum HostExit: Error {
@@ -46,6 +47,8 @@ func parseArgs() -> HostArgs {
             args.list = take() ?? ""
         case "--edges":
             args.edges = take() ?? ""
+        case "--reversed":
+            args.reversed = true
         default:
             break
         }
@@ -63,8 +66,14 @@ func filesFromList(_ root: URL, _ list: String) throws -> [FixtureFile] {
     var files: [FixtureFile] = []
     for line in text.split(separator: "\n", omittingEmptySubsequences: true) {
         let file = String(line)
-        let url = file.hasPrefix("/") ? URL(fileURLWithPath: file) : root.appending(path: file)
-        let body = try readKeepingPrefix(url)
+        let body: String
+        if file == TieInput.file {
+            let minimal = try readKeepingPrefix(root.appending(path: "fixtures/synthetic/terms/valid/minimal.yaml"))
+            body = try TieInput.text(from: minimal)
+        } else {
+            let url = file.hasPrefix("/") ? URL(fileURLWithPath: file) : root.appending(path: file)
+            body = try readKeepingPrefix(url)
+        }
         files.append(FixtureFile(file: file, text: body))
     }
     return files
@@ -78,7 +87,7 @@ func runParity(_ args: HostArgs) throws {
     let root = URL(fileURLWithPath: args.root)
     let files = try SpikeFiles.fromRepo(root: root)
     let source = try files.source(variant: args.variant)
-    let session = try CoreSession(bundleSource: source)
+    let session = try CoreSession(bundleSource: source, reversedComparator: args.reversed)
     let locale = try session.locale()
     emitLocale(engine: "jscontext", variant: args.variant, locale: locale)
     let selected = try filesFromList(root, args.list)

@@ -40,13 +40,7 @@ async function bundleMutant(planted, accept) {
 function parityMutant(flag, reason, prove) {
   const baseline = run("sh", ["spike/ios-core/run-parity.sh", "--prove", prove]);
   show(baseline);
-  const baselineOk =
-    baseline.status === 0 &&
-    (prove === "bytes"
-      ? baseline.stdout.includes("bytes=match")
-      : prove === "count"
-        ? baseline.stdout.includes("status=pass")
-        : baseline.stdout.includes("locale-check status="));
+  const baselineOk = baseline.status === 0 && proveOk(prove, baseline.stdout);
   if (!baselineOk) {
     process.stdout.write(`phase=baseline exit=${baseline.status}\n`);
     process.exit(2);
@@ -58,19 +52,24 @@ function parityMutant(flag, reason, prove) {
   process.stdout.write(`phase=mutant exit=${changed.status} hit=${hit}\n`);
   const restored = run("sh", ["spike/ios-core/run-parity.sh", "--prove", prove]);
   show(restored);
-  const restoredOk =
-    restored.status === 0 &&
-    (prove === "bytes"
-      ? restored.stdout.includes("bytes=match")
-      : prove === "count"
-        ? restored.stdout.includes("status=pass")
-        : restored.stdout.includes("locale-check status="));
+  const restoredOk = restored.status === 0 && proveOk(prove, restored.stdout);
   if (!restoredOk) {
     process.stdout.write(`phase=restored exit=${restored.status}\n`);
     process.exit(5);
   }
   process.stdout.write("phase=restored exit=0\n");
   process.exit(hit ? 1 : 3);
+}
+
+function proveOk(prove, text) {
+  if (prove === "bytes" || prove === "reversed") {
+    return text.includes("bytes=match") && text.includes("reversed=match");
+  }
+  if (prove === "count") return text.includes("status=pass");
+  const line = text.split("\n").find((row) => row.startsWith("locale-check status=pass "));
+  if (!line) return false;
+  const pair = (line.split("jscontext=")[1] ?? "").split(",");
+  return pair[0].startsWith("en") && pair[1].startsWith("sv") && pair[0] !== pair[1];
 }
 
 function dropSnapshotLine() {
@@ -129,6 +128,7 @@ const parity = {
   "change-column": ["--inject-column", "column", "bytes"],
   "same-locale": ["--inject-same-locale", "locale-same", "locales-differ"],
   "fewer-fixtures": ["--inject-fewer", "fixture-count", "count"],
+  "localecompare-dedupe": ["--inject-localecompare", "reversed-tie", "reversed"],
 };
 
 if (parity[mutant]) {

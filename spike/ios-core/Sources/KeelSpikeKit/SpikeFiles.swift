@@ -104,8 +104,8 @@ public func formatMilliseconds(_ value: Double) -> String {
     String(format: "%.3f", locale: Locale(identifier: "en_US_POSIX"), value)
 }
 
-public func parityRecord(variant: String, locale: String, file: String, jsonLine: String) -> String {
-    "KEEL_SPIKE v1 parity variant=\(variant) locale=\(locale) file=\(file) sha256=\(sha256Hex(jsonLine))"
+public func parityRecord(variant: String, locale: String, comparator: String, file: String, jsonLine: String) -> String {
+    "KEEL_SPIKE v1 parity variant=\(variant) locale=\(locale) comparator=\(comparator) file=\(file) sha256=\(sha256Hex(jsonLine))"
 }
 
 public func median(_ values: [Double]) -> Double {
