@@ -16,7 +16,9 @@ Every slice moves through up to four rungs: proposal (the research behind the pr
 | Ideas 10 to 20 from the PR #8 and PR #10 reviews (PR #12) | n/a | none | none | `reviews/pr-12-pass-0.md` | merged 2026-11-01 at squash `0f20993`, reviewed head `9966875` (fast-track) |
 | S01 Terms schema 0.1 and loader (PR #13) | toward `v0.1.0` (non-release) | `specs/s01-terms-schema.md` | none (no UI) | `reviews/pr-13-pass-0.md`, `reviews/pr-13-pass-1.5.md`, `reviews/pr-13-pass-2.5.md` (executive brief) | merged 2026-11-02 at squash `3bceb20`, reviewed head `c527df8` |
 | Ideas 21 to 33 and the S01 spec amendments (PR #14) | n/a | amends `specs/s01-terms-schema.md` | none | `reviews/pr-14-pass-0.md` | merged 2026-11-02 at squash `2ed7b44`, reviewed head `0837d66` (fast-track) |
-| S90 iOS core spike (spec PR #16) | post-`v0.1.0` spike, not a slice toward `v0.1.0` | `specs/s90-ios-core-spike.md` | none (no UI design) | `reviews/pr-16-pass-0.md`, `reviews/pr-16-pass-1.5.md`, `reviews/pr-16-pass-2.5.md` (executive briefs) | spec merged 2026-11-02 at squash `db4ab3f`, reviewed head `19ea2f5`; ADR-0009 Proposed; spike not started |
+| S90 iOS core spike (spec PR #16) | post-`v0.1.0` spike, not a slice toward `v0.1.0` | `specs/s90-ios-core-spike.md` | none (no UI design) | `reviews/pr-16-pass-0.md`, `reviews/pr-16-pass-1.5.md`, `reviews/pr-16-pass-2.5.md` (executive briefs) | spec merged 2026-11-02 at squash `db4ab3f`, reviewed head `19ea2f5`; amended by PR #19; ADR-0009 Proposed; build prompt written 2026-11-04 with base `82e4909` |
+| Ideas 34 to 40 from the PR #16 review (PR #17) | n/a | none | none | `reviews/pr-17-pass-0.md` | merged 2026-11-03 at squash `eb82233`, reviewed head `3314d0b` (fast-track) |
+| S90 amendment before the spike (PR #19) | post-`v0.1.0` spike, not a slice toward `v0.1.0` | amends `specs/s90-ios-core-spike.md` | none | `reviews/pr-19-pass-0.md` | merged 2026-11-04 at squash `82e4909`, reviewed head `4167a98` (fast-track), by Beni's one-time bypass of the `verify` check; the brief records why |
 
 Folders:
 

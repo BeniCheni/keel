@@ -288,3 +288,38 @@ These are facts about the repo, not clauses, so they go in Cursor's prompt and n
 - A committed binary fails the tripwire, as Q6 says: a planted PNG gives `verify failed: tripwire`.
 - `verify` does not check spike code. A badly typed `.ts` and a `.swift` file under the spike both leave it at exit 0.
 - The root `.gitignore` has no `.build/` or `xcuserdata/` line, and AC8 bars editing it, so the spike needs its own (`cat .gitignore`).
+
+## The merge (PM, 2026-11-04, after it)
+
+This lands here because changing the brief before the merge would have moved the reviewed head.
+
+Cursor's re-read ([issuecomment-6634510153](https://github.com/BeniCheni/keel/pull/19#issuecomment-6634510153)) gave "mergeable" at `4167a98`, with M1 closed and no new finding. Beni ran the PM's counts-only private-list script over the diff, the commits, the PR title and body, the comments, the inline comments and the reviews, and reported a positive control hit and `total hits: 0`. The PM did not open the list. That run came before the merge, so it does not cover the squash message or this section.
+
+**`verify` was red when this merged.** `AGENTS.md` says `main` moves only on a PR with the `verify` check green. Beni waived that for this PR only, on 2026-11-04, in the words "Give me a `gh` command to override/kill the pending `verify` CI instances and merge PR #19 as an admin." The PM told him this broke that rule and gave him a script to run, and he reported "Merged". The rule does not change, and this sets no precedent.
+
+GitHub gave the macOS cells no runner in any of the four attempts of run 41854156542 (`gh api repos/BeniCheni/keel/actions/runs/41854156542/attempts/<N>/jobs`):
+
+| Attempt | Started, UTC | Cancelled, UTC | Steps run in each macOS cell |
+| --- | --- | --- | --- |
+| 1 | 15:05:43 | 15:20:45 | 0 |
+| 2 | 15:23:23 | 15:38:25 | 0 |
+| 3 | 15:40:01 | 15:55:03 | 0 |
+| 4 | 17:01:33 | 17:16:34 | 0 |
+
+The reason is GitHub's: "The job was not acquired by Runner of type hosted even after multiple attempts", with a notice about macOS arm64 capacity (`gh api repos/BeniCheni/keel/check-runs/126658105704/annotations --jq '.[].message'`). The `verify` job then printed `needs-check: cells result is abandoned`. The Ubuntu cells passed, and `pnpm verify` exited 0 on Node 24.22.2 and 26.13.0 on the PM's Mac at `4167a98`. The reviewed head `4167a98` did not run on macOS in CI before it merged. The earlier head `662dde3` had passed both macOS cells (`gh api repos/BeniCheni/keel/actions/runs/41767245454/jobs`), and the two differ only in this brief and the spec (`git diff --stat 662dde3 4167a98`).
+
+**What closes it.** A red build is a High, and it was open at the merge. It closes outside tracked files, so it needs a recorded check and Beni's written confirmation. The check: `main`'s own run on the squash, 41885526843, finished green at 18:27 UTC with all five jobs passing, both macOS cells included (`gh api repos/BeniCheni/keel/actions/runs/41885526843/jobs --jq '.jobs[]|[.name,.conclusion]|@tsv'`). The squash's tree equals the reviewed head's, `dd1e2b3` (`git rev-parse '82e4909^{tree}' '4167a98^{tree}'`), and its parent `378dab7` is this PR's base, so that run tested the reviewed tree. In a fresh clone of `main`, `pnpm verify` exited 0 on both Nodes. Beni's merge of this record is his confirmation.
+
+Fast-track has no shadow verdict. This merge would not meet the gate's "`verify` green" clause, so it is no evidence for `gate-activation.md`.
+
+**How the bypass ran.** The `main` ruleset had no bypass actor, so `gh pr merge --admin` alone could not merge (`gh api repos/BeniCheni/keel/rulesets/26183786 --jq .current_user_can_bypass` printed `never`). The versions, from `gh api repos/BeniCheni/keel/rulesets/26183786/history` and `.../history/<id>`, in America/New_York:
+
+| Version | When | State |
+| --- | --- | --- |
+| 55678243 | 2026-10-31 13:31:03 | What `AGENTS.md` describes: squash only, `verify` required, threads resolved, no bypass |
+| 56286804 | 2026-11-04 12:12:14 | The `pull_request` rule removed |
+| 56286959 | 2026-11-04 12:12:58 | That rule back with merge, squash and rebase allowed, thread resolution off, and extra approval for unattributed changes on |
+| 56299579 | 2026-11-04 13:16:28 | 55678243's rules, plus a bypass for repository admins on pull requests |
+| 56299597 | 2026-11-04 13:16:35 | 55678243's rules, with no bypass |
+
+The merge is at 13:16:32 (`gh pr view 19 --repo BeniCheni/keel --json mergedAt`), so the bypass was on for 7 seconds. The ruleset now equals 55678243 on its name, target, enforcement, bypass actors, conditions and rules, and `current_user_can_bypass` prints `never`. The two 12:12 edits came before the PM's script and are not from it. The history gives the actor's type as `User`, and `gh api repos/BeniCheni/keel/collaborators --jq '.[]|[.login,.role_name]|@tsv'` lists one admin, Beni.
