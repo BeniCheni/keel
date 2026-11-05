@@ -1,6 +1,8 @@
 # Device run
 
-Run these steps from a fresh clone of `s90/ios-core-spike`, on the free Personal Team. Leave `KEEL_SPIKE_TEAM`, `KEEL_SPIKE_UDID` and `KEEL_SPIKE_BUNDLE_ID` in the environment. This file records none of their values.
+Run these steps from a fresh clone of `s90/ios-core-spike`, on a free Personal Team or a paid Apple Developer Program team. Leave `KEEL_SPIKE_TEAM`, `KEEL_SPIKE_UDID` and `KEEL_SPIKE_BUNDLE_ID` in the environment. This file records none of their values.
+
+Beni's recorded device run used a paid team and the build at `27c802c7ebd432ea27adcc98d199902d6db08cd9`. Later review commits do not change the app sources he measured. The paid-team reinstall check ran the same day; profile expiry was not tested.
 
 Before the first launch, trust the developer profile on the phone: Settings > General > VPN & Device Management. Turn automatic iOS updates off until the runs end. Every timing comes from one iOS version.
 
@@ -9,11 +11,11 @@ Order:
 1. Before any timing, one launch under `(sv)` `sv_SE` and one under `(haw)` `haw_US`, each with `-KeelProbe 1`. Read the locale lines. If the `sv` locale does not start with `sv`, stop and tell the PM before going further. The `haw` launch is recorded and does not gate.
 2. Q3 fresh launches and the Q2 device parity. Five fresh launches per variant, all under `en-US`. One further launch under `sv_SE` records the Swedish hashes. Each of those launches logs identity and reversed hashes for both variants, including the tie input. The probe launches are not part of the five.
 3. Q5, after those timings and hashes are on disk.
-4. The profile-expiry check last, on day 8 or later. A Personal Team install lasts 7 days.
+4. On a free Personal Team only, the profile-expiry check last, on day 8 or later. A Personal Team install lasts 7 days. A paid-team reinstall check can run the same day and supplies no profile-expiry evidence.
 
 ## Build, install, launch
 
-The committed project sets no team. Its placeholder bundle id is `dev.keel.spike`. The spec's `xcodebuild` line does not pass `PRODUCT_BUNDLE_IDENTIFIER`, so the build line below adds it and takes the real id from `KEEL_SPIKE_BUNDLE_ID`.
+The committed project sets no team. Its placeholder bundle id is `dev.keel.spike`. The spec's `xcodebuild` line does not pass `PRODUCT_BUNDLE_IDENTIFIER`, so the build line below adds it and takes the real id from `KEEL_SPIKE_BUNDLE_ID`. The paid-team build also needed `-allowProvisioningDeviceRegistration` to register the destination device; that flag is included below.
 
 The shell may default to another Node. Run the install and bundle steps with Node 24.22.2. `dist/` is gitignored, so a fresh clone has no `compile.js` or `standalone.js` until those steps run.
 
@@ -22,7 +24,7 @@ export KEEL_DATA_DIR="$(mktemp -d)"
 pnpm install --frozen-lockfile
 pnpm --dir spike/ios-core --ignore-workspace install --frozen-lockfile
 node spike/ios-core/build.mjs
-xcodebuild build -project spike/ios-core/App/KeelSpike.xcodeproj -scheme KeelSpike -configuration Release -destination "platform=iOS,id=$KEEL_SPIKE_UDID" -derivedDataPath spike/ios-core/.build/ios DEVELOPMENT_TEAM="$KEEL_SPIKE_TEAM" -allowProvisioningUpdates PRODUCT_BUNDLE_IDENTIFIER="$KEEL_SPIKE_BUNDLE_ID"
+xcodebuild build -project spike/ios-core/App/KeelSpike.xcodeproj -scheme KeelSpike -configuration Release -destination "platform=iOS,id=$KEEL_SPIKE_UDID" -derivedDataPath spike/ios-core/.build/ios DEVELOPMENT_TEAM="$KEEL_SPIKE_TEAM" -allowProvisioningUpdates -allowProvisioningDeviceRegistration PRODUCT_BUNDLE_IDENTIFIER="$KEEL_SPIKE_BUNDLE_ID"
 ```
 
 Install matches `devicectl device install app --help`: `--device` and the app path.
@@ -81,14 +83,14 @@ export KEEL_DATA_DIR="$(mktemp -d)"
 node spike/ios-core/export-standin.mjs
 ```
 
-`spike/ios-core/standin/export.yaml` is the synthetic export. `spike/ios-core/standin/malformed.yaml` is the synthetic malformed file. Those two files are gitignored: a committed copy of the export fails the tripwire outside `fixtures/synthetic/terms`. AirDrop the export, then use Import export. After a stored copy exists, import the malformed file and record the rejected line and column. Then:
+`spike/ios-core/standin/export.yaml` is the synthetic export. `spike/ios-core/standin/malformed.yaml` is the synthetic malformed file. Those two files are gitignored: a committed copy of the export fails the tripwire outside `fixtures/synthetic/terms`. AirDrop `export.yaml`, then choose that file with Import export. After a stored copy exists, AirDrop and import `malformed.yaml` and record the rejected line and column. Do not select `manifest.json`, which sits beside them and is generation metadata, not the malformed terms fixture. Then:
 
 - Schedule in 2 minutes. Force-quit the app, lock the phone, and record whether it fires.
 - Request 70, and record `pending-kept`.
-- Add repeating trigger, and record `repeating-pending`.
+- Add repeating trigger, and record `repeating-pending`. It repeats every 60 seconds. The harness has no cancellation control: delete the app to stop this trigger. Rebuilding or reinstalling over the app is not a cancellation step.
 - Keychain round trip, and record `keychain`.
 - Read backup flag after the first import and again after a later import replaces the file.
 - Show snapshot detail. The page includes the disclaimer. Opening it from the lock screen waits until the phone is unlocked before it reads the snapshot.
-- On day 8 or later, record whether pending notifications and the sandbox file are still present after a reinstall over the old build, and whether a notification fires after the profile expires.
+- Record whether pending notifications and the sandbox file are still present after a reinstall over the old build. On a free Personal Team, do this on day 8 or later and also record whether a notification fires after the profile expires. On a paid team, record the reinstall separately and mark the expiry check not run.
 
-The builder did not run the device lines.
+The builder did not run the device lines. The device records are Beni's run at the measured build named above.
