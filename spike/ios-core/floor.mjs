@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, rmSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { inspectVariant } from "./bundle.mjs";
@@ -106,6 +106,58 @@ function dropSnapshotLine() {
   process.exit(status !== 0 ? 1 : 3);
 }
 
+// Each inject row must be caught by the gate it targets. This row switches each gate off in a copy of the
+// harness, just before the gates are reported, and requires every inject run on that copy to survive.
+function gateOff() {
+  const script = join(root, "spike/ios-core/run-parity.sh");
+  const copy = join(root, "spike/ios-core/.floor-gate-off.sh");
+  const original = readFileSync(script, "utf8");
+  const needle = 'echo "bytes=$BYTES"\n';
+  if (!original.includes(needle)) {
+    process.stdout.write("phase=baseline exit=2\n");
+    process.exit(2);
+  }
+  const rows = [
+    ["--inject-diff", "byte", "BYTES=match"],
+    ["--inject-column", "column", "BYTES=match"],
+    ["--inject-reorder", "reorder", "BYTES=match"],
+    ["--inject-same-locale", "locale-same", "LOCALE=pass"],
+    ["--inject-one-locale", "locale-run", "LOCALE=pass"],
+    ["--inject-fewer", "fixture-count", "COUNT=pass"],
+    ["--inject-localecompare", "reversed-tie", "REVERSED=match"],
+  ];
+  let detected = 0;
+  let setup = false;
+  try {
+    for (const [flag, reason, off] of rows) {
+      const real = run("sh", ["spike/ios-core/run-parity.sh", flag]);
+      if (real.status !== 1 || !real.stdout.includes(`reason=${reason}\n`)) {
+        process.stdout.write(`phase=baseline flag=${flag} exit=${real.status}\n`);
+        setup = true;
+        break;
+      }
+      writeFileSync(copy, original.replace(needle, `${off}\n${needle}`));
+      const changed = run("sh", ["spike/ios-core/.floor-gate-off.sh", flag]);
+      const survived = changed.status === 3 && changed.stdout.includes("reason=survived\n");
+      if (survived) detected += 1;
+      process.stdout.write(`phase=mutant flag=${flag} gate-off=${off} exit=${changed.status} gate-needed=${survived}\n`);
+    }
+  } finally {
+    rmSync(copy, { force: true });
+  }
+  if (setup) process.exit(2);
+  process.stdout.write("phase=baseline exit=0\n");
+  const restored = run("sh", ["spike/ios-core/run-parity.sh", "--prove", "bytes"]);
+  if (restored.status !== 0) {
+    process.stdout.write(`phase=restored exit=${restored.status}\n`);
+    process.exit(5);
+  }
+  process.stdout.write("phase=restored exit=0\n");
+  const hit = detected === rows.length;
+  process.stdout.write(`hit=${hit}\n`);
+  process.exit(hit ? 1 : 3);
+}
+
 const planted = {
   "node-fs": [`import fs from "node:fs";\nexport const f = fs;\n`, (flag) => flag.reason === "node"],
   "require-call": [`export const r = require("x");\n`, (flag) => flag.reason === "require"],
@@ -127,6 +179,7 @@ const parity = {
   "reorder-diagnostics": ["--inject-reorder", "reorder", "bytes"],
   "change-column": ["--inject-column", "column", "bytes"],
   "same-locale": ["--inject-same-locale", "locale-same", "locales-differ"],
+  "one-run-locale": ["--inject-one-locale", "locale-run", "locales-differ"],
   "fewer-fixtures": ["--inject-fewer", "fixture-count", "count"],
   "localecompare-dedupe": ["--inject-localecompare", "reversed-tie", "reversed"],
 };
@@ -137,6 +190,7 @@ if (parity[mutant]) {
 }
 
 if (mutant === "drop-snapshot-line") dropSnapshotLine();
+if (mutant === "gate-off") gateOff();
 
 process.stderr.write("unknown mutant\n");
 process.exit(2);

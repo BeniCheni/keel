@@ -24,6 +24,7 @@ while [ $# -gt 0 ]; do
     --inject-same-locale) MODE=same-locale ;;
     --inject-fewer) MODE=fewer ;;
     --inject-localecompare) MODE=localecompare ;;
+    --inject-one-locale) MODE=one-locale ;;
     --prove) MODE=prove; shift; PROVE=${1:-bytes} ;;
     --compare-device) shift; MODE=device; DEVICE_LOG=$1 ;;
     *) echo "unknown argument" >&2; exit 2 ;;
@@ -113,6 +114,25 @@ if [ "$MODE" = "fewer" ]; then
   cat "$WORK/short-fixtures.txt" "$WORK/tie-name.txt" > "$WORK/short.txt"
   EN_LIST=$WORK/short.txt
 fi
+# One gating run, the standalone reversed sv run, under the en locale.
+SV_REV_B_LANG=$SV_LANG
+SV_REV_B_REGION=$SV_REGION
+if [ "$MODE" = "one-locale" ]; then
+  SV_REV_B_LANG=$EN_LANG
+  SV_REV_B_REGION=$EN_REGION
+fi
+
+# The localeCompare mutant replaces both bundles before any run, and the exit trap rebuilds them clean.
+if [ "$MODE" = "localecompare" ]; then
+  if [ -n "$(git status --porcelain -- packages)" ]; then echo "reason=setup"; exit 2; fi
+  trap 'node spike/ios-core/build.mjs >/dev/null 2>&1 || true; rm -rf "$WORK"' EXIT
+  if ! KEEL_SPIKE_DEDUPE=localeCompare node spike/ios-core/build.mjs >"$WORK/mutant-build.txt" 2>&1; then echo "reason=setup"; exit 2; fi
+  if [ -n "$(git status --porcelain -- packages)" ]; then echo "reason=setup"; exit 2; fi
+  if ! grep -q localeCompare spike/ios-core/dist/compile.js || ! grep -q localeCompare spike/ios-core/dist/standalone.js; then
+    echo "reason=setup"
+    exit 2
+  fi
+fi
 
 run_node en en_US.UTF-8 "$WORK/node-en.raw" "$LIST"
 run_node haw haw_US.UTF-8 "$WORK/node-haw.raw" "$LIST"
@@ -126,11 +146,47 @@ run_jsc standalone haw haw_US "$WORK/jsc-standalone-haw.raw" "$LIST"
 run_jsc compile "$EN_LANG" "$EN_REGION" "$WORK/jsc-compile-en-rev.raw" "$LIST" reversed
 run_jsc standalone "$EN_LANG" "$EN_REGION" "$WORK/jsc-standalone-en-rev.raw" "$LIST" reversed
 run_jsc compile "$SV_LANG" "$SV_REGION" "$WORK/jsc-compile-sv-rev.raw" "$LIST" reversed
-run_jsc standalone "$SV_LANG" "$SV_REGION" "$WORK/jsc-standalone-sv-rev.raw" "$LIST" reversed
+run_jsc standalone "$SV_REV_B_LANG" "$SV_REV_B_REGION" "$WORK/jsc-standalone-sv-rev.raw" "$LIST" reversed
 
 for name in node-en node-haw node-sv jsc-compile-en jsc-standalone-en jsc-compile-sv jsc-standalone-sv jsc-compile-haw jsc-standalone-haw jsc-compile-en-rev jsc-standalone-en-rev jsc-compile-sv-rev jsc-standalone-sv-rev; do
   payload "$WORK/$name.raw" "$WORK/$name.txt"
 done
+
+# Output injections change what the gates below read. The gates alone decide whether an injection was caught.
+case "$MODE" in
+  diff|column|reorder)
+    for name in node-haw node-sv jsc-compile-en jsc-standalone-en jsc-compile-sv jsc-standalone-sv jsc-compile-en-rev jsc-standalone-en-rev jsc-compile-sv-rev jsc-standalone-sv-rev; do
+      if ! cmp -s "$WORK/node-en.txt" "$WORK/$name.txt"; then echo "reason=preexisting"; exit 4; fi
+    done
+    if ! node --input-type=module - "$MODE" "$WORK/jsc-compile-en.txt" << 'EOF'
+import { readFileSync, writeFileSync } from "node:fs";
+const [mode, file] = process.argv.slice(2);
+const text = readFileSync(file, "utf8");
+let next = text;
+if (mode === "diff") {
+  const index = text.indexOf("{");
+  if (index !== -1) next = `${text.slice(0, index)}[${text.slice(index + 1)}`;
+} else if (mode === "column") {
+  next = text.replace(/"column":(\d+)/, (_, value) => `"column":${Number(value) + 1}`);
+} else {
+  const lines = text.split("\n");
+  const at = lines.findIndex((line) => line.startsWith("{") && (JSON.parse(line).result?.errors?.length ?? 0) >= 2);
+  if (at === -1 || JSON.stringify(JSON.parse(lines[at])) !== lines[at]) process.exit(4);
+  const payload = JSON.parse(lines[at]);
+  const errors = payload.result.errors;
+  [errors[0], errors[1]] = [errors[1], errors[0]];
+  lines[at] = JSON.stringify(payload);
+  next = lines.join("\n");
+}
+if (next === text) process.exit(4);
+writeFileSync(file, next);
+EOF
+    then
+      echo "reason=setup"
+      exit 2
+    fi
+    ;;
+esac
 
 NODE_EN=$(locale_of "$WORK/node-en.raw")
 NODE_HAW=$(locale_of "$WORK/node-haw.raw")
@@ -138,11 +194,7 @@ NODE_SV=$(locale_of "$WORK/node-sv.raw")
 JSC_EN=$(locale_of "$WORK/jsc-compile-en.raw")
 JSC_SV=$(locale_of "$WORK/jsc-compile-sv.raw")
 JSC_HAW=$(locale_of "$WORK/jsc-compile-haw.raw")
-JSC_EN_B=$(locale_of "$WORK/jsc-standalone-en.raw")
-JSC_SV_B=$(locale_of "$WORK/jsc-standalone-sv.raw")
 JSC_HAW_B=$(locale_of "$WORK/jsc-standalone-haw.raw")
-JSC_EN_R=$(locale_of "$WORK/jsc-compile-en-rev.raw")
-JSC_SV_R=$(locale_of "$WORK/jsc-compile-sv-rev.raw")
 
 BYTES=match
 for name in node-haw node-sv jsc-compile-en jsc-standalone-en jsc-compile-sv jsc-standalone-sv; do
@@ -164,19 +216,21 @@ LOCALE=pass
 starts_with "$NODE_EN" en || LOCALE=fail
 starts_with "$NODE_HAW" haw || LOCALE=fail
 starts_with "$NODE_SV" sv || LOCALE=fail
-starts_with "$JSC_EN" en || LOCALE=fail
-starts_with "$JSC_SV" sv || LOCALE=fail
-starts_with "$JSC_EN_B" en || LOCALE=fail
-starts_with "$JSC_SV_B" sv || LOCALE=fail
-starts_with "$JSC_EN_R" en || LOCALE=fail
-starts_with "$JSC_SV_R" sv || LOCALE=fail
 if [ "$NODE_EN" = "$NODE_HAW" ] || [ "$NODE_EN" = "$NODE_SV" ] || [ "$NODE_HAW" = "$NODE_SV" ]; then
   LOCALE=fail
 fi
-if [ "$JSC_EN" = "$JSC_SV" ] || [ "$JSC_EN" != "$JSC_EN_B" ] || [ "$JSC_SV" != "$JSC_SV_B" ]; then
-  LOCALE=fail
-fi
-if [ "$JSC_EN_R" != "$JSC_EN" ] || [ "$JSC_SV_R" != "$JSC_SV" ]; then
+# Every gating JavaScriptCore run, both variants and both comparators, reports the locale it asked for.
+for name in jsc-compile-en jsc-standalone-en jsc-compile-en-rev jsc-standalone-en-rev; do
+  run_locale=$(locale_of "$WORK/$name.raw")
+  starts_with "$run_locale" en || LOCALE=fail
+  [ "$run_locale" = "$JSC_EN" ] || LOCALE=fail
+done
+for name in jsc-compile-sv jsc-standalone-sv jsc-compile-sv-rev jsc-standalone-sv-rev; do
+  run_locale=$(locale_of "$WORK/$name.raw")
+  starts_with "$run_locale" sv || LOCALE=fail
+  [ "$run_locale" = "$JSC_SV" ] || LOCALE=fail
+done
+if [ "$JSC_EN" = "$JSC_SV" ]; then
   LOCALE=fail
 fi
 
@@ -198,104 +252,52 @@ echo "haw-jscontext locale=$JSC_HAW,$JSC_HAW_B bytes=$HAW_BYTES"
 echo "fixture-count compile=$COMPILE_COUNT standalone=$STANDALONE_COUNT node=$NODE_COUNT status=$COUNT"
 echo "locale-check status=$LOCALE node=$NODE_EN,$NODE_HAW,$NODE_SV jscontext=$JSC_EN,$JSC_SV"
 
-if [ "$MODE" = "diff" ]; then
-  if [ "$BYTES" != "match" ] || [ "$REVERSED" != "match" ]; then echo "reason=preexisting"; exit 4; fi
-  node --input-type=module - "$WORK/jsc-compile-en.txt" << 'EOF'
-import { readFileSync, writeFileSync } from "node:fs";
-const file = process.argv[2];
-const buf = readFileSync(file);
-const index = buf.indexOf(0x7b);
-buf[index] = 0x5b;
-writeFileSync(file, buf);
-EOF
-  if cmp -s "$WORK/node-en.txt" "$WORK/jsc-compile-en.txt"; then echo "reason=survived"; exit 3; fi
-  echo "reason=byte"
-  exit 1
-fi
-
-if [ "$MODE" = "column" ]; then
-  if [ "$BYTES" != "match" ] || [ "$REVERSED" != "match" ]; then echo "reason=preexisting"; exit 4; fi
-  node --input-type=module - "$WORK/jsc-compile-en.txt" << 'EOF'
-import { readFileSync, writeFileSync } from "node:fs";
-const file = process.argv[2];
-const text = readFileSync(file, "utf8");
-const next = text.replace(/"column":(\d+)/, (_, value) => `"column":${Number(value) + 1}`);
-if (next === text) process.exit(4);
-writeFileSync(file, next);
-EOF
-  if cmp -s "$WORK/node-en.txt" "$WORK/jsc-compile-en.txt"; then echo "reason=survived"; exit 3; fi
-  echo "reason=column"
-  exit 1
-fi
-
-if [ "$MODE" = "reorder" ]; then
-  if [ "$BYTES" != "match" ] || [ "$REVERSED" != "match" ]; then echo "reason=preexisting"; exit 4; fi
-  MINIMAL=$WORK/two.yaml
-  node --input-type=module - "$MINIMAL" << 'EOF'
-import { readFileSync, writeFileSync } from "node:fs";
-const dest = process.argv[2];
-const text = readFileSync("fixtures/synthetic/terms/valid/minimal.yaml", "utf8");
-const next = text.replace("schema: mln-terms/0.1\n", "schema: mln-terms/0.1\nnope: 1\nalso: 2\n");
-if (next === text) process.exit(4);
-writeFileSync(dest, next);
-EOF
-  printf '%s\n' "$MINIMAL" > "$WORK/one.txt"
-  run_node en en_US.UTF-8 "$WORK/re-node.raw" "$WORK/one.txt"
-  run_jsc compile "$EN_LANG" "$EN_REGION" "$WORK/re-jsc.raw" "$WORK/one.txt"
-  payload "$WORK/re-node.raw" "$WORK/re-node.txt"
-  payload "$WORK/re-jsc.raw" "$WORK/re-jsc.txt"
-  if ! cmp -s "$WORK/re-node.txt" "$WORK/re-jsc.txt"; then echo "reason=preexisting"; exit 4; fi
-  node --input-type=module - "$WORK/re-jsc.txt" << 'EOF'
-import { readFileSync, writeFileSync } from "node:fs";
-const file = process.argv[2];
-const line = readFileSync(file, "utf8").trim();
-const payload = JSON.parse(line);
-const errors = payload.result && payload.result.errors;
-if (!errors || errors.length < 2) process.exit(4);
-const first = errors[0];
-errors[0] = errors[1];
-errors[1] = first;
-writeFileSync(file, `${JSON.stringify(payload)}\n`);
-EOF
-  if cmp -s "$WORK/re-node.txt" "$WORK/re-jsc.txt"; then echo "reason=survived"; exit 3; fi
-  echo "reason=reorder"
-  exit 1
-fi
-
-if [ "$MODE" = "localecompare" ]; then
-  if [ "$BYTES" != "match" ] || [ "$REVERSED" != "match" ] || [ "$LOCALE" != "pass" ]; then echo "reason=preexisting"; exit 4; fi
-  if [ -n "$(git status --porcelain -- packages)" ]; then echo "reason=setup"; exit 2; fi
-  if ! KEEL_SPIKE_DEDUPE=localeCompare node spike/ios-core/build.mjs >"$WORK/mutant-build.txt" 2>&1; then
-    node spike/ios-core/build.mjs >"$WORK/restore-build.txt" 2>&1 || true
-    echo "reason=setup"
-    exit 2
-  fi
-  if [ -n "$(git status --porcelain -- packages)" ]; then
-    node spike/ios-core/build.mjs >"$WORK/restore-build.txt" 2>&1 || true
-    echo "reason=setup"
-    exit 2
-  fi
-  if ! grep -q localeCompare spike/ios-core/dist/compile.js || ! grep -q localeCompare spike/ios-core/dist/standalone.js; then
-    node spike/ios-core/build.mjs >"$WORK/restore-build.txt" 2>&1 || true
-    echo "reason=setup"
-    exit 2
-  fi
-  run_jsc compile "$EN_LANG" "$EN_REGION" "$WORK/mut-id.raw" "$LIST"
-  run_jsc compile "$EN_LANG" "$EN_REGION" "$WORK/mut-rev.raw" "$LIST" reversed
-  payload "$WORK/mut-id.raw" "$WORK/mut-id.txt"
-  payload "$WORK/mut-rev.raw" "$WORK/mut-rev.txt"
-  grep '"file":"fixtures/' "$WORK/mut-id.txt" > "$WORK/mut-id-fixtures.txt"
-  grep '"file":"fixtures/' "$WORK/mut-rev.txt" > "$WORK/mut-rev-fixtures.txt"
-  grep '"file":"tie/minimal.yaml"' "$WORK/mut-id.txt" > "$WORK/mut-id-tie.txt"
-  grep '"file":"tie/minimal.yaml"' "$WORK/mut-rev.txt" > "$WORK/mut-rev-tie.txt"
-  grep '"file":"tie/minimal.yaml"' "$WORK/node-en.txt" > "$WORK/node-tie.txt"
-  node spike/ios-core/build.mjs >"$WORK/restore-build.txt" 2>&1 || true
-  if ! cmp -s "$WORK/mut-id-fixtures.txt" "$WORK/mut-rev-fixtures.txt"; then echo "reason=preexisting"; exit 4; fi
-  if ! cmp -s "$WORK/mut-id-tie.txt" "$WORK/node-tie.txt"; then echo "reason=preexisting"; exit 4; fi
-  if cmp -s "$WORK/mut-id-tie.txt" "$WORK/mut-rev-tie.txt"; then echo "reason=survived"; exit 3; fi
-  echo "reason=reversed-tie"
-  exit 1
-fi
+# Each injection is caught only through the gate it targets. With that gate gone, the injection survives.
+case "$MODE" in
+  diff|column|reorder)
+    if [ "$BYTES" = "differ" ]; then
+      case "$MODE" in
+        diff) echo "reason=byte" ;;
+        column) echo "reason=column" ;;
+        reorder) echo "reason=reorder" ;;
+      esac
+      exit 1
+    fi
+    echo "reason=survived"
+    exit 3
+    ;;
+  same-locale|one-locale)
+    if [ "$LOCALE" = "fail" ]; then
+      if [ "$MODE" = "same-locale" ]; then echo "reason=locale-same"; else echo "reason=locale-run"; fi
+      exit 1
+    fi
+    echo "reason=survived"
+    exit 3
+    ;;
+  fewer)
+    if [ "$COUNT" = "fail" ]; then echo "reason=fixture-count"; exit 1; fi
+    echo "reason=survived"
+    exit 3
+    ;;
+  localecompare)
+    if [ "$REVERSED" = "differ" ]; then
+      # The intended catch: the reversed runs differ from Node on the tie input, and on no fixture.
+      grep '"file":"fixtures/' "$WORK/node-en.txt" > "$WORK/node-fixtures.txt" || true
+      grep '"file":"tie/minimal.yaml"' "$WORK/node-en.txt" > "$WORK/node-tie.txt" || true
+      TIE_CAUGHT=yes
+      for name in jsc-compile-en-rev jsc-standalone-en-rev jsc-compile-sv-rev jsc-standalone-sv-rev; do
+        grep '"file":"fixtures/' "$WORK/$name.txt" > "$WORK/$name-fixtures.txt" || true
+        cmp -s "$WORK/node-fixtures.txt" "$WORK/$name-fixtures.txt" || TIE_CAUGHT=no
+      done
+      grep '"file":"tie/minimal.yaml"' "$WORK/jsc-compile-en-rev.txt" > "$WORK/rev-tie.txt" || true
+      cmp -s "$WORK/node-tie.txt" "$WORK/rev-tie.txt" && TIE_CAUGHT=no
+      if [ "$TIE_CAUGHT" = "yes" ]; then echo "reason=reversed-tie"; else echo "reason=reversed-other"; fi
+      exit 1
+    fi
+    echo "reason=survived"
+    exit 3
+    ;;
+esac
 
 if [ "$MODE" = "prove" ]; then
   case "$PROVE" in
@@ -325,18 +327,6 @@ if [ "$MODE" = "prove" ]; then
       exit 2
       ;;
   esac
-fi
-
-if [ "$MODE" = "fewer" ]; then
-  if [ "$COUNT" = "fail" ]; then echo "reason=fixture-count"; exit 1; fi
-  echo "reason=survived"
-  exit 3
-fi
-
-if [ "$MODE" = "same-locale" ]; then
-  if [ "$JSC_EN" = "$JSC_SV" ]; then echo "reason=locale-same"; exit 1; fi
-  echo "reason=survived"
-  exit 3
 fi
 
 # Reported, not gating: a locale the legacy map accepts, plus inputs edited in memory.
