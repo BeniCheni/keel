@@ -65,7 +65,7 @@ KEEL_SPIKE v1 parity variant=compile locale=<locale> comparator=reversed file=<f
 KEEL_SPIKE v1 q5 subject=import result=stored backup-excluded=true protection=<protection>
 ```
 
-`variant` is `compile` or `standalone`. `comparator` is `identity` or `reversed`. The reversed comparator is a test run on that launch. It is not a host shim. The warm lines come from the warm-set control, after the fresh launches, and they are outside the fresh clock. `sh spike/ios-core/run-parity.sh --compare-device <log>` reads the parity lines, requires `en` and `sv` for both variants and both comparators, reports a haw locale when one is present, and does not require haw.
+`variant` is `compile` or `standalone`. `comparator` is `identity` or `reversed`. The reversed comparator is a test run on that launch. It is not a host shim. The warm lines come from the warm-set control, after the fresh launches, and they are outside the fresh clock. `sh spike/ios-core/run-parity.sh --compare-device <log>` reads the parity lines, requires `en` and `sv` for both variants and both comparators, requires every fixture and the tie input in each of those groups, fails on any `KEEL_SPIKE v1 error` line, reports a haw locale when one is present, and does not require haw. Keep error lines in the log you pass it.
 
 ```bash
 export KEEL_DATA_DIR="$(mktemp -d)"

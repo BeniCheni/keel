@@ -10,8 +10,10 @@ const logPath = process.argv[3];
 const log = readFileSync(logPath, "utf8");
 const records = [];
 let hawSeen = false;
+let errorLines = 0;
 for (const line of log.split("\n")) {
   if (!line.startsWith("KEEL_SPIKE v1 ")) continue;
+  if (line.startsWith("KEEL_SPIKE v1 error ")) errorLines += 1;
   const locale = line.match(/(?:^|\s)locale=(\S+)/);
   if (locale && locale[1].startsWith("haw")) hawSeen = true;
   if (!line.startsWith("KEEL_SPIKE v1 parity ")) continue;
@@ -39,6 +41,19 @@ function fail(reason) {
   process.exit(1);
 }
 
+const listed = spawnSync("git", ["ls-files", "fixtures/synthetic/terms"], { cwd: root, encoding: "utf8" });
+if (listed.status !== 0) fail("setup");
+const expectedFiles = [
+  ...listed.stdout.split("\n").filter((file) => file.endsWith(".yaml")),
+  TIE_FILE,
+];
+
+// The phone logs an error line and carries on when a session or an input fails, so any error line fails the comparison.
+if (errorLines !== 0) {
+  process.stdout.write(`device-compare errors=${errorLines}\n`);
+  fail("error");
+}
+
 const gating = records.filter((record) => record.locale.startsWith("en") || record.locale.startsWith("sv"));
 const gatingLocales = [...new Set(gating.map((record) => record.locale))];
 if (!gatingLocales.some((locale) => locale.startsWith("en")) || !gatingLocales.some((locale) => locale.startsWith("sv"))) {
@@ -56,6 +71,17 @@ for (const variant of ["compile", "standalone"]) {
       fail(comparator === "reversed" ? "reversed" : "locale");
     }
     if (!rows.some((record) => record.file === TIE_FILE)) fail("fixture-count");
+    // Every gating locale in this group holds every fixture and the tie input. A group with fewer is a skipped comparison.
+    for (const locale of rowLocales) {
+      const held = new Set(rows.filter((record) => record.locale === locale).map((record) => record.file));
+      const missing = expectedFiles.filter((file) => !held.has(file));
+      if (missing.length !== 0) {
+        process.stdout.write(
+          `device-compare missing variant=${variant} comparator=${comparator} locale=${locale} count=${missing.length}\n`,
+        );
+        fail("coverage");
+      }
+    }
   }
 }
 

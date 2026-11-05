@@ -1,7 +1,10 @@
-import { readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { inspectVariant } from "./bundle.mjs";
+import { TIE_FILE } from "./tie.mjs";
 
 const root = join(import.meta.dirname, "../..");
 const mutant = process.argv[2];
@@ -158,6 +161,73 @@ function gateOff() {
   process.exit(hit ? 1 : 3);
 }
 
+// A device log built from Node's own hashes passes. With one group thinned to the tie input, or with an
+// error line, the comparison must fail for coverage or for the error.
+function deviceThin() {
+  const scratch = mkdtempSync(join(tmpdir(), "keel-spike-floor-"));
+  try {
+    const listed = run("git", ["ls-files", "fixtures/synthetic/terms"]);
+    if (listed.status !== 0) process.exit(2);
+    const files = [...listed.stdout.split("\n").filter((file) => file.endsWith(".yaml")).sort(), TIE_FILE];
+    const list = join(scratch, "list.txt");
+    writeFileSync(list, `${files.join("\n")}\n`);
+    const full = ["KEEL_SPIKE v1 process pid=1"];
+    for (const lc of ["en_US.UTF-8", "sv_SE.UTF-8"]) {
+      const node = spawnSync("node", ["spike/ios-core/parity-node.mjs", root, list], {
+        cwd: root,
+        encoding: "utf8",
+        env: { ...process.env, LC_ALL: lc },
+      });
+      if (node.status !== 0) process.exit(2);
+      const locale = (node.stdout.match(/ locale=(\S+)/) ?? [])[1];
+      const lines = node.stdout.split("\n").filter((line) => line.startsWith("{"));
+      if (!locale || lines.length !== files.length) process.exit(2);
+      for (const variant of ["compile", "standalone"]) {
+        full.push(`KEEL_SPIKE v1 locale engine=jscontext variant=${variant} locale=${locale}`);
+        for (const comparator of ["identity", "reversed"]) {
+          for (const line of lines) {
+            const sha = createHash("sha256").update(line, "utf8").digest("hex");
+            full.push(`KEEL_SPIKE v1 parity variant=${variant} locale=${locale} comparator=${comparator} file=${JSON.parse(line).file} sha256=${sha}`);
+          }
+        }
+      }
+    }
+    const compare = (name, rows) => {
+      const path = join(scratch, name);
+      writeFileSync(path, `${rows.join("\n")}\n`);
+      return run("node", ["spike/ios-core/compare-device.mjs", root, path]);
+    };
+    const baseline = compare("full.log", full);
+    show(baseline);
+    if (baseline.status !== 0 || !baseline.stdout.includes("bytes=match")) {
+      process.stdout.write(`phase=baseline exit=${baseline.status}\n`);
+      process.exit(2);
+    }
+    process.stdout.write("phase=baseline exit=0\n");
+    const thin = full.filter(
+      (line) => !(line.includes(" variant=standalone ") && line.includes(" comparator=reversed ") && / locale=sv/.test(line) && line.includes(" file=fixtures/")),
+    );
+    const thinRun = compare("thin.log", thin);
+    show(thinRun);
+    const thinHit = thinRun.status === 1 && thinRun.stdout.includes("reason=coverage\n");
+    const errorRun = compare("error.log", [...full, "KEEL_SPIKE v1 error subject=parity"]);
+    show(errorRun);
+    const errorHit = errorRun.status === 1 && errorRun.stdout.includes("reason=error\n");
+    process.stdout.write(`phase=mutant thin=${thinHit} error=${errorHit}\n`);
+    const restored = compare("full.log", full);
+    if (restored.status !== 0) {
+      process.stdout.write(`phase=restored exit=${restored.status}\n`);
+      process.exit(5);
+    }
+    process.stdout.write("phase=restored exit=0\n");
+    const hit = thinHit && errorHit;
+    process.stdout.write(`hit=${hit}\n`);
+    process.exit(hit ? 1 : 3);
+  } finally {
+    rmSync(scratch, { recursive: true, force: true });
+  }
+}
+
 const planted = {
   "node-fs": [`import fs from "node:fs";\nexport const f = fs;\n`, (flag) => flag.reason === "node"],
   "require-call": [`export const r = require("x");\n`, (flag) => flag.reason === "require"],
@@ -191,6 +261,7 @@ if (parity[mutant]) {
 
 if (mutant === "drop-snapshot-line") dropSnapshotLine();
 if (mutant === "gate-off") gateOff();
+if (mutant === "device-thin") deviceThin();
 
 process.stderr.write("unknown mutant\n");
 process.exit(2);
