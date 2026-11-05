@@ -15,8 +15,13 @@ Order:
 
 The committed project sets no team. Its placeholder bundle id is `dev.keel.spike`. The spec's `xcodebuild` line does not pass `PRODUCT_BUNDLE_IDENTIFIER`, so the build line below adds it and takes the real id from `KEEL_SPIKE_BUNDLE_ID`.
 
+The shell may default to another Node. Run the install and bundle steps with Node 24.22.2. `dist/` is gitignored, so a fresh clone has no `compile.js` or `standalone.js` until those steps run.
+
 ```bash
 export KEEL_DATA_DIR="$(mktemp -d)"
+pnpm install --frozen-lockfile
+pnpm --dir spike/ios-core --ignore-workspace install --frozen-lockfile
+node spike/ios-core/build.mjs
 xcodebuild build -project spike/ios-core/App/KeelSpike.xcodeproj -scheme KeelSpike -configuration Release -destination "platform=iOS,id=$KEEL_SPIKE_UDID" -derivedDataPath spike/ios-core/.build/ios DEVELOPMENT_TEAM="$KEEL_SPIKE_TEAM" -allowProvisioningUpdates PRODUCT_BUNDLE_IDENTIFIER="$KEEL_SPIKE_BUNDLE_ID"
 ```
 
