@@ -4,9 +4,9 @@ Written by the PM on 2026-11-06 (America/New_York). The same Claude session wrot
 
 ## Seat for the cold review
 
-Codex, GPT-6.1 Sol High. If the chat reaches that model only through a sub-agent, the sub-agent gets the whole prompt word for word, does all the reading and running, and the comment says so. The seat has no fallback: if the model is unavailable, stop and escalate.
+Cursor, Grok 4.7 at Extra High, by Beni's word of 2026-11-06: "Pivot to use Cursor". The chat's model id reads `grok-4.7` at any effort, so Cursor reads the effort from the picker. If Extra High is unavailable, stop and escalate.
 
-Codex is the only eligible vendor. Claude wrote every line. Cursor built the spike whose results this PR states, so it has a stake. Codex gave Pass 2 on PR #21, and the results and records summarize that pass, so it says so wherever its read concerns its own earlier work.
+This brief first named Codex, and said Cursor had a stake because it built the spike whose results this PR states. Beni moved the seat to Cursor anyway. That fits the authorship rule, because Claude wrote every commit on this PR and Cursor wrote none. The stake stays, so Cursor says so wherever its read concerns its own build on PR #21 or its App Review re-read, and judges the results against the review records and the commands, not against its memory of building the spike.
 
 ## Scope
 
@@ -19,7 +19,7 @@ Codex is the only eligible vendor. Claude wrote every line. Cursor built the spi
 
 ## Ruling
 
-On 2026-11-06, after reading a draft of the results, Beni ruled "Rule Path A", on the PM's question "Rule Path A for the iOS companion's core, as the rule selects?". He gave it in the PM's session, so Codex cannot see it, and Beni's merge confirms it. His earlier rulings on the spike are in `pr-21-pass-0.md`, `pr-21-pass-1.5.md` and `pr-21-pass-2.5.md`, which records his first-hand confirmation of them.
+On 2026-11-06, after reading a draft of the results, Beni ruled "Rule Path A", on the PM's question "Rule Path A for the iOS companion's core, as the rule selects?". He gave it in the PM's session, so the cold reviewer cannot see it, and Beni's merge confirms it. His earlier rulings on the spike are in `pr-21-pass-0.md`, `pr-21-pass-1.5.md` and `pr-21-pass-2.5.md`, which records his first-hand confirmation of them.
 
 ## Authorship record
 
@@ -27,7 +27,7 @@ From `git log --format='%h %an' origin/main..HEAD`.
 
 | Commit | Authoring vendor | Cold read by |
 | --- | --- | --- |
-| Every commit on the branch, this brief's included | Claude | Codex |
+| Every commit on the branch, this brief's included | Claude | Cursor |
 
 ## Fast-track
 
@@ -42,4 +42,4 @@ Allowed: the diff is docs outside sensitive paths, and this is not a release or 
 5. **The Pass 2.5 record.** The PM recorded it from Beni's paste of the review chat, restoring its formatting. Compare it with [issuecomment-6670022832](https://github.com/BeniCheni/keel/pull/21#issuecomment-6670022832) for anything that disagrees.
 6. **The PR #22 corrections** against Cursor's [issuecomment-6641890050](https://github.com/BeniCheni/keel/pull/22#issuecomment-6641890050), and the `docs/README.md` rows against `gh pr view 21 --repo BeniCheni/keel` and `gh pr view 22 --repo BeniCheni/keel`.
 7. **Ideas 41 to 47.** Does each trace to its source, and does none read as a scope commitment?
-8. **Privacy.** Run the owner's private-list check, counts only, over the diff, every commit message, the PR title and body, every comment on this PR, and your own proposed comment. Beni ruled on 2026-11-06 that the Pass 2.5 brief and comment on PR #21 get this check here, since Codex's count on PR #21 came before them, so cover issuecomment-6670022832 too. Read `~/.config/keel/private-terms.txt` for this and nothing else, check first that it is readable, make a failed scan exit nonzero, and never print a term or a matched value. Confirm the two device record files hold only `KEEL_SPIKE v1` lines and `#` notes.
+8. **Privacy.** Run the tripwire over the repo, the PR title and body, every comment on this PR, and your own proposed comment, and report counts per class. Confirm the two device record files hold only `KEEL_SPIKE v1` lines and `#` notes. Cursor never opens the owner's private-list file, so Beni runs that check, counts only, after your comment is posted, with a script the PM wrote. It covers the diff, every commit message, the PR title and body, every comment on this PR, and PR #21's Pass 2.5 comment (issuecomment-6670022832), which Beni ruled on 2026-11-06 is checked here because Codex's count on PR #21 came before it. Your comment says that check is Beni's and still to run.
