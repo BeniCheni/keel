@@ -209,9 +209,9 @@ So AC11 exits 1 until this PR merges, and a further amendment has to edit AC11 a
 
 ## After the cold read
 
-Codex gave the cold read at `fd8c60f` ([issuecomment-6640941944](https://github.com/BeniCheni/keel/pull/22#issuecomment-6640941944)), verdict "mergeable after fixes", with one Medium. Its private-list check found 0 hits. The PM accepts the Medium: the amendment kept the sentence calling the two-locale test "the check that nothing else depends on locale" (`git show fd8c60f:docs/specs/s90-ios-core-spike.md | grep -c 'the check that nothing else depends on locale'` prints `1`), while its new bullet says a second locale is not enough, and rows 7 and 8 above show both JavaScriptCore locales missing a real `localeCompare` dependency. The sentence now states what the runs can show on these inputs and what they cannot prove.
+Codex gave the cold read at `fd8c60f` ([issuecomment-6640941944](https://github.com/BeniCheni/keel/pull/22#issuecomment-6640941944)), verdict "mergeable after fixes", with one Medium. Its private-list check found 0 hits. The PM accepts the Medium: the amendment kept the sentence calling the two-locale test "the check that nothing else depends on locale" (`git show fd8c60f:docs/specs/s90-ios-core-spike.md | grep -c 'the check that nothing else depends on locale'` prints `1`), while its new bullet says a second locale is not enough, and row 8 above shows both JavaScriptCore locales missing a real `localeCompare` dependency on the tie input, where Node's `haw_US` catches it, and row 7 shows no locale catching it on the 31 fixtures. (Corrected 2026-11-06, after Cursor's L1 in [issuecomment-6641890050](https://github.com/BeniCheni/keel/pull/22#issuecomment-6641890050): this sentence first said rows 7 and 8 both showed the JavaScriptCore miss.) The sentence now states what the runs can show on these inputs and what they cannot prove.
 
-Codex re-reads the fix commit. Then Beni merges.
+Beni moved the re-read of the fix commit to Cursor on 2026-11-04, because the Codex chat kept returning its first read. Cursor's re-read is [issuecomment-6641890050](https://github.com/BeniCheni/keel/pull/22#issuecomment-6641890050), and Beni then merged. (Corrected 2026-11-06: this line first said Codex would re-read.)
 
 ## Left for the builder
 
