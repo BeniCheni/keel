@@ -28,7 +28,7 @@ Independence rules:
 - The PM session and the Pass 1 session are different sessions. The sealed appendix in the Pass 0 brief is their only channel.
 - Fable 5.1 pins apply to the Claude seats only; Codex keeps its own pin on every PR. Fable 5.1 seats work only on synthetic data in a fresh clone.
 
-Model pins are as of 2026-10-29. If a pinned model is unavailable, use the fallback and say so in the PR comment. A seat with no fallback stops and escalates.
+Model pins are as of 2026-10-29, except the Builder cold-read effort, which is as of 2026-11-07. If a pinned model is unavailable, use the fallback and say so in the PR comment. A seat with no fallback stops and escalates.
 
 ## Hard rules
 
