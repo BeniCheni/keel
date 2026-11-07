@@ -1,6 +1,6 @@
 # PR #21 device records. Beni's run on 2026-11-05, on an iPhone Air with iOS 27.2, of the app built from 27c802c7ebd432ea27adcc98d199902d6db08cd9.
 # Lines starting with # are the PM's notes. Every other line is a KEEL_SPIKE v1 line as the phone printed it. Nothing else from the console is kept.
-# Order: the Swedish and Hawaiian probe launches, then the timing run's 11 launches in launch order: 5 compile and 5 standalone under en-US, then 1 compile under sv_SE.
+# Order: the Swedish and Hawaiian probe launches, then the timing run's 11 launches in launch order: 5 launched as compile and 5 as standalone under en-US, then 1 launched as compile under sv_SE. The variant named is the one the launch timed; every timing launch printed parity lines for both variants, 64 each. (Clarified 2026-11-07, after Cursor's Medium on PR #23.)
 # This is the input the device helper passed to the comparison. Reproduce from a clone at 27c802c with installs done: sh spike/ios-core/run-parity.sh --compare-device <this file>
 KEEL_SPIKE v1 process pid=3861
 KEEL_SPIKE v1 locale engine=jscontext variant=compile locale=sv-SE

@@ -1,6 +1,6 @@
 # PR #21 device records, continued. Beni's run on 2026-11-05, same phone and build as pr-21-device-records.txt.
 # Lines starting with # are the PM's notes. Every other line is a KEEL_SPIKE v1 line as the phone printed it.
-# Part 1: one compile launch under (haw) haw_US, made right after the Swedish launch. DEVICE.md does not have it. The PM added it after the probe resolved haw on the phone. It is not pre-registered and does not gate.
+# Part 1: one launch under (haw) haw_US with -KeelVariant compile, made right after the Swedish launch. Like every timing launch, it printed one fresh timing line for the variant it was launched with, and parity lines for both variants: 64 compile and 64 standalone, half identity and half reversed. (Corrected 2026-11-07, after Cursor's Medium on PR #23: this note first called it one compile launch.) DEVICE.md does not have it. The PM added it after the probe resolved haw on the phone. It is not pre-registered and does not gate.
 KEEL_SPIKE v1 process pid=3879
 KEEL_SPIKE v1 timing variant=compile kind=fresh pid=3879 contextMs=106.219 loadTermsMs=14.015
 KEEL_SPIKE v1 locale engine=jscontext variant=compile locale=haw

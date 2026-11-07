@@ -43,3 +43,17 @@ Allowed: the diff is docs outside sensitive paths, and this is not a release or 
 6. **The PR #22 corrections** against Cursor's [issuecomment-6641890050](https://github.com/BeniCheni/keel/pull/22#issuecomment-6641890050), and the `docs/README.md` rows against `gh pr view 21 --repo BeniCheni/keel` and `gh pr view 22 --repo BeniCheni/keel`.
 7. **Ideas 41 to 47.** Does each trace to its source, and does none read as a scope commitment?
 8. **Privacy.** Run the tripwire over the repo, the PR title and body, every comment on this PR, and your own proposed comment, and report counts per class. Confirm the two device record files hold only `KEEL_SPIKE v1` lines and `#` notes. Cursor never opens the owner's private-list file, so Beni runs that check, counts only, after your comment is posted, with a script the PM wrote. It covers the diff, every commit message, the PR title and body, every comment on this PR, and PR #21's Pass 2.5 comment (issuecomment-6670022832), which Beni ruled on 2026-11-06 is checked here because Codex's count on PR #21 came before it. Your comment says that check is Beni's and still to run.
+
+## After the cold read
+
+Cursor first stopped, because `.agents/skills/keel-pr-review/SKILL.md` says Cursor never reviews. Beni ruled on 2026-11-07, "Yes, Cursor reads it": `AGENTS.md` outranks that copy, the procedure it points to says `AGENTS.md` wins, and Cursor wrote none of this PR's commits.
+
+Cursor then gave the cold read at `86be618` ([issuecomment-6710345176](https://github.com/BeniCheni/keel/pull/23#issuecomment-6710345176)), on Grok 4.7 Extra High with no sub-agent. Its verdict is "mergeable after fixes", with one Medium, one Low and no High. It said where the read concerns its own build of the spike, its App Review re-read and its PR #22 re-read, and judged those from the records and the commands.
+
+- **Medium 1, accepted.** The note on part 1 of `pr-21-device-extra.txt` called the Hawaiian launch one compile launch, while that part holds parity lines for both variants: 64 compile and 64 standalone, beside one compile timing line (`awk` over part 1, counting lines by kind and variant). Fixed in the commit that adds this section, which also clarifies the same wording in `pr-21-device-records.txt`'s order note. Only `#` lines change in either file, so the device comparison reads the same records.
+- **Found while fixing Medium 1.** The 33 hand-check lines in part 2 of `pr-21-device-extra.txt` each end with a carriage return (`awk '/^# Part 2/{p=1} p && /\r$/{c++} END{print c}' docs/reviews/pr-21-device-extra.txt` prints `33`). The terminal capture added it: the device helper ran `devicectl` through `script` for those sessions, and its strip of one trailing carriage return left one in place. The phone printed none. The lines stay as recorded, and idea 47 covers the device harness.
+- **Low 2, accepted.** The skill copy's "Cursor never reviews" against `AGENTS.md`'s fast-track rule. Idea 33 stays open; aligning the files touches sensitive paths, so it is a PR of its own.
+
+Beni ran the owner's private-list check, counts only, on 2026-11-07, after Cursor's comment. With 6 terms in the list, it found 0 hits in each of seven sources: this PR's diff, its commit messages, its title and body, its comments (1, Cursor's), its reviews, its review comments, and PR #21's Pass 2.5 comment. The positive control fired once, and the scan exited 0. It ran before the fix commit, so Beni runs it again after Cursor's re-read.
+
+Cursor re-reads the fix commit. Then Beni merges.
