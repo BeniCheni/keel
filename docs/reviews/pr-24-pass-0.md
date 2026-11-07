@@ -6,12 +6,12 @@ Written by the PM on 2026-11-07 (America/New_York). The same Claude session wrot
 
 This PR touches `AGENTS.md` and `.agents/skills/**`, both sensitive paths, so fast-track is barred, the Fable 5.1 pins apply to the Claude seats, and Beni merges it.
 
-- **Pass 1:** Codex, GPT-6.1 Sol Extra High, because a Claude session wrote every line. If the chat reaches that model only through a sub-agent, the sub-agent gets the whole prompt word for word, does all the reading and running, and the comment says so. No fallback: if the model is unavailable, stop and escalate.
+- **Pass 1:** Cursor, Grok 4.7 at Extra High, by Beni's word of 2026-11-07: "Let's pivot to use Cursor for this seat." Cursor reads the effort from the picker, not the model id. If Extra High is unavailable, stop and escalate.
 - **Pass 1.5:** the PM.
-- **Pass 2:** Codex, on any Claude-authored commit pushed after Pass 1. If there is none, Pass 2 has nothing to read, and the brief at Pass 1.5 says so.
+- **Pass 2:** Codex, GPT-6.1 Sol Extra High. It adjudicates Pass 1, gives its own read of the whole PR, gives the cold read of any Cursor or Claude commit pushed after Pass 1, and runs the owner's private-list check. If the chat reaches that model only through a sub-agent, the sub-agent gets the whole prompt word for word, and the comment says so. No fallback: if the model is unavailable, stop and escalate.
 - **Pass 2.5:** a fresh Claude session on Fable 5.1 High, fallback Opus 5.5 High, on synthetic data only, which also gives the cold read of any Codex-authored commit.
 
-Cursor gives no pass here: this PR changes what Cursor may do, so it has a stake.
+This PR widens what Cursor may do, so Cursor has a stake in it. This brief first gave Cursor no pass for that reason, with Codex at Pass 1. Beni moved Pass 1 to Cursor anyway. `AGENTS.md` names Codex for Pass 1 on a Claude-authored PR, so this holds by his word, for this PR only, as on PR #16. Cursor says so wherever its read concerns the rule about itself, and Codex at Pass 2 gives the independent read of the whole PR, so Cursor's is not the only cold read.
 
 ## Scope
 
@@ -32,7 +32,7 @@ From `git log --format='%h %an' origin/main..HEAD`.
 
 | Commit | Authoring vendor | Cold read by |
 | --- | --- | --- |
-| Every commit on the branch, this brief's included | Claude | Codex, Pass 1 |
+| Every commit on the branch, this brief's included | Claude | Cursor, Pass 1, and Codex, Pass 2 |
 
 ## Fast-track
 
@@ -45,4 +45,4 @@ Not allowed: the diff touches sensitive paths.
 3. **Consistency.** Does any other rule file still contradict the new text? Check `AGENTS.md`, `CLAUDE.md`, `.claude/skills/**` and `.agents/skills/**` (`git grep -n -i cursor -- AGENTS.md CLAUDE.md .claude .agents`).
 4. **The model pin.** The Builder row now pins Extra High for cold reads, as Cursor ran on PRs #19, #22 and #23. `AGENTS.md` says its pins are as of 2026-10-29. Should that date move?
 5. **The records.** Check the `docs/README.md` row and the merge section against `gh pr view 23 --repo BeniCheni/keel --json mergeCommit,mergedAt,headRefOid`, the PR #23 comments, and `git rev-parse b58e2df^{tree} 04403b0^{tree}`. Check that idea 33's outcome row matches the ruling, and that no other idea row changed.
-6. **Privacy.** Run the owner's private-list check, counts only, over the diff, every commit message, the PR title and body, every comment, and your own proposed comment. Read `~/.config/keel/private-terms.txt` for this and nothing else, check first that it is readable, make a failed scan exit nonzero, and never print a term or a matched value.
+6. **Privacy.** Pass 1 runs the tripwire over the repo, the PR title and body, every comment and its own proposed comment, and reports counts per class. Cursor never opens the owner's private-list file. At Pass 2, Codex runs that check, counts only, over the diff, every commit message, the PR title and body, every comment and its own proposed comment, reading `~/.config/keel/private-terms.txt` for this and nothing else, checking first that it is readable, making a failed scan exit nonzero, and never printing a term or a matched value.
