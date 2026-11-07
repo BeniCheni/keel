@@ -1,6 +1,6 @@
 # ADR-0009: A native iOS companion, with its own storage, data path and notifications
 
-- Status: Proposed. Drafted 2026-11-02. The core choice is decided by spike S90's pre-registered rule, and Beni rules on the results.
+- Status: Accepted on 2026-11-06, when Beni ruled Path A on S90's results (`docs/specs/s90-ios-core-spike-results.md`). Drafted 2026-11-02 as Proposed.
 - Deciders: Beni (owner), on the PM's recommendation.
 
 ## Context
@@ -15,7 +15,7 @@ This ADR is additive. It supersedes nothing. ADR-0001, ADR-0004 and ADR-0007 sta
 
 **Role.** A companion. The phone reads and explains what the desktop's data produces, and schedules its own date-based reminders. It writes nothing back. The story-by-story split is the journey table in `docs/specs/s90-ios-core-spike.md`.
 
-**Core.** Path A runs the TypeScript `@keel/core` in JavaScriptCore; Path B is a full Swift port. S90's decision rule chooses, on measured parity, load time and App Review reading. This section is rewritten when Beni rules on the results.
+**Core.** Path A: the phone runs the TypeScript `@keel/core` inside JavaScriptCore, as one bundled script built from the core as merged, with no Node built-ins and no host shim. Beni ruled it on 2026-11-06, as S90's pre-registered rule selected. On macOS and on his iPhone the bundle's output matched Node's byte for byte on every terms fixture and the tie input. On the phone, creating the context and evaluating the bundle took a median of 105 ms, and the first `loadTerms` 13.5 ms, against limits of 500 ms and 50 ms. The bundle ships inside the app and nothing downloads, which S90 read as no App Review blocker; App Review has the final word. Path B, a full Swift port, is not taken. S90 measured the terms loader only, because the engine, schedule and alert rules do not exist yet, so the core's growth stays a reason to revisit. Two limits carry over: JavaScriptCore defines no `URL`, and a deep but valid document can fail in Node, which runs out of stack, while it loads in JavaScriptCore. The results file has the measurements and their commands.
 
 **Data path.** Files only. The desktop's export reaches the phone through the Files app, by a route the owner chooses: AirDrop and USB stay between the owner's devices, and iCloud Drive leaves them, which the phone names. No network, no account, no sync service. Each import replaces the previous snapshot only after validation succeeds; a rejected import leaves the previous snapshot intact. `loadTerms` validates each terms document only. Validation of observations, alerts and their cross-references belongs to the later export/import contract, not to that API or this terms-loader spike. What the export omits, the phone says it omits, and it shows no empty state that claims more. The newest observation date means only the latest observation present. Each holding and series keeps its applicable dates, and a newer close for one cannot freshen another. With no observations, the phone says no observation date is present. The terms format has no provenance date today, an alert firing on the desktop has a firing time, and an observation date cannot date terms. The import screen separately shows when the phone imported the files; neither that time nor a file's modification time stands in for source freshness.
 
@@ -45,4 +45,4 @@ A hand-carried file is the weakest part of a monitor whose job is "never be surp
 
 ## Revisit when
 
-S90's results arrive; a stale phone misses an event in Beni's own use; the export slice settles what travels; story 6.11 or any sync is taken up; Apple's rules on bundled code, the notification limit or the Personal Team change; an App Store listing is wanted; or the core's size or dependencies change enough to invalidate S90's load times.
+A stale phone misses an event in Beni's own use; the export slice settles what travels; story 6.11 or any sync is taken up; Apple's rules on bundled code, the notification limit or the Personal Team change; an App Store listing is wanted; or the core's size or dependencies change enough to invalidate S90's load times.
