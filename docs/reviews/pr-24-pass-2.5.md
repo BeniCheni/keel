@@ -104,7 +104,7 @@ None. No figure in this PR comes from a model or an assumption.
 
 - This PR widens what Cursor may do, and Cursor gave Pass 1 on it. Codex's Pass 2 read the whole PR, and this seat read the rule text again, so Cursor's read is not the only one. Pass 1 found the gap in its own favour and reported it against its interest.
 - The bar names Cursor only. By Beni's ruling of 2026-11-07, the parallel reading for Codex is parked in the ideas file and does not change the rule now. Until it is settled, a records PR about a PR with a Codex-authored commit may get its only cold read from Codex by the letter of the rule.
-- The records PR that will carry this brief records PR #24, which has two Cursor-authored commits, so under the new bar Cursor cannot give its cold read; Codex or Claude Code can. Codex wrote `22de9d7` on this PR, which the rule as ruled does not bar.
+- The records PR that will carry this brief records PR #24, which has three Cursor-authored commits, so under the new bar Cursor cannot give its cold read; Codex or Claude Code can. Codex wrote `22de9d7` on this PR, which the rule as ruled does not bar.
 - The rule files read the pin date two ways on purpose: 2026-10-29 for every pin, 2026-11-07 for the Builder cold-read effort.
 - Process deviations recorded, none a rule conflict: the prompt put the fresh clone at `~/code/keel-pr-24-p25` where the skill names `/tmp/keel-pr-<N>`, and the clone was fresh and empty, which is what the skill protects; Codex's Pass 2 read every commit rather than only the Claude commits after Pass 1, which `AGENTS.md` scopes for the case where Codex took Pass 1, and Cursor took Pass 1 here by ruling 1, with ruling 2 letting Codex go on.
 
@@ -122,7 +122,7 @@ Rulings 1 and 3 are in `docs/reviews/pr-24-pass-0.md` and `docs/reviews/pr-24-pa
 | Gate clause | Holds? |
 | --- | --- |
 | Not a release, no numbering fork | Yes |
-| Verdict mergeable, every High closed (fix commit with a failing-first test, or for a High outside tracked files, a recorded remediation check plus Beni's confirmation) | Yes: no High was raised; all three Pass 1 Mediums and Codex's Medium are fixed and cold-read; the two Lows are fixed in `d1d24df` |
+| Verdict mergeable, every High closed (fix commit with a failing-first test, or for a High outside tracked files, a recorded remediation check plus Beni's confirmation) | Yes: no High was raised; both Pass 1 Mediums, its Low and Codex's Medium are fixed and cold-read; the two Lows are fixed in `d1d24df` |
 | Nothing contested | Yes: Beni's ruling 4, confirmed "Yes, both" in chat on 2026-11-07 |
 | `verify` green at tip; every number re-run | Yes: exit 0 on both Node versions; everything not re-run is listed above and none of it is a gate number |
 | No sensitive path, dependency or schema change | No: `AGENTS.md` and `.agents/skills/keel-pr-review/SKILL.md` are sensitive paths; no dependency or schema change |
@@ -200,7 +200,7 @@ For the records PR: the `docs/README.md` row for PR #24 changes from "in review"
 
 ## Records note (PM, 2026-11-07)
 
-This brief was written uncommitted in the Pass 2.5 clone and lands in a records PR written by the PM. The PM changed two things and nothing else: questions 4 and 5 above are put in number order, so the rendered list keeps the numbers the Pass 2.5 comment used, and this note is added.
+This brief was written uncommitted in the Pass 2.5 clone and lands in a records PR written by the PM. The PM changed four things and nothing else. Questions 4 and 5 above are put in number order, so the rendered list keeps the numbers the Pass 2.5 comment used. Two counts are corrected after Codex's cold read of this records PR: "Risks and accepted costs" said two Cursor-authored commits where `git log --format='%h %an' b58e2df..d1d24df` shows three, and the shadow gate log said three Pass 1 Mediums where Pass 1 recorded two Mediums and one Low. And this note is added.
 
 A later clone of `main` does not have this PR's branch commits, such as `c8b1f59`, `22de9d7` or `d1d24df`, because the branch is deleted. Run `git fetch origin pull/24/head` first. In a fresh clone, `git rev-parse --verify -q 'd1d24df^{commit}'` exits 1 before the fetch. After it, `git rev-parse 'de7a3db^{tree}' 'd1d24df49787dcc85538b60a1f4ea36d5e7305ef^{tree}'` prints `2086434fce3ecffc356808e2fa92e8114eb6000f` twice, and `git diff --shortstat b58e2df...d1d24df` gives 7 files, 139 insertions and 4 deletions. In the commands above, `origin/main` and `HEAD` mean `main` and the PR head as they were when each check ran.
 
