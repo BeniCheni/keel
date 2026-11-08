@@ -21,6 +21,8 @@ Every slice moves through up to four rungs: proposal (the research behind the pr
 | S90 amendment before the spike (PR #19) | post-`v0.1.0` spike, not a slice toward `v0.1.0` | amends `specs/s90-ios-core-spike.md` | none | `reviews/pr-19-pass-0.md` | merged 2026-11-04 at squash `82e4909`, reviewed head `4167a98` (fast-track), by Beni's one-time bypass of the `verify` check; the brief records why |
 | S90 spike build (PR #21) | post-`v0.1.0` spike, not a slice toward `v0.1.0` | `specs/s90-ios-core-spike.md` | none | `reviews/pr-21-pass-0.md`, `reviews/pr-21-pass-1.5.md`, `reviews/pr-21-pass-2.5.md` (executive brief), `reviews/pr-21-device-records.txt`, `reviews/pr-21-device-extra.txt` | closed unmerged 2026-11-06 at reviewed head `0c06924`, as the spec says; measured build `27c802c`; branch `s90/ios-core-spike` kept |
 | S90 Q2 amendment after the spike's first commit (PR #22) | post-`v0.1.0` spike, not a slice toward `v0.1.0` | amends `specs/s90-ios-core-spike.md` | none | `reviews/pr-22-pass-0.md` | merged 2026-11-04 at squash `32cfe40`, reviewed head `ad6e488` (fast-track); cold read by Codex, re-read of the fix by Cursor |
+| S90 results and ADR-0009 accepted (PR #23) | post-`v0.1.0` spike, not a slice toward `v0.1.0` | `specs/s90-ios-core-spike-results.md`; `adr/0009-ios-companion-and-core.md` | none | `reviews/pr-23-pass-0.md` | merged 2026-11-07 at squash `b58e2df`, reviewed head `04403b0` (fast-track); cold read and re-read by Cursor, by Beni's ruling of 2026-11-07 |
+| Cursor cold-read policy (PR #24, idea 33) | n/a | none (review policy) | none | `reviews/pr-24-pass-0.md`, `reviews/pr-24-pass-1.5.md` | in review |
 
 Folders:
 

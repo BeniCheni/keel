@@ -57,3 +57,11 @@ Cursor then gave the cold read at `86be618` ([issuecomment-6710345176](https://g
 Beni ran the owner's private-list check, counts only, on 2026-11-07, after Cursor's comment. With 6 terms in the list, it found 0 hits in each of seven sources: this PR's diff, its commit messages, its title and body, its comments (1, Cursor's), its reviews, its review comments, and PR #21's Pass 2.5 comment. The positive control fired once, and the scan exited 0. It ran before the fix commit, so Beni runs it again after Cursor's re-read.
 
 Cursor re-reads the fix commit. Then Beni merges.
+
+## The merge (PM, 2026-11-07, after it)
+
+Cursor re-read the fix at `04403b0` ([issuecomment-6710500138](https://github.com/BeniCheni/keel/pull/23#issuecomment-6710500138)), on Grok 4.7 Extra High: verdict "mergeable". It counted 64 compile and 64 standalone parity lines in part 1, found no `KEEL_SPIKE` line changed, and found this brief's account accurate.
+
+Beni ran his private-list scan again, chained to the merge so the merge ran only if the scan exited 0. He reported that it printed `total hits: 0`.
+
+He merged at 13:05 America/New_York as squash `b58e2df` (`gh pr view 23 --repo BeniCheni/keel --json mergeCommit,mergedAt`), with "fast-track" in the subject and trailers for Claude and Cursor. The PM then checked from a fresh clone: `origin/main` equals `b58e2df`, its parent is `32cfe40`, and its tree equals `04403b0`'s (`git rev-parse b58e2df^{tree} 04403b0^{tree}` prints one tree twice). A later clone of `main` does not have `04403b0` after the branch is deleted; `git fetch origin pull/23/head` and then `git rev-parse b58e2df^{tree} 04403b087b3174e4d09d263c56546bff55cae292^{tree}` prints `38074eb1df9a3968328167d9aa87b017f793b577` twice. `pnpm verify` exits 0 on Node 24.22.2 and 26.13.0, and `main`'s push CI on `b58e2df` succeeded. GitHub deleted the PR branch, and the PM deleted the older `docs/pr-21-records`, after checking that every file on it is on `main`.
