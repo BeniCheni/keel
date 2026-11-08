@@ -1,6 +1,6 @@
 # S02: Observation schedule and exchange calendar
 
-- Status: drafted 2026-11-08 by the PM (Claude), on Beni's ruling of 2026-11-08 to split the engine work and build the schedule first. It goes through the plan challenge (Codex, Pass 1) before any code exists.
+- Status: drafted 2026-11-08 by the PM (Claude), on Beni's ruling of 2026-11-08 to split the engine work and build the schedule first. Amended the same day after Codex's plan challenge (`docs/reviews/pr-28-pass-1.5.md`). No code exists yet.
 - Release: non-release slice toward `v0.1.0`. Starts only after this spec merges.
 - Builder: Cursor, Grok 4.7 Extra High (sensitive-path slice), in one draft PR on branch `s02/schedule`.
 - Sensitive paths the build touches: `packages/core/**`. This spec PR touches none.
@@ -16,7 +16,7 @@ keel can say which dates a note observes on. When the terms list those dates, ke
 Each of these is open to the plan challenge.
 
 1. **The calendar is rule-generated code, passed in.** Core does no I/O and the default build makes no outbound request, so the calendar cannot be fetched. `nyseRulesCalendar()` computes closures from fixed rules with no dependency, and returns plain data that every schedule function takes as an argument (ADR-0002).
-2. **One calendar, NYSE, for every underlying.** The terms schema has no calendar field, and adding one is a schema change this slice does not make. Every generated entry names the calendar in its `rule`, so the assumption is visible.
+2. **One calendar, NYSE, for every underlying.** The terms schema has no calendar field, and adding one is a schema change this slice does not make. Every generated entry names the calendar in its `rule`, so the assumption is visible. The calendar is a planning fallback: it is no evidence of when an underlying on another exchange trades, or of unscheduled closures.
 3. **Coverage is 2026 to 2060 inclusive.** Rules cannot know an unscheduled closure, and past years contain some (for example 2025-01-09), so coverage starts at 2026. A date outside coverage is flagged `outside-calendar`, never reported as an ordinary open day.
 4. **Generated dates step from the stated first call observation.** `dates.first_call_observation` is the anchor, and it is entry 0 exactly as stated: it is never moved, even if it falls on a closed day, because a stated date is not this slice's to change. A closed-day anchor is flagged instead.
 5. **`call.non_call_months` is not read.** The anchor already carries that information. Checking that the two agree needs a tolerance no source gives, so that check is left out and goes to the ideas file.
@@ -25,7 +25,7 @@ Each of these is open to the plan challenge.
 
 ## Scope
 
-All new code lives in `packages/core/src/schedule/` and is exported from `packages/core/src/index.ts`. `loadTerms`, `dateFlags` and `verificationSummary` keep their behaviour and signatures. No new dependency, schema change, fixture file or generator.
+All new code lives in `packages/core/src/schedule/` and is exported from `packages/core/src/index.ts`. `loadTerms`, `dateFlags` and `verificationSummary` keep their behaviour and signatures. No new dependency, schema change, fixture file or registered fixture generator.
 
 ### Calendar rules
 
@@ -44,7 +44,7 @@ Closures for each year, each a weekday:
 | `Thanksgiving Day` | Fourth Thursday of November |
 | `Christmas Day` | December 25, observed |
 
-"Observed" means a Saturday date closes the Friday before and a Sunday date closes the Monday after. New Year's Day is the exception above, because NYSE Rule 7.2 keeps the exchange open when that Friday ends a monthly or yearly accounting period, and December 31 does.
+"Observed" means a Saturday date closes the Friday before and a Sunday date closes the Monday after. NYSE states that practice with an exception for unusual business conditions, such as the end of a monthly or yearly accounting period (SR-NYSE-2021-56, footnote 6, <https://www.govinfo.gov/content/pkg/FR-2021-10-05/html/2021-21742.htm>), and its published table has no closure on Friday, December 31, 2027. This calendar projects that one case as a fixed rule: a Saturday New Year's Day closes nothing. That is keel's projection, not a commitment by NYSE, whose discretion is wider.
 
 Early closes still produce a closing price, so they are not closures.
 
@@ -58,11 +58,11 @@ export interface ExchangeCalendar {
   id: string;
   fromYear: number;
   toYear: number;
-  closures: readonly ExchangeClosure[]; // ascending by date, no duplicates
+  closures: readonly ExchangeClosure[]; // ascending by date, no duplicates, real dates
 }
 export function nyseRulesCalendar(): ExchangeCalendar; // id "nyse-rules-1", 2026 to 2060
 
-export type ScheduleFlag = "weekend" | "exchange-holiday" | "outside-calendar";
+export type ScheduleFlag = "weekend" | "exchange-holiday" | "outside-calendar" | "invalid-date";
 export function scheduleDateFlags(isoDate: string, calendar: ExchangeCalendar): ScheduleFlag[];
 export function termDateFlags(terms: Terms, calendar: ExchangeCalendar): Record<string, ScheduleFlag[]>;
 
@@ -73,6 +73,7 @@ export interface StatedEntry {
   date: string;
   origin: "stated";
   status: Exclude<TermStatus, "unknown" | "conflict">;
+  flags: ScheduleFlag[];
 }
 export interface GeneratedEntry {
   index: number;
@@ -94,9 +95,10 @@ export interface ListedEntry { index: number; date: string | null; term: Term<st
 export interface ListedSchedule { kind: "listed"; entries: ListedEntry[] }
 
 export type UnavailableReason =
-  | { code: "input-unknown" | "input-conflict"; path: string }
+  | { code: "input-unknown" | "input-conflict" | "input-invalid"; path: string }
   | { code: "anchor-after-maturity"; path: "dates.first_call_observation" }
-  | { code: "outside-calendar"; date: string };
+  | { code: "outside-calendar"; date: string }
+  | { code: "calendar-collision"; date: string };
 export interface UnavailableSchedule { kind: "unavailable"; reasons: UnavailableReason[] }
 
 export type ScheduleResult = EstimatedSchedule | ListedSchedule | UnavailableSchedule;
@@ -111,7 +113,7 @@ export function scheduleDiff(terms: Terms, calendar: ExchangeCalendar): Schedule
 
 ### `scheduleDateFlags`
 
-`weekend` for a Saturday or Sunday, from the date alone. `exchange-holiday` when the date is a closure in the calendar. `outside-calendar` when the date's year is outside `fromYear` to `toYear`. The order in the array is the order just given. An outside date never gets `exchange-holiday`.
+`weekend` for a Saturday or Sunday, from the date alone. `exchange-holiday` when the date is a closure in the calendar. `outside-calendar` when the date's year is outside `fromYear` to `toYear`. The order in the array is the order just given. An outside date never gets `exchange-holiday`. A string that is not a real Gregorian date returns only `invalid-date`, so it cannot read as an open day.
 
 ### `termDateFlags`
 
@@ -119,25 +121,27 @@ The same keys `loadTerms` returns in `dateFlags` for the same file, including `.
 
 ### `observationSchedule`
 
+`terms` comes from a successful `loadTerms`. `calendar` meets the comments on `ExchangeCalendar`. Each entry's `index` is its position in `entries`, from 0.
+
 1. If `terms.dates.observation_schedule` is present, return `listed`: one entry per list item, in file order. `date` is the value, or `null` for `unknown` and `conflict`. `term` is the item unchanged, so a conflict keeps every candidate in file order. A listed schedule is not thereby verified: `verificationSummary` decides that.
-2. Otherwise read the three inputs in this order: `dates.first_call_observation`, `dates.maturity`, `call.frequency`. If any is `unknown` or `conflict`, return `unavailable` with one `input-unknown` or `input-conflict` reason per such input, in that order, and nothing else.
+2. Otherwise read the three inputs in this order: `dates.first_call_observation`, `dates.maturity`, `call.frequency`. If any is `unknown` or `conflict`, or has a known value that is not a real Gregorian date (the two dates) or one of the four frequencies, return `unavailable` with one `input-unknown`, `input-conflict` or `input-invalid` reason per such input, in that order, and nothing else.
 3. If the anchor is after maturity, return `unavailable` with `anchor-after-maturity`.
-4. Otherwise `step` is 1, 3, 6 or 12 months for `monthly`, `quarterly`, `semiannual` or `annual`. Entry 0 is the anchor, `origin: "stated"`, with the anchor's status.
+4. Otherwise `step` is 1, 3, 6 or 12 months for `monthly`, `quarterly`, `semiannual` or `annual`. Entry 0 is the anchor, `origin: "stated"`, with the anchor's status and `flags` from `scheduleDateFlags`. It needs no calendar coverage.
 5. For `k` from 1: `unadjusted` is the anchor plus `k × step` months, computed from the anchor each time, with the day clamped to the length of the target month. So a January 31 anchor gives February 28 and then March 31.
    - If `unadjusted` is after maturity, stop.
-   - Roll forward one day at a time while the date is a Saturday, a Sunday or a closure.
-   - If `unadjusted` or any date reached while rolling is outside the calendar's years, return `unavailable` with one `outside-calendar` reason naming that date. There is no partial schedule.
-   - If the rolled date is after maturity, leave it out and continue to the next `k`, which then stops.
-6. Each generated entry has `rule` exactly `Generated from the stated first call observation, <every>, each moved to the next open day on calendar <id>.`, where `<every>` is `every month`, `every 3 months`, `every 6 months` or `every 12 months`.
+   - Starting at `unadjusted`, take each date in turn. If it is after maturity, leave this `k` out and go to the next `k`. Otherwise, if its year is outside the calendar's years, return `unavailable` with one `outside-calendar` reason naming that date. Otherwise, if it is a Saturday, a Sunday or a closure, move to the next day. Otherwise accept it.
+   - If the accepted date is not after the previous entry's date, return `unavailable` with one `calendar-collision` reason naming it.
+   - There is no partial schedule.
+6. Each generated entry has `rule` exactly `Generated from the stated first call observation, <every>, with closed days moved to the next open day on calendar <id>.`, where `<every>` is `every month`, `every 3 months`, `every 6 months` or `every 12 months`.
 7. `inputs` lists the three inputs and their statuses in the order of step 2.
 
 ### `scheduleDiff`
 
-Returns `no-list` when the terms have no observation schedule. Otherwise it computes the estimate from the terms with the list ignored; if that is `unavailable`, it returns that result. Dates are compared as sets: `inBoth`, `onlyEstimated` and `onlyListed` are ascending, compared by code unit. `noKnownDate` holds the indices of list items with no known value, ascending. Conflict candidates appear in no set. It does not pair dates up or guess which one moved.
+Returns `no-list` when the terms have no observation schedule. Otherwise it computes the estimate from the terms with the list ignored; if that is `unavailable`, it returns that result. Dates are compared as sets: `inBoth`, `onlyEstimated` and `onlyListed` are ascending, compared by code unit. `noKnownDate` holds the indices of list items with no known value, ascending. A conflict candidate contributes no listed date, and does not remove an estimated date of the same value. It does not pair dates up or guess which one moved.
 
 ### Purity
 
-No I/O, clock, randomness or locale: no `Date`, `Intl`, `localeCompare`, `Math.random`, `process` or Node built-ins outside test files. ADR-0009's Path A runs this core inside JavaScriptCore with no host shim. `packages/core/src/terms/dates.ts` already holds a Gregorian `dayOfWeek` and `isLeapYear`, and the build reuses them.
+No I/O, clock, randomness or locale outside test files, and only relative imports. AC10 lists the forms this rules out. ADR-0009's Path A runs this core inside JavaScriptCore with no host shim. `packages/core/src/terms/dates.ts` already holds a Gregorian `dayOfWeek` and `isLeapYear`, and the build reuses them.
 
 ## Frozen values
 
@@ -172,6 +176,8 @@ Each case starts from `fixtures/synthetic/terms/valid/minimal.yaml` as loaded, w
 
 Case 4 against case 5 is the maturity boundary: 2028-12-25 is on or before both maturities, and rolls to 2028-12-26, which only case 4 includes.
 
+Entry 0's `flags` are `weekend` in case 2, `exchange-holiday` in cases 4, 5 and 6, and empty in cases 1, 3 and 7.
+
 ### Unavailable schedules
 
 | # | Input | Expected `reasons` |
@@ -181,6 +187,17 @@ Case 4 against case 5 is the maturity boundary: 2028-12-25 is on or before both 
 | 10 | First call 2027-03-16, maturity 2027-03-15 | `[{ code: "anchor-after-maturity", path: "dates.first_call_observation" }]` |
 | 11 | First call 2060-11-30, maturity 2061-01-31, monthly, with `nyseRulesCalendar()` | `[{ code: "outside-calendar", date: "2061-01-30" }]` |
 | 12 | First call 2028-11-30, maturity 2029-03-01, monthly, with a calendar `{ id: "test-2028", fromYear: 2028, toYear: 2028, closures: [] }` | `[{ code: "outside-calendar", date: "2029-01-01" }]`, reached while rolling from 2028-12-30 |
+| 14 | First call 2027-01-01, maturity 2027-03-03, monthly, with a calendar `test-collision` covering 2027 and closing every weekday from 2027-02-01 through 2027-03-01 | `[{ code: "calendar-collision", date: "2027-03-02" }]` |
+| 15 | Case 1 with first call value `2027-02-30` | `[{ code: "input-invalid", path: "dates.first_call_observation" }]` |
+| 16 | Case 1 with frequency value `weekly` | `[{ code: "input-invalid", path: "call.frequency" }]` |
+
+### Coverage edge cases
+
+| # | Input | Expected |
+| --- | --- | --- |
+| 13 | First call 2028-11-30, maturity 2028-12-31, monthly, with `test-2028` | `estimated`, entry 0 only: the roll from 2028-12-30 passes maturity before it leaves coverage |
+| 17 | First call 2025-12-15, maturity 2026-02-15, monthly | `estimated`: entry 0 is 2025-12-15 with flags `outside-calendar`, then 2026-01-15. The 2026-02-15 slot rolls past maturity |
+| 18 | First call and maturity 2061-01-03, monthly | `estimated`, entry 0 only, with flags `outside-calendar` |
 
 ### Date flags
 
@@ -194,6 +211,7 @@ Case 4 against case 5 is the maturity boundary: 2028-12-25 is on or before both 
 | 2025-12-25 | `outside-calendar` |
 | 2025-12-27 | `weekend`, `outside-calendar` |
 | 2060-12-31 | none |
+| 2027-02-30 | `invalid-date` |
 | 2061-01-03 | `outside-calendar` |
 
 `termDateFlags` on `example-autocall.yaml` returns exactly:
@@ -219,9 +237,14 @@ Case 1's terms, with `dates.observation_schedule` set to `2026-09-01` (primary),
 - `unknown` in any of the three inputs generates nothing.
 - A listed conflict keeps `date: null` and every candidate in file order. A listed `unknown` keeps `date: null`.
 - `observationSchedule`, `scheduleDiff` and `termDateFlags` never change `terms`: a deep copy taken before the call equals `terms` after it.
-- A generated schedule never makes `dates.observation_schedule` verified: `verificationSummary` returns the same object before and after, and the path stays unverified when the list is absent.
-- A date outside the calendar is never reported as open: no flags array for such a date lacks `outside-calendar`, and a generated schedule reaching one is `unavailable`, never partial.
-- A stated anchor on a closed day stays as stated in entry 0 and is flagged by `termDateFlags`.
+- A generated schedule never makes `dates.observation_schedule` verified: `verificationSummary` returns deep-equal values before and after, and the path stays unverified when the list is absent.
+- A date outside the calendar is never reported as open: every flags array for such a date holds `outside-calendar`, and a generated date on or before maturity that reaches one makes the result `unavailable`, never partial.
+- A stated anchor on a closed day stays as stated in entry 0, and is flagged in that entry and by `termDateFlags`.
+- An invalid date never reads as open: `scheduleDateFlags` returns `invalid-date`, and an invalid input generates nothing.
+
+## What S03 takes from this
+
+This slice gives S03 estimated or listed call-observation dates. It does not establish the note's final valuation date: the last entry is not that date, and the terms have no field for it. Leaving out a slot that rolls past maturity can also shorten the count, so a monthly note can show 54 entries where the research counts 55. S03's spec has to establish separately the final valuation date, the order of the call and barrier tests on it, an exact dated close for each test, and the premium accrual basis when a date was moved or listed.
 
 ## Non-goals
 
@@ -234,20 +257,20 @@ All schedule tests run with `pnpm --filter @keel/core test schedule`. Each crite
 | # | Criterion | Test file and what it asserts |
 | --- | --- | --- |
 | AC1 | The calendar matches the frozen values | `schedule.calendar.test.ts`: count 345, the SHA-256 above, each year in the closures table, ascending, no duplicates, every closure a weekday, `id`, `fromYear` and `toYear` |
-| AC2 | Generated schedules match, entry by entry | `schedule.generate.test.ts`: cases 1 to 7, deep-equal on `date`, `unadjusted`, `origin`, `status` and `label`, plus `rule` for each of the four frequencies, and `inputs` |
-| AC3 | Unavailable schedules match | `schedule.generate.test.ts`: cases 8 to 12, deep-equal on `reasons` |
-| AC4 | A listed schedule is returned as listed | `schedule.listed.test.ts`: file order, `date` and `term` for `primary`, `user`, `unknown` and `conflict` items, with no generated entry and regardless of the three inputs' statuses |
+| AC2 | Generated schedules match, entry by entry | `schedule.generate.test.ts`: cases 1 to 7, deep-equal on `index`, `date`, `unadjusted`, `origin`, `status` and `label`, entry 0's `flags`, `rule` for each of the four frequencies, and `inputs` |
+| AC3 | Unavailable and edge-case schedules match | `schedule.generate.test.ts`: cases 8 to 12 and 14 to 16, deep-equal on `reasons`, and cases 13, 17 and 18 as stated |
+| AC4 | A listed schedule is returned as listed | `schedule.listed.test.ts`: file order, `index`, `date` and `term` for `primary`, `user`, `unknown` and `conflict` items, with no generated entry and regardless of the three inputs' statuses |
 | AC5 | The diff matches | `schedule.listed.test.ts`: the diff case above, `no-list` with no schedule, and `unavailable` when the estimate is |
-| AC6 | Date flags match | `schedule.flags.test.ts`: the table above, the frozen `termDateFlags` object, and, for every valid fixture, the same key set as the loader's `dateFlags` |
-| AC7 | Generated schedules are well formed across inputs | `schedule.properties.test.ts`: over at least 1,000 cases from a fixed-seed generator local to the test, entries are strictly increasing, every generated date is an open day within the calendar and on or before maturity, and two runs are deep-equal |
+| AC6 | Date flags match | `schedule.flags.test.ts`: the table above, the frozen `termDateFlags` object, for every valid fixture the same key set as the loader's `dateFlags`, and for case 1 with the diff case's list the keys `dates.observation_schedule[0]` to `[2]` and `dates.observation_schedule[3].candidates[0]` and `[1]` |
+| AC7 | Generated schedules are well formed across inputs | `schedule.properties.test.ts`: from a fixed-seed generator local to the test, the test counts and requires at least 1,000 `estimated` schedules with at least one generated entry. In each, entries are strictly increasing, `index` equals position, every generated date is an open day within the calendar and on or before maturity, and two runs are deep-equal |
 | AC8 | Honesty tests pass, and each fails when its guarded behaviour is broken | `schedule.honesty.test.ts` under `pnpm verify`; the PR body names, per mutant, the test that kills it |
 | AC9 | S01's behaviour is unchanged | `git diff --stat origin/main...HEAD -- packages/core/src/terms schemas fixtures tools` prints nothing, and `pnpm --filter @keel/core test terms` passes |
-| AC10 | The code is pure | `git ls-files packages/core/src/schedule \| grep -c '\.ts$'` is at least 1, and `git grep -nE 'new Date\|Date\.now\|Intl\.\|localeCompare\|Math\.random\|performance\.\|process\.\|from "node:\|require\(' -- packages/core/src/schedule ':!packages/core/src/schedule/*.test.ts'` exits 1 with no output |
+| AC10 | The code is pure, and the check can fail | `schedule.purity.test.ts`: loads each non-test `.ts` file in `packages/core/src/schedule/` as raw text through `import.meta.glob`, requires at least one such file, and requires each to pass a checker defined in that test. The checker rejects any import or export specifier not starting with `./` or `../`, and the words `Date`, `Intl`, `localeCompare`, `Math.random`, `performance`, `process`, `globalThis`, `fetch`, `eval`, `Function(`, `require(` and `import(`. The test requires the checker to reject each negative control: `import { readFileSync } from 'node:fs'`, the same with double quotes, `import fs from 'fs'`, `export * from "ajv"`, `Date.UTC(2026, 0, 1)`, `new Date()`, `Date.now()`, `Intl.Collator()`, `a.localeCompare(b)`, `Math.random()`, `performance.now()`, `process.env`, `globalThis.x`, `require("fs")` and `import("fs")`. It requires the checker to accept `import { dayOfWeek } from "../terms/dates.ts"` and the identifier `scheduleDateFlags` |
 | AC11 | `pnpm verify` stays green, including tripwire, network and determinism | `pnpm verify`, on Node 24.22.2 and 26.13.0 |
 
 ## Mutation floor
 
-At least three killed mutants per claim, listed in the PR body with the killing test. Required among them: closing the December 31 before a Saturday New Year's Day; closing the Friday before a Sunday holiday; Good Friday one day off; fourth Monday in place of last Monday of May; last Thursday in place of fourth Thursday of November (2029); rolling backward in place of forward; stepping from the previous date in place of the anchor; not clamping the day; excluding a date equal to maturity; keeping a rolled date after maturity; rolling entry 0; treating a conflict as its first candidate; marking a generated entry with the anchor's status; treating 2061 as covered; treating 2060 as outside; flagging a Saturday holiday as `exchange-holiday`.
+At least three killed mutants per claim, listed in the PR body with the killing test. Required among them: closing the December 31 before a Saturday New Year's Day; closing the Friday before a Sunday holiday; Good Friday one day off; fourth Monday in place of last Monday of May; last Thursday in place of fourth Thursday of November (2029); rolling backward in place of forward; stepping from the previous date in place of the anchor; not clamping the day; excluding a date equal to maturity; keeping a rolled date after maturity; rolling entry 0; treating a conflict as its first candidate; marking a generated entry with the anchor's status; treating 2061 as covered; treating 2060 as outside; flagging a Saturday holiday as `exchange-holiday`; checking coverage before maturity while rolling; dropping the collision check; treating an invalid date as open; removing any purity rule.
 
 ## Dependencies
 
