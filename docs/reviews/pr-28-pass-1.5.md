@@ -38,8 +38,9 @@ Codex has authored nothing on this PR. If it pushes a fix at Pass 2, that commit
 
 1. **"Yes, with obligations (Recommended)"**, on 2026-11-08, on "May that High close here without a test, for this PR only, if I rewrite AC10 as a test with negative controls that the S02 build must land?" An exception for this PR only, as on PR #16 (ruling 12). The obligation is AC10 as now written: the S02 build lands that test. `AGENTS.md` has no exception path, so the High stays open under its Severity clause, the formal verdict stays "not mergeable", the shadow gate will say "would escalate", and idea 39 stays open. Whether to merge with it open is Beni's call at the merge.
 2. **"Split, schedule first"**, on 2026-11-08, on how to slice the engine work.
+3. **"Yes, last round"**, on 2026-11-08, on "Make this push the last AC10 round on the spec?" Codex still gives this commit its cold read and checks that the change is correct. Any further AC10 form it finds goes on a list for S02's build review and does not start another spec round. The High stays open as ruling 1 states.
 
-Both were given in the PM's session, so Codex cannot see them, and Beni's merge confirms them.
+All three were given in the PM's session, so Codex cannot see them, and Beni's merge confirms them.
 
 ## What Pass 2 does
 
@@ -76,4 +77,14 @@ Codex's re-read is [issuecomment-6729889774](https://github.com/BeniCheni/keel/p
 | AC10 still passes `crypto.getRandomValues` and `toLocaleUpperCase`, and a removed stub stays green | High, continues Pass 1 finding 1 | Accept | Reproduced. Adding two more words would leave the same gap, so the lexical check now derives its banned names from the running Node's globals, minus a frozen list of pure language names, and bans the text `locale`. The runtime check adds crypto and locale stubs, and each stub now has its own control. Ruling 1 covers this as the same finding |
 | The S03 handoff calls the last estimated entry generated, and the finding 4 row excludes the last entry outright | Medium | Accept | Case 13 ends on the stated anchor, and a listed last entry can be `null`. The handoff now states both branches, and the row now says the last entry does not establish the final valuation date |
 
-Codex re-reads the commit that carries these changes, because a Claude session wrote it. Then a fresh Claude session takes Pass 2.5.
+Codex re-reads the commit that carries these changes, because a Claude session wrote it.
+
+## After the second re-read
+
+Codex's second re-read is [issuecomment-6730578499](https://github.com/BeniCheni/keel/pull/28#issuecomment-6730578499), at `739405e`. Its formal verdict under `AGENTS.md` is not mergeable, on finding 1 alone. Its verdict on the plan is mergeable after fixes. It accepted the S03 handoff.
+
+| Second re-read finding | Severity | PM disposition | Reason and fix |
+| --- | --- | --- | --- |
+| `RegExp.$1`, `Error.stack` and `import.meta.url` pass both parts of AC10 | High, continues Pass 1 finding 1 | Accept | Reproduced. `RegExp` leaves the pure names along with four the slice does not need, the lexical check bans the text `stack`, `import.` and `__dirname` and `__filename`, and each form gets a control. The runtime check now calls each function twice and compares the results, which catches state held between calls. Ruling 1 covers this as the same finding |
+
+By ruling 3, this is the last AC10 round on the spec. Codex reads the commit that carries these changes, because a Claude session wrote it. Then a fresh Claude session takes Pass 2.5.
