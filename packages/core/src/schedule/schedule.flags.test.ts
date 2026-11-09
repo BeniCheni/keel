@@ -89,3 +89,33 @@ underlyings:
   );
   expect(keys).not.toContain("dates.observation_schedule[3]");
 });
+
+test("termDateFlags gives an unknown date no key, as the loader does", () => {
+  const text = textOf("valid", "minimal.yaml")
+    .replace(
+      "  settlement:\n    value: 2026-03-04\n    status: primary\n    source: supplement\n",
+      "  settlement:\n    value: null\n    status: unknown\n",
+    )
+    .replace(
+      "underlyings:\n",
+      `  observation_schedule:
+    - value: 2026-09-01
+      status: primary
+      source: supplement
+    - value: null
+      status: unknown
+underlyings:
+`,
+    );
+  const loaded = loadTerms(text, "minimal.yaml");
+  expect(loaded.ok).toBe(true);
+  if (!loaded.ok) return;
+  const keys = Object.keys(termDateFlags(loaded.terms, nyseRulesCalendar())).sort();
+  expect(keys).toEqual(Object.keys(loaded.dateFlags).sort());
+  expect(keys).toEqual([
+    "dates.first_call_observation",
+    "dates.maturity",
+    "dates.observation_schedule[0]",
+    "dates.trade",
+  ]);
+});

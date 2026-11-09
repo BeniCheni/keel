@@ -3,6 +3,7 @@ import { nyseRulesCalendar, observationSchedule, scheduleDateFlags, scheduleDiff
 import { verificationSummary } from "../terms/summary.ts";
 import type { Term, Terms } from "../terms/types.ts";
 import { loadExample, loadMinimal } from "./samples.ts";
+import type { ExchangeCalendar } from "./types.ts";
 
 const VALUED = ["primary", "document", "advisor", "user", "estimate", "assumed"] as const;
 
@@ -219,4 +220,115 @@ test("an invalid date is never open", () => {
     kind: "unavailable",
     reasons: [{ code: "input-invalid", path: "dates.first_call_observation" }],
   });
+});
+
+// Added at Pass 1 of PR #30: each of these guards a behaviour that a mutant could break with every test above still passing.
+
+test("a generated entry names the calendar that was passed in", () => {
+  const calendar: ExchangeCalendar = { id: "test-2027", fromYear: 2027, toYear: 2027, closures: [] };
+  const terms = loadMinimal();
+  setValued(terms.dates.first_call_observation, "2027-01-15");
+  setValued(terms.dates.maturity, "2027-03-15");
+  setValued(terms.call.frequency, "monthly");
+  const result = observationSchedule(terms, calendar);
+  expect(result.kind).toBe("estimated");
+  if (result.kind !== "estimated") return;
+  expect(result.calendar).toBe("test-2027");
+  expect(result.entries.map((entry) => entry.date)).toEqual(["2027-01-15", "2027-02-15", "2027-03-15"]);
+  for (const entry of result.entries.slice(1)) {
+    expect(entry).toMatchObject({
+      origin: "generated",
+      status: "estimate",
+      label: "ESTIMATE",
+      rule: "Generated from the stated first call observation, every month, with closed days moved to the next open day on calendar test-2027.",
+    });
+  }
+});
+
+test("the stated entry and the inputs carry each input's own status", () => {
+  const calendar = nyseRulesCalendar();
+  for (const status of VALUED) {
+    const terms = loadMinimal();
+    terms.dates.first_call_observation = valued("2026-09-01", status);
+    const result = observationSchedule(terms, calendar);
+    expect(result.kind, status).toBe("estimated");
+    if (result.kind !== "estimated") continue;
+    expect(result.entries[0], status).toEqual({ index: 0, date: "2026-09-01", origin: "stated", status, flags: [] });
+    expect(result.inputs, status).toEqual([
+      { path: "dates.first_call_observation", status },
+      { path: "dates.maturity", status: "primary" },
+      { path: "call.frequency", status: "primary" },
+    ]);
+  }
+  const mixed = loadMinimal();
+  mixed.dates.first_call_observation = valued("2026-09-01", "user");
+  mixed.dates.maturity = valued("2031-03-03", "document");
+  mixed.call.frequency = valued("quarterly", "assumed");
+  const result = observationSchedule(mixed, calendar);
+  expect(result.kind).toBe("estimated");
+  if (result.kind !== "estimated") return;
+  expect(result.entries[0]).toMatchObject({ origin: "stated", status: "user" });
+  expect(result.inputs).toEqual([
+    { path: "dates.first_call_observation", status: "user" },
+    { path: "dates.maturity", status: "document" },
+    { path: "call.frequency", status: "assumed" },
+  ]);
+});
+
+test("the three functions do not change terms that carry a list", () => {
+  const calendar = nyseRulesCalendar();
+  const terms = loadMinimal();
+  terms.dates.observation_schedule = [
+    { value: "2026-09-01", status: "primary", source: "supplement" },
+    { value: null, status: "unknown" },
+    { value: "2027-03-02", status: "user" },
+    {
+      status: "conflict",
+      candidates: [
+        { value: "2027-06-01", status: "primary", source: "supplement" },
+        { value: "2027-06-02", status: "user" },
+      ],
+    },
+  ];
+  const before = structuredClone(terms);
+  expect(observationSchedule(terms, calendar).kind).toBe("listed");
+  expect(terms, "observationSchedule").toEqual(before);
+  expect(scheduleDiff(terms, calendar).kind).toBe("diff");
+  expect(terms, "scheduleDiff").toEqual(before);
+  termDateFlags(terms, calendar);
+  expect(terms, "termDateFlags").toEqual(before);
+});
+
+test("a closure outside the calendar's years does not make its date a holiday", () => {
+  const calendar: ExchangeCalendar = {
+    id: "test-2028",
+    fromYear: 2028,
+    toYear: 2028,
+    closures: [
+      { date: "2027-12-31", name: "Closed" },
+      { date: "2028-07-04", name: "Closed" },
+      { date: "2029-01-02", name: "Closed" },
+    ],
+  };
+  expect(scheduleDateFlags("2027-12-31", calendar)).toEqual(["outside-calendar"]);
+  expect(scheduleDateFlags("2029-01-02", calendar)).toEqual(["outside-calendar"]);
+  expect(scheduleDateFlags("2028-07-04", calendar)).toEqual(["exchange-holiday"]);
+});
+
+test("an invalid date in either date input generates nothing", () => {
+  const calendar = nyseRulesCalendar();
+  const firstReason = { code: "input-invalid", path: "dates.first_call_observation" };
+  const maturityReason = { code: "input-invalid", path: "dates.maturity" };
+  for (const bad of ["2027-02-30", "2027-02-29", "2026-13-01", "2026-00-10", "2031-3-03", "nope", ""]) {
+    const first = loadMinimal();
+    setValued(first.dates.first_call_observation, bad);
+    expect(observationSchedule(first, calendar), bad).toEqual({ kind: "unavailable", reasons: [firstReason] });
+    const maturity = loadMinimal();
+    setValued(maturity.dates.maturity, bad);
+    expect(observationSchedule(maturity, calendar), bad).toEqual({ kind: "unavailable", reasons: [maturityReason] });
+    const both = loadMinimal();
+    setValued(both.dates.first_call_observation, bad);
+    setValued(both.dates.maturity, bad);
+    expect(observationSchedule(both, calendar), bad).toEqual({ kind: "unavailable", reasons: [firstReason, maturityReason] });
+  }
 });

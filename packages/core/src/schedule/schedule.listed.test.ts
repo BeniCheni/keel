@@ -106,3 +106,20 @@ test("scheduleDiff returns the unavailable estimate when a list is present", () 
     reasons: [{ code: "input-conflict", path: "dates.maturity" }],
   });
 });
+
+test("the diff puts an unknown item under noKnownDate and counts no date for it", () => {
+  const terms = loadMinimal();
+  terms.dates.observation_schedule = [
+    { value: "2026-09-01", status: "primary", source: "supplement" },
+    { value: null, status: "unknown" },
+    { value: "2026-12-02", status: "user" },
+  ];
+  expect(scheduleDiff(terms, nyseRulesCalendar())).toEqual({
+    kind: "diff",
+    calendar: "nyse-rules-1",
+    inBoth: ["2026-09-01"],
+    onlyEstimated: ["2026-12-01", ...ONLY_ESTIMATED],
+    onlyListed: ["2026-12-02"],
+    noKnownDate: [1],
+  });
+});

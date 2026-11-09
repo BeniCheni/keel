@@ -274,6 +274,14 @@ test("case 16 rejects a frequency outside the four named periods", () => {
 
 // Cases beyond the spec's frozen tables, added at Pass 1 of PR #30. Each expected value follows from the spec's steps and was derived by a separate implementation, not read back from this code.
 
+test("a slot before the calendar's first year returns outside-calendar", () => {
+  const terms = withInputs("2025-11-15", "2026-02-15", "monthly");
+  expect(observationSchedule(terms, nyseRulesCalendar())).toEqual({
+    kind: "unavailable",
+    reasons: [{ code: "outside-calendar", date: "2025-12-15" }],
+  });
+});
+
 test("a year below 1000 prints four digits and is still checked against the calendar", () => {
   const terms = withInputs("0999-01-15", "0999-12-31", "quarterly");
   expect(observationSchedule(terms, nyseRulesCalendar())).toEqual({
