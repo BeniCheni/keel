@@ -11,7 +11,7 @@ Codex receives this brief for Pass 2, at GPT-6.1 Sol High. There is no fallback.
 | 1 | High | Accept | Reproduced: a single-quoted `node:fs` import and `Date.UTC` in a scratch tree give AC10's grep exit 1 and a file count of 1. AC10 is now `schedule.purity.test.ts`: only relative imports, a word list, and negative controls the checker has to reject. It stays open under `AGENTS.md`'s Severity clause, because a docs PR cannot land the fix commit with a test. Beni's ruling below lets this PR merge with it open | no |
 | 2 | Medium | Accept | Entry 0 now carries `flags` and needs no coverage. While rolling, a date past maturity is checked before coverage. New cases 13, 17 and 18 | no |
 | 3 | Medium | Accept | A new `calendar-collision` reason: an accepted date not after the previous entry makes the schedule unavailable. New case 14 | no |
-| 4 | Medium | Accept | New section "What S03 takes from this": the last entry is not the final valuation date, and the count can differ from the research's 55 | no |
+| 4 | Medium | Accept | New section "What S03 takes from this": the last entry does not establish the final valuation date, and the count can differ from the research's 55 | no |
 | 5 | Medium | Accept | AC2 and AC4 assert `index`, and the spec defines it. AC6 adds a listed date and a conflict candidate. AC7 counts the schedules it exercised | no |
 | 6 | Medium | Accept | Preconditions stated. A non-real date flags `invalid-date` only, and an invalid input returns `input-invalid`. New cases 15 and 16 and a flags row | no |
 | 7 | Medium | Accept | Decision 2 now says the calendar is a planning fallback and no evidence for another exchange or an unscheduled closure | no |
@@ -64,5 +64,16 @@ Codex's Pass 2 is [issuecomment-6725366071](https://github.com/BeniCheni/keel/pu
 | AC10 can still pass impure code | High, continues Pass 1 finding 1 | Accept | Reproduced: none of AC10's listed rules fires on `Math["random"]()` or `console.log`. A word list cannot be complete, so AC10 now has two parts: a tighter lexical check with one negative control per rule, and a runtime check with counting stubs. The spec says the pair guards against accident and that deliberate evasion stays with review. Ruling 1 covers this as the same finding |
 | Case 13 misdescribes the order of dates | Medium | Accept | The roll reaches 2029-01-01, where maturity is checked first. The case now says so |
 | The S03 handoff overstates what S02 knows | Medium | Accept | A listed schedule can state any date, so the handoff now says only what each kind of last entry is |
+
+Codex re-reads the commit that carries these changes, because a Claude session wrote it.
+
+## After the Pass 2 re-read
+
+Codex's re-read is [issuecomment-6729889774](https://github.com/BeniCheni/keel/pull/28#issuecomment-6729889774), at `7f373cd`. Its formal verdict under `AGENTS.md` is not mergeable, on finding 1 alone. Its verdict on the plan is mergeable after fixes. It accepted the case 13 fix.
+
+| Re-read finding | Severity | PM disposition | Reason and fix |
+| --- | --- | --- | --- |
+| AC10 still passes `crypto.getRandomValues` and `toLocaleUpperCase`, and a removed stub stays green | High, continues Pass 1 finding 1 | Accept | Reproduced. Adding two more words would leave the same gap, so the lexical check now derives its banned names from the running Node's globals, minus a frozen list of pure language names, and bans the text `locale`. The runtime check adds crypto and locale stubs, and each stub now has its own control. Ruling 1 covers this as the same finding |
+| The S03 handoff calls the last estimated entry generated, and the finding 4 row excludes the last entry outright | Medium | Accept | Case 13 ends on the stated anchor, and a listed last entry can be `null`. The handoff now states both branches, and the row now says the last entry does not establish the final valuation date |
 
 Codex re-reads the commit that carries these changes, because a Claude session wrote it. Then a fresh Claude session takes Pass 2.5.
