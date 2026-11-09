@@ -36,7 +36,7 @@ const PURE_NAMES = [
   "undefined",
 ] as const;
 
-const sources = import.meta.glob("./*.ts", {
+const sources = import.meta.glob("./**/*.ts", {
   query: "?raw",
   import: "default",
   eager: true,
@@ -52,17 +52,20 @@ function wholeWord(text: string, word: string): boolean {
   return new RegExp(`(?<![A-Za-z0-9_$])${escaped}(?![A-Za-z0-9_$])`).test(text);
 }
 
+const LINE_END = /[\n\r\u2028\u2029]/;
+
+/** Skips what JavaScript allows between two tokens: any whitespace or line terminator it accepts (`\s` is that set), and comments. */
 function skipGap(text: string, index: number): number {
   let cursor = index;
   while (cursor < text.length) {
-    const ch = text[cursor];
-    if (ch === " " || ch === "\t" || ch === "\n" || ch === "\r" || ch === "\f" || ch === "\v") {
+    const ch = text[cursor] ?? "";
+    if (/\s/.test(ch)) {
       cursor += 1;
       continue;
     }
     if (ch === "/" && text[cursor + 1] === "/") {
       cursor += 2;
-      while (cursor < text.length && text[cursor] !== "\n") cursor += 1;
+      while (cursor < text.length && !LINE_END.test(text[cursor] ?? "")) cursor += 1;
       continue;
     }
     if (ch === "/" && text[cursor + 1] === "*") {
@@ -86,15 +89,29 @@ function importPunctuation(text: string): boolean {
   return false;
 }
 
+/** Every string that follows the word `from` or `import`, whatever stands before the word and across any gap after it. */
+function specifiers(text: string): string[] {
+  const found: string[] = [];
+  for (const match of text.matchAll(/(?<![A-Za-z0-9_$])(?:from|import)(?![A-Za-z0-9_$])/g)) {
+    const at = match.index;
+    if (at === undefined) continue;
+    const open = skipGap(text, at + match[0].length);
+    const quote = text[open];
+    if (quote !== '"' && quote !== "'") continue;
+    const close = text.indexOf(quote, open + 1);
+    found.push(close === -1 ? text.slice(open + 1) : text.slice(open + 1, close));
+  }
+  return found;
+}
+
 function mathMisuse(text: string): boolean {
   return /(?<![A-Za-z0-9_$])Math(?![A-Za-z0-9_$])(?!\.(?:floor|ceil|min|max|abs|trunc)(?![A-Za-z0-9_$]))/.test(text);
 }
 
 function purityHits(text: string): string[] {
   const hits: string[] = [];
-  for (const match of text.matchAll(/(?:^|\s)(?:from|import)\s*["']([^"']+)["']/g)) {
-    const spec = match[1];
-    if (spec !== undefined && !spec.startsWith("./") && !spec.startsWith("../")) hits.push(`specifier:${spec}`);
+  for (const spec of specifiers(text)) {
+    if (!spec.startsWith("./") && !spec.startsWith("../")) hits.push(`specifier:${spec}`);
   }
   if (importPunctuation(text)) hits.push("import-punctuation");
   for (const word of ["constructor", "require", "__dirname", "__filename"]) {
@@ -109,7 +126,7 @@ function purityHits(text: string): string[] {
   return hits;
 }
 
-const NEGATIVES: Array<{ snippet: string; rule: string }> = [
+const NEGATIVES: Array<{ snippet: string; rule: string; label?: string }> = [
   { snippet: "import { readFileSync } from 'node:fs'", rule: "specifier:node:fs" },
   { snippet: 'import { readFileSync } from "node:fs"', rule: "specifier:node:fs" },
   { snippet: "import fs from 'fs'", rule: "specifier:fs" },
@@ -153,6 +170,18 @@ const NEGATIVES: Array<{ snippet: string; rule: string }> = [
   { snippet: "Symbol(1)", rule: "ambient:Symbol" },
   { snippet: "new WeakMap()", rule: "ambient:WeakMap" },
   { snippet: "new WeakSet()", rule: "ambient:WeakSet" },
+  // Forms found at Pass 1 of PR #30. AC10: "A form found later is added here as a new control".
+  { snippet: 'import{readFileSync}from"node:fs"', rule: "specifier:node:fs" },
+  { snippet: 'export*from"fs"', rule: "specifier:fs" },
+  { snippet: 'export{x}from"fs"', rule: "specifier:fs" },
+  { snippet: ';import"fs"', rule: "specifier:fs" },
+  { snippet: 'import /* c */ "node:fs"', rule: "specifier:node:fs" },
+  { snippet: 'import x from /* c */ "node:fs"', rule: "specifier:node:fs" },
+  { snippet: 'import x from // c\n"node:fs"', rule: "specifier:node:fs", label: 'import x from, a line comment, "node:fs"' },
+  { snippet: 'import\u00a0("fs")', rule: "import-punctuation", label: 'import, U+00A0, ("fs")' },
+  { snippet: "import\u2028.meta.url", rule: "import-punctuation", label: "import, U+2028, .meta.url" },
+  { snippet: "import\ufeff.meta.url", rule: "import-punctuation", label: "import, U+FEFF, .meta.url" },
+  { snippet: 'import // c\r("fs")', rule: "import-punctuation", label: 'import, a line comment ended by U+000D, ("fs")' },
 ];
 
 const POSITIVES = [
@@ -177,7 +206,7 @@ test("ambient names come from the running global object", () => {
 });
 
 for (const item of NEGATIVES) {
-  test(`purity rejects ${item.snippet}`, () => {
+  test(`purity rejects ${item.label ?? item.snippet}`, () => {
     expect(purityHits(item.snippet), item.snippet).toContain(item.rule);
   });
 }
@@ -189,13 +218,13 @@ for (const snippet of POSITIVES) {
 }
 
 test("schedule sources pass the purity checker", () => {
-  const files = Object.entries(sources).filter(([file]) => !file.includes(".test.ts"));
+  const files = Object.entries(sources).filter(([file]) => !file.endsWith(".test.ts"));
   expect(files.length).toBeGreaterThan(0);
   const joined = files.map(([, text]) => text).join("\n");
   expect(joined).toContain("export function nyseRulesCalendar");
   expect(joined).toContain("export function observationSchedule");
   for (const [file, text] of files) {
-    expect(file.includes(".test.ts"), file).toBe(false);
+    expect(file.endsWith(".test.ts"), file).toBe(false);
     expect(purityHits(text), `${file} ${purityHits(text).join(" ")}`).toEqual([]);
   }
 });
