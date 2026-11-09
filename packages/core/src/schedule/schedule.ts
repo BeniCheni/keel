@@ -1,6 +1,5 @@
-import { isRealDate } from "../terms/dates.ts";
 import type { Term, TermStatus, Terms } from "../terms/types.ts";
-import { addDays, addMonths, formatIso, parseIso, type Civil } from "./civil.ts";
+import { addDays, addMonths, compareCivil, formatIso, parseIso, type Civil } from "./civil.ts";
 import { scheduleDateFlags } from "./flags.ts";
 import type {
   EstimatedSchedule,
@@ -16,7 +15,7 @@ import type {
 
 type ValuedStatus = Exclude<TermStatus, "unknown" | "conflict">;
 type DateRead =
-  | { ok: true; value: string; status: ValuedStatus }
+  | { ok: true; value: string; civil: Civil; status: ValuedStatus }
   | { ok: false; code: "input-unknown" | "input-conflict" | "input-invalid" };
 type FrequencyName = "monthly" | "quarterly" | "semiannual" | "annual";
 type FrequencyRead =
@@ -26,8 +25,9 @@ type FrequencyRead =
 function readDate(term: Term<string>): DateRead {
   if (term.status === "unknown") return { ok: false, code: "input-unknown" };
   if (term.status === "conflict") return { ok: false, code: "input-conflict" };
-  if (!isRealDate(term.value)) return { ok: false, code: "input-invalid" };
-  return { ok: true, value: term.value, status: term.status };
+  const civil = parseIso(term.value);
+  if (civil === null) return { ok: false, code: "input-invalid" };
+  return { ok: true, value: term.value, civil, status: term.status };
 }
 
 function readFrequency(term: Term<string>): FrequencyRead {
@@ -73,12 +73,8 @@ function estimateSchedule(terms: Terms, calendar: ExchangeCalendar): EstimatedSc
   const frequency = readFrequency(terms.call.frequency);
   if (!frequency.ok) reasons.push({ code: frequency.code, path: "call.frequency" });
   if (!anchor.ok || !maturity.ok || !frequency.ok) return unavailable(reasons);
-  if (anchor.value > maturity.value) {
+  if (compareCivil(anchor.civil, maturity.civil) > 0) {
     return unavailable([{ code: "anchor-after-maturity", path: "dates.first_call_observation" }]);
-  }
-  const anchorCivil = parseIso(anchor.value);
-  if (anchorCivil === null) {
-    return unavailable([{ code: "input-invalid", path: "dates.first_call_observation" }]);
   }
   const step = stepMonths(frequency.value);
   const stated: StatedEntry = {
@@ -90,35 +86,36 @@ function estimateSchedule(terms: Terms, calendar: ExchangeCalendar): EstimatedSc
   };
   const entries: Array<StatedEntry | GeneratedEntry> = [stated];
   const rule = ruleFor(step, calendar.id);
-  let previous = anchor.value;
+  // Dates are compared as numbers. As text, a year past 9999 sorts before a four-digit year.
+  let previous = anchor.civil;
   for (let k = 1; ; k += 1) {
-    const unadjustedCivil = addMonths(anchorCivil, k * step);
-    const unadjusted = formatIso(unadjustedCivil);
-    if (unadjusted > maturity.value) break;
-    let cursor = unadjustedCivil;
-    let accepted: string | null = null;
+    const unadjusted = addMonths(anchor.civil, k * step);
+    if (compareCivil(unadjusted, maturity.civil) > 0) break;
+    let cursor = unadjusted;
+    let accepted: Civil | null = null;
     for (;;) {
-      const current = formatIso(cursor);
-      if (current > maturity.value) {
+      if (compareCivil(cursor, maturity.civil) > 0) {
         accepted = null;
         break;
       }
       if (yearOutside(cursor.year, calendar)) {
-        return unavailable([{ code: "outside-calendar", date: current }]);
+        return unavailable([{ code: "outside-calendar", date: formatIso(cursor) }]);
       }
       if (blocked(cursor, calendar)) {
         cursor = addDays(cursor, 1);
         continue;
       }
-      accepted = current;
+      accepted = cursor;
       break;
     }
     if (accepted === null) continue;
-    if (accepted <= previous) return unavailable([{ code: "calendar-collision", date: accepted }]);
+    if (compareCivil(accepted, previous) <= 0) {
+      return unavailable([{ code: "calendar-collision", date: formatIso(accepted) }]);
+    }
     const generated: GeneratedEntry = {
       index: entries.length,
-      date: accepted,
-      unadjusted,
+      date: formatIso(accepted),
+      unadjusted: formatIso(unadjusted),
       origin: "generated",
       status: "estimate",
       label: "ESTIMATE",

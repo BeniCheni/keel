@@ -18,8 +18,20 @@ function twoDigits(value: number): string {
   return value < 10 ? `0${value}` : `${value}`;
 }
 
+/** A year below 1000 keeps its leading zeros, so the text is still an ISO date and matches a calendar's closures. */
+function fourDigits(value: number): string {
+  return `${value}`.padStart(4, "0");
+}
+
 export function formatIso(civil: Civil): string {
-  return `${civil.year}-${twoDigits(civil.month)}-${twoDigits(civil.day)}`;
+  return `${fourDigits(civil.year)}-${twoDigits(civil.month)}-${twoDigits(civil.day)}`;
+}
+
+/** Negative when `left` is the earlier date, zero when they are equal, positive when it is later. It compares numbers, so it holds for a year of any length. */
+export function compareCivil(left: Civil, right: Civil): number {
+  if (left.year !== right.year) return left.year - right.year;
+  if (left.month !== right.month) return left.month - right.month;
+  return left.day - right.day;
 }
 
 export function parseIso(isoDate: string): Civil | null {

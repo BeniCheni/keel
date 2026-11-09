@@ -271,3 +271,42 @@ test("case 16 rejects a frequency outside the four named periods", () => {
     reasons: [{ code: "input-invalid", path: "call.frequency" }],
   });
 });
+
+// Cases beyond the spec's frozen tables, added at Pass 1 of PR #30. Each expected value follows from the spec's steps and was derived by a separate implementation, not read back from this code.
+
+test("a year below 1000 prints four digits and is still checked against the calendar", () => {
+  const terms = withInputs("0999-01-15", "0999-12-31", "quarterly");
+  expect(observationSchedule(terms, nyseRulesCalendar())).toEqual({
+    kind: "unavailable",
+    reasons: [{ code: "outside-calendar", date: "0999-04-15" }],
+  });
+  const covering: ExchangeCalendar = { id: "test-0999", fromYear: 999, toYear: 999, closures: [] };
+  expectEstimated(
+    observationSchedule(terms, covering),
+    "0999-01-15 0999-04-15 0999-07-15 0999-10-15",
+    [],
+    "every 3 months",
+    "test-0999",
+  );
+});
+
+test("a slot past year 9999 is after maturity and ends the schedule", () => {
+  const quarterly = withInputs("9999-12-01", "9999-12-31", "quarterly");
+  expectEstimated(observationSchedule(quarterly, nyseRulesCalendar()), "9999-12-01", ["outside-calendar"], "every 3 months", NYSE);
+  const monthly = withInputs("9999-10-31", "9999-12-31", "monthly");
+  const covering: ExchangeCalendar = { id: "test-9999", fromYear: 9999, toYear: 9999, closures: [] };
+  expectEstimated(
+    observationSchedule(monthly, covering),
+    "9999-10-31 9999-11-30 9999-12-31",
+    ["weekend"],
+    "every month",
+    "test-9999",
+  );
+  const closed: ExchangeCalendar = {
+    id: "test-9999-closed",
+    fromYear: 9999,
+    toYear: 9999,
+    closures: [{ date: "9999-12-31", name: "Closed" }],
+  };
+  expectEstimated(observationSchedule(monthly, closed), "9999-10-31 9999-11-30", ["weekend"], "every month", "test-9999-closed");
+});
