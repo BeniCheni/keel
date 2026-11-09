@@ -8,6 +8,7 @@ import {
 } from "../index.ts";
 import type { Terms } from "../terms/types.ts";
 import { loadExample, loadMinimal } from "./samples.ts";
+import { sameTwice } from "./test-support/same-twice.ts";
 import type { ExchangeCalendar } from "./types.ts";
 
 declare const performance: { now: () => number };
@@ -220,6 +221,7 @@ for (const snippet of POSITIVES) {
 test("schedule sources pass the purity checker", () => {
   const files = Object.entries(sources).filter(([file]) => !file.endsWith(".test.ts"));
   expect(files.length).toBeGreaterThan(0);
+  expect(files.map(([file]) => file)).toContain("./test-support/same-twice.ts");
   const joined = files.map(([, text]) => text).join("\n");
   expect(joined).toContain("export function nyseRulesCalendar");
   expect(joined).toContain("export function observationSchedule");
@@ -228,10 +230,6 @@ test("schedule sources pass the purity checker", () => {
     expect(purityHits(text), `${file} ${purityHits(text).join(" ")}`).toEqual([]);
   }
 });
-
-function sameTwice(run: () => unknown): boolean {
-  return JSON.stringify(run()) === JSON.stringify(run());
-}
 
 test("the repeat comparison rejects a lastIndex stand-in", () => {
   const pattern = /x/g;
@@ -385,10 +383,28 @@ test("public schedule functions are stable and do not touch the stubs", () => {
   first.value = "2028-11-30";
   maturity.value = "2028-12-31";
   frequency.value = "monthly";
+  const caseWithList = loadMinimal();
+  caseWithList.dates.observation_schedule = [
+    { value: "2026-09-01", status: "primary", source: "supplement" },
+    { value: "2027-03-02", status: "user" },
+    { value: null, status: "unknown" },
+    {
+      status: "conflict",
+      candidates: [
+        { value: "2027-06-01", status: "primary", source: "supplement" },
+        { value: "2027-06-02", status: "user" },
+      ],
+    },
+  ];
   const installed = installStubs();
   let equal = false;
   try {
-    equal = sameTwice(() => [exercise(case1, nyse), exercise(case8, nyse), exercise(case13, narrow)]);
+    equal = sameTwice(() => [
+      exercise(case1, nyse),
+      exercise(case8, nyse),
+      exercise(case13, narrow),
+      exercise(caseWithList, nyse),
+    ]);
   } finally {
     installed.restore();
   }
