@@ -8,7 +8,7 @@ Codex receives this brief for Pass 2, at GPT-6.1 Sol High. There is no fallback.
 
 | Pass 1 # | Severity | PM disposition | Reason and fix | Rework for Cursor? |
 | --- | --- | --- | --- | --- |
-| 1 | High | Accept | Reproduced: a single-quoted `node:fs` import and `Date.UTC` in a scratch tree give AC10's grep exit 1 and a file count of 1. AC10 is now `schedule.purity.test.ts`: only relative imports, a word list, and negative controls the checker has to reject. Closes by Beni's ruling below, not by a fix commit with a test | no |
+| 1 | High | Accept | Reproduced: a single-quoted `node:fs` import and `Date.UTC` in a scratch tree give AC10's grep exit 1 and a file count of 1. AC10 is now `schedule.purity.test.ts`: only relative imports, a word list, and negative controls the checker has to reject. It stays open under `AGENTS.md`'s Severity clause, because a docs PR cannot land the fix commit with a test. Beni's ruling below lets this PR merge with it open | no |
 | 2 | Medium | Accept | Entry 0 now carries `flags` and needs no coverage. While rolling, a date past maturity is checked before coverage. New cases 13, 17 and 18 | no |
 | 3 | Medium | Accept | A new `calendar-collision` reason: an accepted date not after the previous entry makes the schedule unavailable. New case 14 | no |
 | 4 | Medium | Accept | New section "What S03 takes from this": the last entry is not the final valuation date, and the count can differ from the research's 55 | no |
@@ -36,7 +36,7 @@ Codex has authored nothing on this PR. If it pushes a fix at Pass 2, that commit
 
 ## Rulings from Beni
 
-1. **"Yes, with obligations (Recommended)"**, on 2026-11-08, on "May that High close here without a test, for this PR only, if I rewrite AC10 as a test with negative controls that the S02 build must land?" An exception for this PR only, as on PR #16 (ruling 12). The obligation is AC10 as now written: the S02 build lands that test. `AGENTS.md` has no exception path, so the shadow gate will say "would escalate", and idea 39 stays open.
+1. **"Yes, with obligations (Recommended)"**, on 2026-11-08, on "May that High close here without a test, for this PR only, if I rewrite AC10 as a test with negative controls that the S02 build must land?" An exception for this PR only, as on PR #16 (ruling 12). The obligation is AC10 as now written: the S02 build lands that test. `AGENTS.md` has no exception path, so the High stays open under its Severity clause, the formal verdict stays "not mergeable", the shadow gate will say "would escalate", and idea 39 stays open. Whether to merge with it open is Beni's call at the merge.
 2. **"Split, schedule first"**, on 2026-11-08, on how to slice the engine work.
 
 Both were given in the PM's session, so Codex cannot see them, and Beni's merge confirms them.
@@ -54,3 +54,15 @@ Both were given in the PM's session, so Codex cannot see them, and Beni's merge 
 Pass 1's findings and fixes are suspicions to re-derive, not conclusions. Codex reproduces or disproves each one independently and adds its own read.
 
 The PM's own working gives case 13 as entry 0 only, case 14 as `calendar-collision` on 2027-03-02, case 17 as 2025-12-15 and 2026-01-15, and case 18 as entry 0 only, from the script in the PR body. Cases 1 to 12 print as before.
+
+## After Pass 2
+
+Codex's Pass 2 is [issuecomment-6725366071](https://github.com/BeniCheni/keel/pull/28#issuecomment-6725366071), at `f2ad7ca`. It stopped once, because this brief and the prompt treated the ruling as closing the High, and it was right: that wording is corrected above. Its formal verdict under `AGENTS.md` is not mergeable, on finding 1 alone. Its verdict on the plan is mergeable after fixes. It accepted every Pass 1 disposition, and its own implementation matched cases 1 to 18.
+
+| Pass 2 finding | Severity | PM disposition | Reason and fix |
+| --- | --- | --- | --- |
+| AC10 can still pass impure code | High, continues Pass 1 finding 1 | Accept | Reproduced: none of AC10's listed rules fires on `Math["random"]()` or `console.log`. A word list cannot be complete, so AC10 now has two parts: a tighter lexical check with one negative control per rule, and a runtime check with counting stubs. The spec says the pair guards against accident and that deliberate evasion stays with review. Ruling 1 covers this as the same finding |
+| Case 13 misdescribes the order of dates | Medium | Accept | The roll reaches 2029-01-01, where maturity is checked first. The case now says so |
+| The S03 handoff overstates what S02 knows | Medium | Accept | A listed schedule can state any date, so the handoff now says only what each kind of last entry is |
+
+Codex re-reads the commit that carries these changes, because a Claude session wrote it. Then a fresh Claude session takes Pass 2.5.
