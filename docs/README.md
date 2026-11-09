@@ -24,6 +24,7 @@ Every slice moves through up to four rungs: proposal (the research behind the pr
 | S90 results and ADR-0009 accepted (PR #23) | post-`v0.1.0` spike, not a slice toward `v0.1.0` | `specs/s90-ios-core-spike-results.md`; `adr/0009-ios-companion-and-core.md` | none | `reviews/pr-23-pass-0.md` | merged 2026-11-07 at squash `b58e2df`, reviewed head `04403b0` (fast-track); cold read and re-read by Cursor, by Beni's ruling of 2026-11-07 |
 | Cursor cold-read policy (PR #24, idea 33) | n/a | none (review policy) | none | `reviews/pr-24-pass-0.md`, `reviews/pr-24-pass-1.5.md`, `reviews/pr-24-pass-2.5.md` (executive brief) | merged 2026-11-07 at squash `de7a3db`, reviewed head `d1d24df`; Pass 1 by Cursor and Pass 2 by Codex, by Beni's rulings of 2026-11-07 |
 | Idea 48 from the PR #24 review (PR #26) | n/a | none | none | `reviews/pr-26-pass-0.md` | merged 2026-11-08 at squash `d8721f7`, reviewed head `01ac20e` (fast-track); cold read by Codex |
+| S02 Observation schedule and exchange calendar (spec PR #28) | toward `v0.1.0` (non-release) | `specs/s02-schedule.md` | none (no UI) | `reviews/pr-28-pass-0.md`, `reviews/pr-28-pass-1.5.md` | spec in review |
 
 Folders:
 
