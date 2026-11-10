@@ -188,3 +188,43 @@ The PM accepts all four findings and contests none. The fixes are in `48b995e`. 
    - a premium on a listed item dated before the first call observation?
 3. **Re-derive the new examples** with your own implementation before reading the scripts: the four new or changed ones under Chronology and mapping failures, and the three under Final valuation date not known. Confirm that no other frozen value changed, and that slots in both directions change no existing nearest-slot value.
 4. **Check the renamed headings.** Is every reference to them right?
+
+## After the second re-read
+
+Codex's second re-read is [issuecomment-6779820940](https://github.com/BeniCheni/keel/pull/32#issuecomment-6779820940), at `9ccc8ee`, run in a GPT-6.1 Sol High sub-agent. Its verdict was not mergeable, with one new High and one Medium.
+
+- **Dispositions.** It closed R1 to R4 and found the PM's slot gap partly closed.
+- **Checks.** Both quickstarts, GitHub's `verify`, every claim in the PR body and the privacy scans passed. Demo mode, mutations and Pass M were recorded as N/A.
+- **A process slip.** Against the prompt, the sub-agent opened the review skill's pointer file in an earlier checkout, `keel-pr-32-p2`. It read nothing else there and reviewed in `/tmp/keel-pr-32-reread2`. That checkout is a clone of this repository holding synthetic data only, so the PM records a process slip, not a privacy issue. The next prompt names the skill files to read in the fresh clone.
+
+The PM accepts both findings and contests neither, numbering them R5 and R6. The fixes are in `7563d4f`. S02.1 is unchanged.
+
+| Re-read # | Severity | PM disposition | Reason and fix in `7563d4f` |
+| --- | --- | --- | --- |
+| R5 | High | Accept | Reproduced with `s03_reread2.py`. In L with its first item on 2026-08-31, the distances to slots −1, 0 and 1 are 91, 1 and 92 days. Under `48b995e` check 5 finds nothing, so closes that would call on 2026-08-31 give `called` at 104250, a day before the first date the terms allow a call. The fix makes the date chain explicit:<br>- settlement on or after the trade date;<br>- the first call observation after settlement;<br>- every listed item with a known date, and the final valuation date, on or after the first call observation and on or before maturity.<br>`observation-before-first-call` replaces `observation-before-settlement`, and `final-valuation-before-first-call` replaces `final-valuation-before-settlement`. The first call observation falls after settlement, so each new code covers the one it replaces. Frozen as "Before the first call", in place of the June example |
+| R6 | Medium | Accept | Reproduced: under the rules at `cc8b063`, the June example already gave `final-valuation-off-cycle`, so it paid nothing. The PM's "would have been paid" overstated it, and only with the term absent did the old rule give no finding. R5's case replaces the example and isolates the gap: `observation-before-first-call` at index 0, alone |
+
+**The negative slots of `48b995e` are withdrawn.** Once nothing dated falls before the first call observation, no negative slot is ever nearest. `s03_reread2.py` checks every date from the anchor to maturity, 1,645 of them, quarterly and monthly. Keeping the slots would leave dead text and a mutant no test can kill. Slots count from 0 again, as at `cc8b063`, and the mutant "Counting slots only from 0" is gone. Two mutants are added: accepting a listed item before the first call observation, and accepting a final valuation date before it.
+
+### The PM's re-runs at `7563d4f`
+
+| Check | Command | Result |
+| --- | --- | --- |
+| The changed examples | `python3 -I s03_reread2.py`, printed in the PR body | R5's case gives nothing under `48b995e` and `observation-before-first-call` at index 0 alone under the new rules. The June list, under the rules at `cc8b063`: `final-valuation-off-cycle` with the term present, nothing with it absent. Every other example's findings are unchanged. Negative slots change no nearest slot on any of the 1,645 dates |
+| No frozen value changed | `python3 -I frozen20.py` and `python3 -I s03_frozen.py \| shasum -a 256` | 20 of 20 present and unchanged since `89687da`. The output hash starts `4dbe9b22`, unchanged |
+| Copy words | `grep -c -i -w 'should\|buy\|sell\|hold' docs/specs/s03-payoff-engine.md` | 0 |
+| Size of the amendment | `git diff --shortstat 9ccc8ee 7563d4f` | 1 file, 17 insertions, 15 deletions |
+
+### Authorship since the second re-read
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `7563d4f` docs(specs): amend S03 after the second re-read | Claude | Codex, the third re-read |
+| The commit adding this section | Claude | Codex, the same re-read |
+
+### What the third re-read does
+
+1. **Cold-read `7563d4f` and this section's commit.** `git diff 9ccc8ee 7563d4f` is the whole amendment.
+2. **Reproduce or disprove each disposition above.** Can a compliant build still show a call or a premium on a dated observation before the first call observation, on or before settlement, or before the trade date? Check both kinds of schedule, with the final valuation date known and not known. Does withdrawing the negative slots reopen any route that `48b995e` closed?
+3. **Re-derive "Before the first call"** with your own implementation before reading the script, and confirm that no other example's findings changed.
+4. **Check the retired codes.** Does any reference to `observation-before-settlement` or `final-valuation-before-settlement` remain in the spec?
