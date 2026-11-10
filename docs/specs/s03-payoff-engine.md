@@ -1,6 +1,6 @@
 # S03: Payoff engine
 
-- Status: drafted 2026-11-10 by the PM (Claude), on Beni's ruling of 2026-11-08 to split the engine work ("Split, schedule first") and his rulings of 2026-11-10, recorded under Decisions. Amended the same day after Codex's plan challenge, after its Pass 2, and after its re-read of the Pass 2 fixes (`docs/reviews/pr-32-pass-1.5.md`). No code exists yet.
+- Status: drafted 2026-11-10 by the PM (Claude), on Beni's ruling of 2026-11-08 to split the engine work ("Split, schedule first") and his rulings of 2026-11-10, recorded under Decisions. Amended the same day after Codex's plan challenge, after its Pass 2, and after each of its two re-reads of the fixes (`docs/reviews/pr-32-pass-1.5.md`). No code exists yet.
 - Release: non-release slice toward `v0.1.0`. Starts only after this spec merges and S02.1's build merges, because it reads `dates.final_valuation` from schema 0.2.
 - Builder: Cursor, Grok 4.7 Extra High (sensitive-path slice), in one draft PR on branch `s03/payoff-engine`. Codex adds the Pass M reference at Pass 2 (see Pass M).
 - Sensitive paths the build touches: `packages/plugin-mln/**` and `fixtures/golden/**`, including its `expected/` files. At Pass 2 Codex also adds `tools/reference/**`. This spec PR touches none.
@@ -28,7 +28,12 @@ Each of these is open to the plan challenge, except where a ruling of Beni's set
 7. **Money rounds once, half up, to the cent.** The terms state no rounding for amounts, so this is keel's convention, and every result names it in `assumptions`.
 8. **Only the exactly dated close counts.** A row reads closes dated on its own date and nothing else: no carry forward or back, and never a close dated after `asOf`. Two closes for one member and date with different values make that row unknown, listing both, as hard rule 6 keeps sources side by side. An unknown row stops the evaluation, and so does a called row, because a call ends the note.
 9. **The final valuation date comes from the term (Beni's ruling 1, 2026-11-10, "Schema term first"), and the dates must be in order.**
-   - **Chronology.** `dates.trade`, `dates.settlement`, `dates.first_call_observation` and `dates.maturity` must be evidenced (Decision 14), since chronology, the premium mapping and `matured` rest on them. Settlement must fall on or after the trade date. The first call observation, every evidenced call event and the final valuation date must fall after settlement, so all of them fall after the trade date. The final valuation date must fall on or before maturity.
+   - **Chronology.** `dates.trade`, `dates.settlement`, `dates.first_call_observation` and `dates.maturity` must be evidenced (Decision 14), since chronology, the premium mapping and `matured` rest on them. The dates must run in order:
+     - settlement on or after the trade date;
+     - the first call observation after settlement;
+     - every listed item with a known date, and the final valuation date, on or after the first call observation and on or before maturity.
+
+     So no observation comes before the first date the terms allow a call, and every observation follows settlement and the trade date.
    - **Splitting the schedule.** Estimated entries after the final valuation date are left out, and the result counts them. A listed item after it, or after maturity, makes the evaluation unavailable.
    - **Statuses.** The final payoff is fixed on the final valuation date, but the note matures on its maturity date. So the engine reports `final-fixed` between the two dates and `matured` only from maturity on.
    - **Term not known.** When the term is absent, unknown or in conflict, there is no final row, and the status is never `final-fixed` or `matured`. An event is then a call event only when the terms show it comes before the final valuation date. With the term absent or unknown, a later listed item with an evidenced date shows it. With a conflict, only a date before every candidate shows it. A listed item never rules a candidate out, since that would resolve the conflict, which hard rule 6 forbids. Any other event's role is unknown, and reaching it stops evaluation with status `unknown`.
@@ -82,8 +87,8 @@ export type PayoffReason =
   | { code: "schedule-unavailable"; reasons: UnavailableReason[] }
   | { code: "final-valuation-absent" | "final-valuation-unknown" | "final-valuation-conflict" }
   | { code: "settlement-before-trade" | "first-call-before-settlement" }
-  | { code: "final-valuation-before-settlement" | "final-valuation-after-maturity" | "final-valuation-off-cycle" }
-  | { code: "observation-before-settlement" | "listed-after-maturity" | "listed-after-final-valuation" | "listed-off-cycle"; index: number }
+  | { code: "final-valuation-before-first-call" | "final-valuation-after-maturity" | "final-valuation-off-cycle" }
+  | { code: "observation-before-first-call" | "listed-after-maturity" | "listed-after-final-valuation" | "listed-off-cycle"; index: number }
   | { code: "non-call-months-mismatch" }
   | { code: "date-unknown"; index: number }
   | { code: "estimated-date"; scheduleIndex: number | null; date: string }
@@ -194,7 +199,7 @@ The entry exports exactly `PRINCIPAL_CENTS`, `evaluateNote`, `payoutSchedule`, `
 - **Premium.** For simple accrual, `premium(m) = cents(100000 × rate × m / 120000)`, where `rate` is `premium.rate_per_year` in basis points. A call, or a final row at or above the call level, pays `100000 + premium(m)`.
 - **Below the barrier**, the final row pays `cents(100000 × w)`, where `w` is the rounded worst ratio.
 - **Months.** Adding `n` months to a date moves it `n` calendar months and clamps the day to the target month's length, as in S02.
-- **Slots.** Slot `j`, for every integer `j`, is `dates.first_call_observation` plus `j × step` months, computed from the first call observation each time. A negative `j` moves back. A date's nearest slot is the one with the fewest days between them. When two slots are equally near, the date has no nearest slot. Slots before the first call observation count, so a listed item dated months before it sits nearest a negative slot, never slot 0.
+- **Slots.** Slot `j`, for `j ≥ 0`, is `dates.first_call_observation` plus `j × step` months, computed from the first call observation each time. A date's nearest slot is the one with the fewest days between them. When two slots are equally near, the date has no nearest slot. Check 5 lets no compared date fall before the first call observation, so no slot before it is needed.
 - **Whole-month offset.** The whole-month offset of `dates.first_call_observation` is the `n ≥ 0` for which `dates.settlement` plus `n` months is nearest it in days. A tie means there is none.
 
 ### Checks, in order
@@ -213,9 +218,9 @@ Every function runs the checks that apply to it in this order. It returns the fi
 4. **Schedule.** If `observationSchedule(terms, calendar)` is `unavailable`, the result is one `schedule-unavailable` reason carrying its reasons unchanged. `noteMetrics` skips this group.
 5. **Chronology and mapping.** `noteMetrics` skips this group. The others check, in this order:
    - `settlement-before-trade` when the settlement date is before the trade date.
-   - When the final valuation date is known: `final-valuation-before-settlement` when it is on or before the settlement date, and `final-valuation-after-maturity` when it is after maturity.
    - `first-call-before-settlement` when `dates.first_call_observation` is on or before the settlement date, with either kind of schedule. An estimated schedule's entries start from it, and the slots are counted from it.
-   - With a listed schedule, `observation-before-settlement` for each item with a known date on or before the settlement date. So the whole-month offset is always measured forward from settlement, and no observation comes before the trade date.
+   - When the final valuation date is known: `final-valuation-before-first-call` when it is before the first call observation, and `final-valuation-after-maturity` when it is after maturity.
+   - With a listed schedule, `observation-before-first-call` for each item with a known date before the first call observation. With the bullets above, every dated observation falls on or after the first call observation, which falls after settlement. So the whole-month offset is measured forward from settlement, and no date is compared with a slot before slot 0.
    - With a listed schedule, `listed-after-maturity` for each item with a known date after maturity.
    - With a listed schedule and a known final valuation date, `listed-after-final-valuation` for each item that has a known date after it, or that follows an item dated on it.
    - `non-call-months-mismatch` when the first call observation has no whole-month offset, or its offset differs from `call.non_call_months`.
@@ -383,10 +388,7 @@ Each result lists every finding in check 5's group, in order.
   - The second item is 15 days from slot 0 and 15 days from slot 1, so it has no nearest slot.
   - `k` is 2, while the final valuation date sits nearest monthly slot 54.
   - So the result is `listed-off-cycle` at index 1, then `final-valuation-off-cycle`.
-- **Before the first call.** B with a listed schedule of 2026-06-01 and 2026-12-01, both `primary`:
-  - The first item sits on slot −1, 0 days away. Counting slots only from 0, it would sit nearest slot 0, 92 days away, and be paid 6 months' premium inside the non-call period.
-  - `k` is 2, while the final valuation date sits nearest slot 18.
-  - So the result is `listed-off-cycle` at index 0, then `final-valuation-off-cycle`.
+- **Before the first call.** L with its first item moved to 2026-08-31, a Monday, one day before `dates.first_call_observation`, gives `observation-before-first-call` at index 0 alone. That item's nearest slot is 0, 1 day away, so the mapping alone would pass it. Without this check, closes on 2026-08-31 that would call give `called` at 104250, the day before the first date the terms allow a call.
 - **Mismatched offset.** B with `call.non_call_months` 7 gives `non-call-months-mismatch` alone.
 - **Call before settlement.** B with settlement 2027-03-04 and `call.non_call_months` 0 gives `first-call-before-settlement` alone. The whole-month offset there would be 0 (184 days), so without this check the mapping would have passed.
 - **Listed, anchored before settlement.** B with `dates.first_call_observation` 2026-03-03, `call.non_call_months` 0, no final valuation term, and a listed schedule of 2026-03-05 and 2026-06-03, both `primary`:
@@ -510,7 +512,7 @@ Codex's Pass 2 comment reports all three runs. Under the review skill any disagr
   - On B with row 0 not called, every `asOf` from 2026-12-01 onward gives `unknown` with `estimated-date`, whatever the closes on generated dates say.
   - On L, setting any item's status to `estimate` or `assumed` gives the same once `asOf` reaches that item, unless an earlier row ends the evaluation.
 - **No payout on an unestablished chronology or mapping.** Each example under Chronology and mapping failures gives `unavailable` and no payout.
-- **Chronology.** Each of `settlement-before-trade`, `final-valuation-before-settlement`, `final-valuation-after-maturity`, `first-call-before-settlement`, `observation-before-settlement`, `listed-after-maturity` and `listed-after-final-valuation` gives `unavailable`. So does `estimate` or `assumed` on the trade date, settlement, the first call observation or maturity, with `input-unevidenced`. In particular, an estimated maturity never yields `matured`.
+- **Chronology.** Each of `settlement-before-trade`, `first-call-before-settlement`, `final-valuation-before-first-call`, `final-valuation-after-maturity`, `observation-before-first-call`, `listed-after-maturity` and `listed-after-final-valuation` gives `unavailable`. So does `estimate` or `assumed` on the trade date, settlement, the first call observation or maturity, with `input-unevidenced`. In particular, an estimated maturity never yields `matured`.
 - **No maturity before maturity.** On g05's input, with `asOf` moved to each date from the final valuation date up to the day before maturity, the status is `final-fixed`. It is `matured` only from maturity on.
 - **A close conflict is never resolved.** The row is `unknown` and lists every distinct value. That member has no ratio, and the status is `unknown`.
 - **Nothing carries.** On g08's input, deleting every decoy close leaves `evaluateNote` deep-equal, and moving BRVO's decoy onto the row's date changes it.
@@ -544,7 +546,7 @@ All plugin tests run with `pnpm --filter @keel/plugin-mln test`. Each criterion 
 
 | # | Criterion | Test file and what it asserts |
 | --- | --- | --- |
-| AC1 | Arithmetic matches the frozen values | `payoff.arithmetic.test.ts`: the rounding table, cent rounding with the 111673 tie, decimal equality (`95.1` equals `95.10`), every grammar in Arithmetic with one passing and one failing value each, an initial level of `9999999999.999999` parsed exactly, month addition with clamping in both directions, nearest slots including a tie and a negative slot, and the whole-month offset for B |
+| AC1 | Arithmetic matches the frozen values | `payoff.arithmetic.test.ts`: the rounding table, cent rounding with the 111673 tie, decimal equality (`95.1` equals `95.10`), every grammar in Arithmetic with one passing and one failing value each, an initial level of `9999999999.999999` parsed exactly, month addition with clamping, nearest slots including a tie, and the whole-month offset for B |
 | AC2 | Payout schedules match | `payoff.payouts.test.ts`: `payoutSchedule` on B, on L, and on B with rate 2000 and `monthly` (the month table and its 54 call rows), including each row's `evidenced` |
 | AC3 | Final payouts match | `payoff.final.test.ts`: the `finalPayout` table and the `none` case at 60000 |
 | AC4 | Checks and events behave as specified | `payoff.evaluate.test.ts` asserts each of these:<br>- Each reason code in check order, including a case with two findings in one group, and unsupported after unknown.<br>- Each check-5 reason, and each example under Chronology and mapping failures with its full list of findings.<br>- An estimated entry on the final valuation date becomes the final row.<br>- A listed `unknown` item as `next`, as an in-list `date-unknown` stop, and as a trailing `date-unknown` stop.<br>- An `estimated-date` stop at a generated entry, and at a listed item with status `estimate`.<br>- An ignored ticker, and equal duplicate closes merging their sources.<br>- With the final valuation date absent, `live` with empty `reasons` while the last listed item is in the future, and `unknown` with `final-valuation-absent` once it is reached.<br>- Each example under Final valuation date not known, at each `asOf` it names.<br>- `input-unevidenced` for each of the trade date, settlement, the first call observation and maturity.<br>- Invalid closes after `asOf` and for nonmember tickers leaving the result unchanged.<br>- The member trace of Rows step 5 for each reason |
@@ -576,7 +578,6 @@ At least three killed mutants per claim, listed in the PR body with the killing 
   - Dropping the offset check.
   - Dropping the off-cycle check.
   - Accepting a tie for the nearest slot.
-  - Counting slots only from 0.
   - Measuring the offset from the trade date.
   - Accepting a first call observation on or before settlement, with either kind of schedule.
 - **Selection.**
@@ -596,7 +597,8 @@ At least three killed mutants per claim, listed in the PR body with the killing 
 - **Final valuation date and chronology.**
   - Keeping estimated entries after it.
   - Accepting a listed item after it, or after maturity.
-  - Accepting a final valuation date after maturity, or on the settlement date.
+  - Accepting a final valuation date after maturity, or before the first call observation.
+  - Accepting a listed item before the first call observation.
   - Accepting a settlement date before the trade date.
   - Accepting an estimated trade date, settlement, first call observation or maturity.
   - Treating an event of unknown role as a call event.
