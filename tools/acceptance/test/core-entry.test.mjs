@@ -12,7 +12,7 @@ test(
     const script = 'import("./packages/core/src/index.ts").then((api) => console.log(Object.keys(api).join(" ")))';
     const result = run(process.execPath, ["--input-type=module", "-e", script], { cwd: repoRoot });
     expect(result.status, result.stderr).toBe(0);
-    expect(result.stdout.trim()).toBe("dateFlags loadTerms verificationSummary");
+    expect(result.stdout.trim()).toBe("dateFlags loadTerms nyseRulesCalendar observationSchedule scheduleDateFlags scheduleDiff termDateFlags verificationSummary");
   },
   NESTED_RUN_TIMEOUT_MS,
 );
