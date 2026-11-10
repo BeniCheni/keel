@@ -93,3 +93,53 @@ Pass 1's findings and the PM's fixes are suspicions to re-derive, not conclusion
 | 4 | `0.000001 / 100.25` rounds to `0/1` under `half-up-4dp`, below the barrier | The same script |
 | 5 | Pass 1's H4 example pays 106375 by index and 114875 by elapsed months | Pass 1's probe C, rerun by the PM in this session |
 | 6 | The amendment changes no value that Pass 1 reproduced at `89687da` | `python3 -I s03_frozen.py` again. Then 20 frozen strings were checked against the spec at `89687da` and at the head: the rounding rows, B's payouts, the month table, the tie, the `finalPayout` and `noteMetrics` rows, and the golden decimals. Each is present, unchanged, in both |
+
+## After Pass 2
+
+Codex's Pass 2 is [issuecomment-6776702360](https://github.com/BeniCheni/keel/pull/32#issuecomment-6776702360), at `0b44cdb`. Its verdict was not mergeable, with four new Highs, four Mediums and one Low.
+
+- **Pass 1 dispositions.** It closed H1, H5, M1, M2, M4, M5, M6, M7 and L1. It found H2, H3, H4 and M3 partly closed, with what remains in its new findings.
+- **Checks.** Both quickstarts, GitHub's `verify` and the privacy scans passed. Demo mode, mutations and Pass M were recorded as N/A.
+- **Stops.** It first stopped on an existing clone path, and the PM gave it a new one.
+
+The PM accepts all nine findings and contests none. The fixes are in `d6c22f7`. S02.1 is unchanged.
+
+| Pass 2 # | Severity | PM disposition | Reason and fix in `d6c22f7` |
+| --- | --- | --- | --- |
+| P2-1 | High | Accept | Reproduced from the text: check 2 required maturity to be known, not evidenced, and `matured` read only dates. Check 2 now requires settlement, the first call observation and maturity to be evidenced. A status of `estimate` or `assumed` gives the new `input-unevidenced`, for every function but `noteMetrics`. Decisions 9 and 14 and a new honesty clause cover it |
+| P2-2 | High | Accept | Reproduced from the text: with the final valuation date not known, every event was a call. Now an event is a call event only when a later listed item has a known date, or, for a conflict, it falls before every candidate. Any other event's role is unknown:<br>- It is never a row.<br>- Reaching it gives `unknown` with the final valuation reason.<br>- Before that it is `next`, of kind `observation`.<br>Pass 2's case is frozen as "Role unknown" |
+| P2-3 | High | Accept | Reproduced from the text and S02's listed branch. Check 2 now includes `dates.first_call_observation` for unknown, conflict and unevidenced, so no listed schedule reaches the mapping without an anchor |
+| P2-4 | High | Accept | Reproduced: with settlement 2027-03-04, the offset search gives 0 at 184 days. Chronology now runs from settlement. `observation-before-settlement` and `final-valuation-before-settlement` replace the codes based on the trade date, so the offset is always measured forward. Pass 2's case is frozen as "Call before settlement". The trade date is no longer read, and `unverified` now starts with `dates.settlement` |
+| P2-5 | Medium | Accept | Confirmed in `tools/tripwire/scan.mjs`: `scanRepo` lists files with `git ls-files` and returns `error` apart from `hits`. The generator now copies its output and the two policy files into a fresh temporary Git repository, commits them, sets `origin/main` and runs `scanRepo`. It fails on any hit or on an `error` |
+| P2-6 | Medium | Accept | Reproduced: with two listed items `k` is 2, while the final valuation date sits nearest slot 18, or slot 54 for monthly. Both examples now list `listed-off-cycle` then `final-valuation-off-cycle`, and "Mapping failures" says each lists the group's full findings in order |
+| P2-7 | Medium | Accept | AC4 now pins both sides with the final valuation date absent: `live` with empty `reasons` while the last listed item is in the future, and `unknown` with `final-valuation-absent` once it is reached |
+| P2-8 | Low | Accept | Decision 3 now says nothing divides by a zero ratio, and that the two distances divide by the worst ratio only when it is above zero |
+| P2-9 | Medium | Accept | The tie sentence now says the premium is exactly 11672.5 cents and rounds half up to 11673, so the payout is 111673. Half-even would give 11672 and 111672 |
+
+Beyond the findings, the Rows steps are renumbered for the new step 3, an event of unknown role. References to them in `finalPayout`, `noteMetrics` and AC4 now say steps 5 and 8. B's description now names settlement and maturity, and says the trade date is not read.
+
+### The PM's re-runs at `d6c22f7`
+
+| Check | Command | Result |
+| --- | --- | --- |
+| The new examples' values | `python3 -I s03_amend.py`, extended and printed in the PR body | Settlement 2027-03-04 gives offset 0 at 184 days, against 215 for 1. With two listed items, the final valuation date sits nearest slot 18 (quarterly) and 54 (monthly). 2026-09-01 is not before every candidate in the role example |
+| No frozen value changed | The 20 frozen strings from Pass 1.5, against the spec at `89687da` and at `d6c22f7` | 20 of 20 present and unchanged |
+| Size of the amendment | `git diff --shortstat 0b44cdb d6c22f7` | 1 file, 80 insertions, 58 deletions |
+
+### Authorship since Pass 2
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `d6c22f7` docs(specs): amend S03 after Pass 2 | Claude | Codex, re-read of the Pass 2 fixes |
+| The commit adding this section | Claude | Codex, the same re-read |
+
+### What the re-read does
+
+1. **Cold-read `d6c22f7` and this section's commit.** `git diff 0b44cdb d6c22f7` is the whole amendment.
+2. **Reproduce or disprove each disposition above.** Can a compliant build still show:
+   - `matured` or `final-fixed` that rests on a planning date;
+   - `called` on an event whose role is unknown;
+   - a mapping without an evidenced anchor;
+   - a call on or before settlement?
+3. **Re-derive the new examples** with your own implementation: call before settlement, role unknown, and both two-item mapping failures with their full findings. Confirm no other frozen value changed.
+4. **Check the renumbered Rows steps.** Is every reference to them right?
