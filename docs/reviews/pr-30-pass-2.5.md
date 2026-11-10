@@ -512,7 +512,7 @@ Added by the PM for the records PR. The Pass 2.5 seat wrote no file. This brief 
 - **Post-merge checks**, in a fresh clone at `5ce0853` with a fresh `mktemp -d` as `KEEL_DATA_DIR`: `origin/main` equals the squash commit. `pnpm install --frozen-lockfile` and `pnpm verify` each exit 0 on Node v24.22.2 and v26.13.0, with 154 core and 122 tooling tests and all eight steps ok, and `git status` is clean afterwards. The push run on `main`, 42832784562, succeeded (`gh run view 42832784562 --repo BeniCheni/keel --json headSha,event,conclusion`). Demo mode is N/A, because the README has none.
 - **Closed:** PR #28's Pass 1 finding 1 and this PR's findings 1, 2 and 5.
 - **Still open:**
-  - Medium 2.5-1 and the three items Pass 1.5 carries (where a relative specifier may point, now including `test-support/`; Unicode-escaped identifiers; the `.mts`, `.js` and `.json` extensions). All four go to the next ordinary docs PR.
+  - Medium 2.5-1 and the three items Pass 1.5 carries (where a relative specifier may point, now including `test-support/`; Unicode-escaped identifiers; the `.mts`, `.js` and `.json` extensions). The three go to the next ordinary docs PR, as Pass 1.5 records. Medium 2.5-1 goes to the next ordinary PR, as this brief and Pass 2.5's comment say: its fix changes `packages/core/src/schedule/schedule.purity.test.ts`, so a docs PR cannot carry it.
   - `AGENTS.md` still pins this seat to Fable 5.1. Beni's ruling seated Fable 5.2 for this PR only, so moving the pin takes its own sensitive-path PR.
 
 The script Beni ran:
