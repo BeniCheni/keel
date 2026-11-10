@@ -101,3 +101,24 @@ The date probes at the tip, through `observationSchedule` with `nyseRulesCalenda
 N3 changes the first maturity check at `schedule.ts` back to a text comparison, and it passes. Pass 1 calls it equivalent. The PM's reasoning agrees: a slot past 9999 sorts before the maturity as text, the roll's numeric check then rejects it, and the loop still ends once the year's text sorts after the maturity. Only the iteration count differs. Check that yourself.
 
 Pass 1's comment reports its effort as "Extra as assigned" and says the session could not show it. No seat can check that statement.
+
+## After Pass 2
+
+Codex's Pass 2 is [issuecomment-6749892420](https://github.com/BeniCheni/keel/pull/30#issuecomment-6749892420), and it pushed `f6a21c1`. Its formal verdict is not mergeable, on finding 5 alone, pending Beni's written confirmation. It accepted every disposition above, including the raised severity and the dispute on finding 1. It added two things: a glob control, which moves `sameTwice` into `packages/core/src/schedule/test-support/same-twice.ts` and asserts the glob reaches that file, and the fourth runtime case under ruling 7. On that commit it closed finding 1 and PR #28's Pass 1 finding 1. It reported zero private-list hits on every surface. That is Codex's claim, and Beni's later run is recorded in the Pass 2.5 brief.
+
+The PM re-ran these at `f6a21c1`, in a fresh clone with a fresh `mktemp -d` as `KEEL_DATA_DIR`. This is not the cold read of `f6a21c1`, which went to the fresh Claude session at Pass 2.5.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Install and verify | `pnpm install --frozen-lockfile`, `pnpm verify`, on v24.22.2 and v26.13.0 | Exit 0 for each. Core 154 in 16 files, tooling 122 in 10, eight steps ok, status clean |
+| Diff | `git diff --shortstat origin/main...HEAD` | 17 files, 2046 insertions, 4 deletions |
+| CI at the head | `gh run list --repo BeniCheni/keel --commit f6a21c144a9ce2510c550d6cec6f3dc0a659d64d --json databaseId,event,conclusion,status` | Run 42687442879, `pull_request`, success |
+| The glob control | Glob in `schedule.purity.test.ts` set to `./*.ts`, then `pnpm --filter @keel/core exec vitest run --config vitest.config.mjs schedule.purity` | 1 failed, 67 passed |
+| The fourth runtime case | `void Math.random();` at the start of `listedSchedule`, then before the `estimatedSet` line in `scheduleDiff`, the same run each time | 2 failed, 66 passed, each time: the runtime test and the lexical one |
+| The same, without the case | The second insertion, with the purity test file from `ab33165` | 1 failed, 67 passed: the lexical test only |
+
+**PR body refresh.** At 19:22 EST on 2026-11-09 the PM replaced "Corrections after Pass 1" with a version that describes `f6a21c1`, using `gh pr edit 30 --body-file`. Codex's report had named the refresh as the PM's step. Cursor's first 103 lines are byte-identical (`cmp` against the body saved before the edit). The repo tripwire's `scanRepo` gated the edit: no error and 0 hits on the new text, and a generated address added to the same temporary repository gives 1 email hit. The refresh came after Codex's private-list check, so Beni ran that check again before merging.
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `f6a21c1` test(core): guard nested schedule sources and listed runtime paths | Codex | Claude, Pass 2.5, fresh session, Fable 5.2 High by Beni's ruling of 2026-11-09 |
