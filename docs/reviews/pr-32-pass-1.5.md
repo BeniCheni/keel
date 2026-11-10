@@ -143,3 +143,48 @@ Beyond the findings, the Rows steps are renumbered for the new step 3, an event 
    - a call on or before settlement?
 3. **Re-derive the new examples** with your own implementation: call before settlement, role unknown, and both two-item mapping failures with their full findings. Confirm no other frozen value changed.
 4. **Check the renumbered Rows steps.** Is every reference to them right?
+
+## After the re-read of the Pass 2 fixes
+
+Codex's re-read is [issuecomment-6778380443](https://github.com/BeniCheni/keel/pull/32#issuecomment-6778380443), at `cc8b063`, run in a GPT-6.1 Sol High sub-agent. Its verdict was not mergeable, with two new Highs and two Mediums.
+
+- **Pass 2 dispositions.** It closed P2-1, P2-3, P2-5, P2-6, P2-7, P2-8 and P2-9. It found P2-2 and P2-4 partly closed, with what remains in R1 and R2.
+- **Checks.** Both quickstarts, GitHub's `verify`, every claim in the PR body and the privacy scans passed. Demo mode, mutations and Pass M were recorded as N/A.
+
+The PM accepts all four findings and contests none. The fixes are in `48b995e`. S02.1 is unchanged.
+
+| Re-read # | Severity | PM disposition | Reason and fix in `48b995e` |
+| --- | --- | --- | --- |
+| R1 | High | Accept | Reproduced with the rules at `cc8b063` in `s03_reread.py`. In the role example with a second listed item on 2026-12-01 at `estimate`, the first item was a call event because a later item had a known date, so closes that would call gave `called` at 104250. Now:<br>- With the term absent or unknown, only a later item with an evidenced date makes an event a call event.<br>- With a conflict, only a date before every candidate does. A listed item never rules a candidate out, since that would resolve the conflict, which hard rule 6 forbids. This goes beyond R1's case, and is stricter.<br>Frozen as "A later listed item" and "The term absent", under a new heading, "Final valuation date not known" |
+| R2 | Medium | Accept | Reproduced: with a listed schedule, a stated first call observation of 2026-03-03, before settlement on 2026-03-04, gave no finding, with an offset of 0 at 1 day. The new `first-call-before-settlement` checks `dates.first_call_observation` with either kind of schedule, and `observation-before-settlement` now covers listed items only. Frozen as "Listed, anchored before settlement". "Call before settlement" now gives `first-call-before-settlement` alone, in place of `observation-before-settlement` at index 0. That is the one example value this amendment changes |
+| R3 | High | Accept | Reproduced: with the trade date at 2026-09-02, check 5 at `cc8b063` found nothing, so g01's closes would give `called` at 104250. `d6c22f7` had stopped reading the trade date. It is read again:<br>- In check 2, as one of four dates that must be known and evidenced.<br>- In check 5, where the new `settlement-before-trade` requires settlement on or after it. Every observation must fall after settlement, so each falls after the trade date.<br>`unverified` starts with `dates.trade` again, as it did at `0b44cdb`, and paths 3 to 16 are `verificationSummary`'s list. B's trade date is `primary`, so no golden `unverified` value changes. Frozen as "Trade after settlement" |
+| R4 | Medium | Accept | Confirmed: "Role unknown" sat under "Mapping failures", whose honesty clause requires `unavailable`, while the example is evaluated. It moves to "Final valuation date not known". "Mapping failures" becomes "Chronology and mapping failures", and the honesty clauses and AC4 name both headings. The chronology honesty clause now names its codes instead of counting bullets |
+
+**Found by the PM while checking the fixes.** Slots were counted only from 0, so a listed item dated before the first call observation could sit nearest slot 0. In B with a listed schedule of 2026-06-01 and 2026-12-01, the first item sat nearest slot 0, 92 days away. It would have been paid 6 months' premium inside the non-call period, a wrong payoff and so a High under Severity. Slots now run in both directions, so that item sits on slot −1 and gives `listed-off-cycle`. Every existing nearest-slot value is unchanged. Frozen as "Before the first call", with AC1 and a new mutant. The next re-read checks it like the four findings.
+
+### The PM's re-runs at `48b995e`
+
+| Check | Command | Result |
+| --- | --- | --- |
+| The new examples' values | `python3 -I s03_reread.py`, printed in the PR body | Each new example's findings and roles as frozen. Under the rules at `cc8b063` the same script reproduces R1 (the first item a call event), R2 and R3 (no finding). With slots from 0 only, 2026-06-01 sits nearest slot 0; with slots in both directions, slot −1. Every existing nearest-slot value is unchanged |
+| No frozen value changed | `python3 -I frozen20.py`, printed in the PR body, and `python3 -I s03_frozen.py \| shasum -a 256` | 20 of 20 present and unchanged since `89687da`. The output hash starts `4dbe9b22`, unchanged |
+| Copy words | `grep -c -i -w 'should\|buy\|sell\|hold' docs/specs/s03-payoff-engine.md` | 0 |
+| Size of the amendment | `git diff --shortstat cc8b063 48b995e` | 1 file, 63 insertions, 37 deletions |
+
+### Authorship since the re-read
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `48b995e` docs(specs): amend S03 after the re-read of the Pass 2 fixes | Claude | Codex, the next re-read |
+| The commit adding this section | Claude | Codex, the same re-read |
+
+### What the next re-read does
+
+1. **Cold-read `48b995e` and this section's commit.** `git diff cc8b063 48b995e` is the whole amendment.
+2. **Reproduce or disprove each disposition above.** Can a compliant build still show:
+   - `called` on an event whose role rests on a planning date, or on a resolved conflict;
+   - a mapping anchored on or before settlement, with either kind of schedule;
+   - an observation on or before the trade date;
+   - a premium on a listed item dated before the first call observation?
+3. **Re-derive the new examples** with your own implementation before reading the scripts: the four new or changed ones under Chronology and mapping failures, and the three under Final valuation date not known. Confirm that no other frozen value changed, and that slots in both directions change no existing nearest-slot value.
+4. **Check the renamed headings.** Is every reference to them right?
