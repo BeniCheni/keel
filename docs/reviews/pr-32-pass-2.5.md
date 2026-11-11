@@ -366,7 +366,9 @@ Added by the PM for the records PR. The Pass 2.5 seat wrote no file. This brief 
   - The error is the PM's, for writing the quote into the prompt before the ruling existed.
 - **Where the seat started.** The session opened in `~/code/keel-pr-32-final`, a clone of the PR made at 09:59 EST that day, because `~/code/keel-pr-32-p25` did not exist. Before asking Beni (line 7 above), it ran `git reflog` and `git status` there and read three files from that clone: `SKILL.md`, `executive-brief.md` and `pr-comment.md` under `.claude/skills/keel-pr-review/`.
   - Its prompt said to leave every other keel clone alone, and the brief does not mention these reads.
-  - Nothing the seat read differs from what it reviewed. That clone is at `06f8ac9` with no tracked changes and no untracked or ignored files (`git -C ~/code/keel-pr-32-final status --porcelain --ignored` prints nothing), and its skill folder equals the head's (`git -C ~/code/keel-pr-32-final diff --quiet 06f8ac9 -- .claude/skills` exits 0).
+  - Nothing the seat read differs from what it reviewed. The evidence is its transcript, because the folder was removed before this PR's cold read.
+    - Its own shell calls there showed `HEAD` at `06f8ac9`, a reflog holding only the clone and the checkout at 09:59 EST, and no output from `git status --porcelain --ignored --untracked-files=all`.
+    - The text of each of the three files it read, as its transcript records it, equals that file at `06f8ac9`. `seat_clone_check.py`, printed in the records PR body, shows this, and the same check against `8a04ff3^` finds two of the three different.
   - The cause is the PM's handoff, which had Beni make the clone in a separate step. Seat prompts now make their own clone.
 - **The merge.** Squash `7c47d104b4c8ac5edbbbf331e483a315436005a2`, merged by Beni at 2026-11-11T16:53:55Z (11:53 EST), reviewed head `06f8ac9` (`gh pr view 32 --repo BeniCheni/keel --json mergeCommit,mergedAt,headRefOid,mergedBy`).
   - Its parent is `38f9c1a`, so the base did not move. Its tree equals the reviewed head's: `7f21263a9784726c3b5d5af1da3710212e3d71e9` for both (`git rev-parse '7c47d10^{tree}' '06f8ac9^{tree}'`).
