@@ -6,7 +6,7 @@ Written by the PM on 2026-11-11 (America/New_York), from a fresh read of the PR 
 
 Claude Code, fresh session, fresh clone. Model Fable 5.2 Extra, by ruling 3 below; `AGENTS.md` pins Fable 5.1 Extra, because sensitive paths are touched. Fallback Opus 5.5 High; say so in the comment if it is used. Fable seats work on synthetic data only and never open the private-list file.
 
-This brief first said Fable 5.1 Extra, and so did the Pass 1 prompt. Ruling 3 came at 17:39 EST, after the Pass 1 session had opened at 17:23 EST; the PM amended this brief afterward.
+This brief first said Fable 5.1 Extra, and so did the Pass 1 prompt as the PM wrote it. The prompt the seat worked from said Fable 5.2 Extra, because Beni edited it before resending; the Pass 1.5 brief gives the sequence. Ruling 3 came at 17:39 EST, after Pass 1 had started, and the PM amended this brief afterward.
 
 Later seats: Pass 1.5 is the PM. Pass 2 is Codex, GPT-6.1 Sol Extra High, with no fallback, and it also runs the private-list check, reporting counts only. Pass 2.5 is a fresh Claude session on Fable 5.2 High by ruling 3 (`AGENTS.md` pins Fable 5.1 High), fallback Opus 5.5 High. Beni merges. The PR is still a draft and must be marked ready before it can merge.
 
