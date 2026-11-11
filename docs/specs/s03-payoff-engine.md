@@ -1,6 +1,6 @@
 # S03: Payoff engine
 
-- Status: drafted 2026-11-10 by the PM (Claude), on Beni's ruling of 2026-11-08 to split the engine work ("Split, schedule first") and his rulings of 2026-11-10, recorded under Decisions. Amended the same day after Codex's plan challenge, after its Pass 2, and after each of its two re-reads of the fixes (`docs/reviews/pr-32-pass-1.5.md`). No code exists yet.
+- Status: drafted 2026-11-10 by the PM (Claude), on Beni's ruling of 2026-11-08 to split the engine work ("Split, schedule first") and his rulings of 2026-11-10, recorded under Decisions. Amended the same day after Codex's plan challenge, after its Pass 2, and after each of its three re-reads of the fixes (`docs/reviews/pr-32-pass-1.5.md`). No code exists yet.
 - Release: non-release slice toward `v0.1.0`. Starts only after this spec merges and S02.1's build merges, because it reads `dates.final_valuation` from schema 0.2.
 - Builder: Cursor, Grok 4.7 Extra High (sensitive-path slice), in one draft PR on branch `s03/payoff-engine`. Codex adds the Pass M reference at Pass 2 (see Pass M).
 - Sensitive paths the build touches: `packages/plugin-mln/**` and `fixtures/golden/**`, including its `expected/` files. At Pass 2 Codex also adds `tools/reference/**`. This spec PR touches none.
@@ -199,7 +199,7 @@ The entry exports exactly `PRINCIPAL_CENTS`, `evaluateNote`, `payoutSchedule`, `
 - **Premium.** For simple accrual, `premium(m) = cents(100000 × rate × m / 120000)`, where `rate` is `premium.rate_per_year` in basis points. A call, or a final row at or above the call level, pays `100000 + premium(m)`.
 - **Below the barrier**, the final row pays `cents(100000 × w)`, where `w` is the rounded worst ratio.
 - **Months.** Adding `n` months to a date moves it `n` calendar months and clamps the day to the target month's length, as in S02.
-- **Slots.** Slot `j`, for `j ≥ 0`, is `dates.first_call_observation` plus `j × step` months, computed from the first call observation each time. A date's nearest slot is the one with the fewest days between them. When two slots are equally near, the date has no nearest slot. Check 5 lets no compared date fall before the first call observation, so no slot before it is needed.
+- **Slots.** Slot `j`, for `j ≥ 0`, is `dates.first_call_observation` plus `j × step` months, computed from the first call observation each time. A date's nearest slot is the one with the fewest days between them. When two slots are equally near, the date has no nearest slot. No slot before the first call observation is needed: check 5 rejects every date before it, whatever its nearest slot.
 - **Whole-month offset.** The whole-month offset of `dates.first_call_observation` is the `n ≥ 0` for which `dates.settlement` plus `n` months is nearest it in days. A tie means there is none.
 
 ### Checks, in order
@@ -216,11 +216,11 @@ Every function runs the checks that apply to it in this order. It returns the fi
    `noteMetrics` checks only `underlyings.performance_rounding`, `call.level` and `barrier.level`.
 3. **Variants.** The result is `unsupported` with `accrual-compound` (path `premium.accrual`), `barrier-daily-close` or `barrier-continuous` (path `barrier.observation`), and `below-barrier-physical-delivery` (path `barrier.below_barrier`), in that order. `noteMetrics` skips this group.
 4. **Schedule.** If `observationSchedule(terms, calendar)` is `unavailable`, the result is one `schedule-unavailable` reason carrying its reasons unchanged. `noteMetrics` skips this group.
-5. **Chronology and mapping.** `noteMetrics` skips this group. The others check, in this order:
+5. **Chronology and mapping.** `noteMetrics` skips this group. The others run every bullet below, in this order. A date one bullet rejects is still checked by the bullets after it, the mapping bullets included:
    - `settlement-before-trade` when the settlement date is before the trade date.
    - `first-call-before-settlement` when `dates.first_call_observation` is on or before the settlement date, with either kind of schedule. An estimated schedule's entries start from it, and the slots are counted from it.
    - When the final valuation date is known: `final-valuation-before-first-call` when it is before the first call observation, and `final-valuation-after-maturity` when it is after maturity.
-   - With a listed schedule, `observation-before-first-call` for each item with a known date before the first call observation. With the bullets above, every dated observation falls on or after the first call observation, which falls after settlement. So the whole-month offset is measured forward from settlement, and no date is compared with a slot before slot 0.
+   - With a listed schedule, `observation-before-first-call` for each item with a known date before the first call observation. So whenever check 5 finds nothing, every dated observation falls on or after the first call observation, which falls after settlement, and the whole-month offset is measured forward from settlement.
    - With a listed schedule, `listed-after-maturity` for each item with a known date after maturity.
    - With a listed schedule and a known final valuation date, `listed-after-final-valuation` for each item that has a known date after it, or that follows an item dated on it.
    - `non-call-months-mismatch` when the first call observation has no whole-month offset, or its offset differs from `call.non_call_months`.
@@ -389,6 +389,7 @@ Each result lists every finding in check 5's group, in order.
   - `k` is 2, while the final valuation date sits nearest monthly slot 54.
   - So the result is `listed-off-cycle` at index 1, then `final-valuation-off-cycle`.
 - **Before the first call.** L with its first item moved to 2026-08-31, a Monday, one day before `dates.first_call_observation`, gives `observation-before-first-call` at index 0 alone. That item's nearest slot is 0, 1 day away, so the mapping alone would pass it. Without this check, closes on 2026-08-31 that would call give `called` at 104250, the day before the first date the terms allow a call.
+- **Two before the first call.** L with its first two items replaced by 2026-08-28 and 2026-08-31, both nearest slot 0, gives `observation-before-first-call` at index 0, `observation-before-first-call` at index 1, then `listed-off-cycle` at index 1. Every bullet runs, so the mapping bullets see the two rejected dates too.
 - **Mismatched offset.** B with `call.non_call_months` 7 gives `non-call-months-mismatch` alone.
 - **Call before settlement.** B with settlement 2027-03-04 and `call.non_call_months` 0 gives `first-call-before-settlement` alone. The whole-month offset there would be 0 (184 days), so without this check the mapping would have passed.
 - **Listed, anchored before settlement.** B with `dates.first_call_observation` 2026-03-03, `call.non_call_months` 0, no final valuation term, and a listed schedule of 2026-03-05 and 2026-06-03, both `primary`:
