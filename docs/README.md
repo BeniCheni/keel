@@ -26,6 +26,8 @@ Every slice moves through up to four rungs: proposal (the research behind the pr
 | Idea 48 from the PR #24 review (PR #26) | n/a | none | none | `reviews/pr-26-pass-0.md` | merged 2026-11-08 at squash `d8721f7`, reviewed head `01ac20e` (fast-track); cold read by Codex |
 | S02 Observation schedule and exchange calendar (spec PR #28) | toward `v0.1.0` (non-release) | `specs/s02-schedule.md` | none (no UI) | `reviews/pr-28-pass-0.md`, `reviews/pr-28-pass-1.5.md`, `reviews/pr-28-pass-2.5.md` (executive brief) | merged 2026-11-09 at squash `105a58d`, reviewed head `0b4bcc5`; Pass 1 finding 1 (High) stays open by Beni's ruling of 2026-11-08, and the S02 build must land the AC10 test; it closed in PR #30 at `f6a21c1` |
 | S02 build (PR #30) | toward `v0.1.0` (non-release) | `specs/s02-schedule.md` | none (no UI) | `reviews/pr-30-pass-0.md`, `reviews/pr-30-pass-1.5.md`, `reviews/pr-30-pass-2.5.md` (executive brief) | merged 2026-11-10 at squash `5ce0853`, reviewed head `f6a21c1`; AC9 exception and Pass 2.5 on Fable 5.2 High, both by Beni's rulings of 2026-11-09; Medium 2.5-1 carried |
+| S02.1 Final valuation date term (spec PR #32) | toward `v0.1.0` (non-release) | `specs/s02.1-final-valuation.md` | none (no UI) | `reviews/pr-32-pass-0.md`, `reviews/pr-32-pass-1.5.md` | spec in review; carries Medium 2.5-1 and idea 29 |
+| S03 Payoff engine (spec PR #32) | toward `v0.1.0` (non-release) | `specs/s03-payoff-engine.md` | none (no UI) | `reviews/pr-32-pass-0.md`, `reviews/pr-32-pass-1.5.md` | spec in review; builds after S02.1's build merges |
 
 Folders:
 
