@@ -4,9 +4,11 @@ Written by the PM on 2026-11-11 (America/New_York), from a fresh read of the PR 
 
 ## Seat for Pass 1
 
-Claude Code, fresh session, fresh clone. Model Fable 5.1 Extra, because sensitive paths are touched. Fallback Opus 5.5 High; say so in the comment if it is used. Fable seats work on synthetic data only and never open the private-list file.
+Claude Code, fresh session, fresh clone. Model Fable 5.2 Extra, by ruling 3 below; `AGENTS.md` pins Fable 5.1 Extra, because sensitive paths are touched. Fallback Opus 5.5 High; say so in the comment if it is used. Fable seats work on synthetic data only and never open the private-list file.
 
-Later seats: Pass 1.5 is the PM. Pass 2 is Codex, GPT-6.1 Sol Extra High, with no fallback, and it also runs the private-list check, reporting counts only. Pass 2.5 is a fresh Claude session on Fable 5.1 High, fallback Opus 5.5 High. Beni merges. The PR is still a draft and must be marked ready before it can merge.
+This brief first said Fable 5.1 Extra, and so did the Pass 1 prompt. Ruling 3 came at 17:39 EST, after the Pass 1 session had opened at 17:23 EST; the PM amended this brief afterward.
+
+Later seats: Pass 1.5 is the PM. Pass 2 is Codex, GPT-6.1 Sol Extra High, with no fallback, and it also runs the private-list check, reporting counts only. Pass 2.5 is a fresh Claude session on Fable 5.2 High by ruling 3 (`AGENTS.md` pins Fable 5.1 High), fallback Opus 5.5 High. Beni merges. The PR is still a draft and must be marked ready before it can merge.
 
 ## Scope
 
@@ -23,6 +25,7 @@ Later seats: Pass 1.5 is the PM. Pass 2 is Codex, GPT-6.1 Sol Extra High, with n
 
 1. **Two readings of the spec, Beni, 2026-11-11 at 16:23 EST, in the PM's session.** The PM asked: "My S02.1 spec says schema 0.2.json is 0.1.json with only its `schema` constant changed. But 0.1.json also sets `$id` and `title` to mln-terms/0.1, and the fixture manifest's `version` line also moves from 1 to 2. Should Cursor's build prompt state both readings (0.2.json's `$id` and `title` read mln-terms/0.2, and the manifest's version line moves to 2), with the spec wording fixed in the next docs PR?" Beni answered "Yes, in the prompt (Recommended)". So `0.2.json`'s `$id` and `title`, and the manifest's `version` line, differing from the spec's literal text are not findings. Whether the build matches the two readings is still yours to check.
 2. **Ruling 4 of 2026-11-10, "Bump to 0.2 (Recommended)".** It put the term in a new schema 0.2 and kept `0.1.json` byte-identical. `docs/reviews/pr-32-pass-1.5.md`, "Rulings from Beni", has it.
+3. **Fable 5.2 for every Fable seat, Beni, 2026-11-11 at 17:39 EST, in the PM's session.** His words: "Correction: Fable 5.2 is the current latest version from Claude. We're using that for the Pass 1 prompt and future prompts when Fable is desired." It is a standing ruling, not one for this PR only. `AGENTS.md` still pins Fable 5.1 until its own sensitive-path PR moves the pins, so a Claude seat on Fable 5.2 Extra or High is not a finding on this PR. The fallback stays Opus 5.5 High, and the Fable rules on synthetic data and fresh clones still apply.
 
 The PM owns three known gaps, all bound for the next ordinary docs PR. Cite them rather than raising them as new:
 
