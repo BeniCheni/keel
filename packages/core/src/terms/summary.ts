@@ -17,6 +17,11 @@ export function verificationSummary(terms: Terms): VerificationSummary {
   };
   consider("dates.maturity", verifiedStatus(terms.dates.maturity.status));
   consider("dates.first_call_observation", verifiedStatus(terms.dates.first_call_observation.status));
+  const finalValuation = terms.dates.final_valuation;
+  consider(
+    "dates.final_valuation",
+    finalValuation !== undefined && verifiedStatus(finalValuation.status),
+  );
   const schedule = terms.dates.observation_schedule;
   const scheduleVerified =
     schedule !== undefined && schedule.length > 0 && schedule.every((item) => verifiedStatus(item.status));
@@ -33,6 +38,6 @@ export function verificationSummary(terms: Terms): VerificationSummary {
   consider("barrier.level", verifiedStatus(terms.barrier.level.status));
   consider("barrier.observation", verifiedStatus(terms.barrier.observation.status));
   consider("barrier.below_barrier", verifiedStatus(terms.barrier.below_barrier.status));
-  const total = 12 + terms.underlyings.members.length;
+  const total = 13 + terms.underlyings.members.length;
   return { verified: total - unverified.length, total, unverified };
 }

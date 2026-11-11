@@ -1,6 +1,6 @@
 {
   "name": "terms",
-  "version": 1,
+  "version": 2,
   "seed": "keel-s01-terms-1",
   "valid": [
     "example-autocall.yaml",
@@ -209,6 +209,20 @@
       "path": "dates.observation_schedule[1].value",
       "line": 30,
       "column": 14
+    },
+    {
+      "file": "final-valuation-in-0.1.yaml",
+      "code": "unknown-key",
+      "path": "dates.final_valuation",
+      "line": 26,
+      "column": 3
+    },
+    {
+      "file": "invalid-date-final-valuation.yaml",
+      "code": "invalid-date",
+      "path": "dates.final_valuation.value",
+      "line": 27,
+      "column": 12
     }
   ]
 }

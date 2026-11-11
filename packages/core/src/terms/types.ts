@@ -52,7 +52,7 @@ export interface Member {
 }
 
 export interface Terms {
-  schema: "mln-terms/0.1";
+  schema: "mln-terms/0.1" | "mln-terms/0.2";
   id: string;
   category: "mln";
   structure: "autocall-snowball-worst-of";
@@ -66,6 +66,7 @@ export interface Terms {
     settlement: Term<string>;
     maturity: Term<string>;
     first_call_observation: Term<string>;
+    final_valuation?: Term<string>;
     observation_schedule?: Term<string>[];
   };
   underlyings: {

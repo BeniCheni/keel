@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { dateFlags } from "./dates.ts";
+import { dateFlags, dayOfWeek } from "./dates.ts";
 import { loadTerms } from "./load.ts";
 import { textOf } from "./fixtures.ts";
 
@@ -83,4 +83,78 @@ test("the century rule of the Gregorian calendar holds", () => {
   // 2000-02-29 was a Tuesday and the calendar repeats every 400 years.
   expect(dateFlags("2400-02-29")).toEqual([]);
   expect(dateFlags("2000-02-29")).toEqual([]);
+});
+
+const EXAMPLE_DATE_FLAGS = {
+  "dates.trade": ["weekend"],
+  "dates.settlement": [],
+  "dates.maturity.candidates[0]": [],
+  "dates.maturity.candidates[1]": ["weekend"],
+  "dates.first_call_observation": ["weekend"],
+  "dates.final_valuation": [],
+};
+
+function withFinalValuation(body: string, schedule = ""): string {
+  return textOf("valid", "minimal.yaml")
+    .replace("schema: mln-terms/0.1\n", "schema: mln-terms/0.2\n")
+    .replace("underlyings:\n", `  final_valuation:\n${body}${schedule}underlyings:\n`);
+}
+
+test("dateFlags on example-autocall matches the frozen object", () => {
+  const loaded = loadTerms(textOf("valid", "example-autocall.yaml"), "example-autocall.yaml");
+  expect(loaded.ok).toBe(true);
+  if (!loaded.ok) return;
+  expect(loaded.dateFlags).toEqual(EXAMPLE_DATE_FLAGS);
+  const finalValuation = loaded.terms.dates.final_valuation;
+  expect(finalValuation).toEqual({ value: "2031-07-09", status: "primary", source: "supplement" });
+  expect(dayOfWeek(2031, 7, 9)).toBe(3);
+  const keys = Object.keys(loaded.dateFlags);
+  expect(keys.indexOf("dates.final_valuation")).toBe(keys.indexOf("dates.first_call_observation") + 1);
+});
+
+test("a Saturday final valuation flags weekend, and a conflict flags each candidate", () => {
+  const saturday = loadTerms(
+    withFinalValuation(
+      "    value: 2026-03-21\n    status: primary\n    source: supplement\n",
+      "  observation_schedule:\n    - value: 2026-09-01\n      status: primary\n      source: supplement\n",
+    ),
+    "minimal.yaml",
+  );
+  expect(saturday.ok).toBe(true);
+  if (saturday.ok) {
+    expect(saturday.dateFlags["dates.final_valuation"]).toEqual(["weekend"]);
+    const keys = Object.keys(saturday.dateFlags);
+    expect(keys.indexOf("dates.final_valuation")).toBe(keys.indexOf("dates.first_call_observation") + 1);
+    expect(keys.indexOf("dates.observation_schedule[0]")).toBe(keys.indexOf("dates.final_valuation") + 1);
+  }
+
+  const conflict = loadTerms(
+    withFinalValuation(
+      "    status: conflict\n    candidates:\n      - value: 2026-03-21\n        status: primary\n        source: supplement\n      - value: 2026-03-23\n        status: primary\n        source: supplement\n",
+    ),
+    "minimal.yaml",
+  );
+  expect(conflict.ok).toBe(true);
+  if (conflict.ok) {
+    expect(conflict.dateFlags["dates.final_valuation"]).toBeUndefined();
+    expect(conflict.dateFlags["dates.final_valuation.candidates[0]"]).toEqual(["weekend"]);
+    expect(conflict.dateFlags["dates.final_valuation.candidates[1]"]).toEqual([]);
+  }
+
+  const unknown = loadTerms(withFinalValuation("    value: null\n    status: unknown\n"), "minimal.yaml");
+  expect(unknown.ok).toBe(true);
+  if (unknown.ok) expect(unknown.dateFlags["dates.final_valuation"]).toBeUndefined();
+});
+
+test("an unpadded final valuation is invalid-date", () => {
+  const loaded = loadTerms(
+    withFinalValuation("    value: 2031-7-9\n    status: primary\n    source: supplement\n"),
+    "minimal.yaml",
+  );
+  expect(loaded.ok).toBe(false);
+  if (!loaded.ok) {
+    expect(loaded.errors).toEqual([
+      expect.objectContaining({ code: "invalid-date", path: "dates.final_valuation.value" }),
+    ]);
+  }
 });

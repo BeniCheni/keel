@@ -1,18 +1,23 @@
 import Ajv from "ajv/dist/2020.js";
 import type { ErrorObject } from "ajv";
-import schema from "../../../../schemas/mln-terms/0.1.json" with { type: "json" };
+import schemaV01 from "../../../../schemas/mln-terms/0.1.json" with { type: "json" };
+import schemaV02 from "../../../../schemas/mln-terms/0.2.json" with { type: "json" };
 import { missingPos, nodePos, type DocIndex } from "./locate.ts";
 import { diagnostic } from "./messages.ts";
-import type { Diagnostic } from "./types.ts";
+import type { Diagnostic, Terms } from "./types.ts";
 
 const ajv = new Ajv({ allErrors: true, strict: true });
-const validate = ajv.compile(schema);
+const validators: Record<Terms["schema"], ReturnType<typeof ajv.compile>> = {
+  "mln-terms/0.1": ajv.compile(schemaV01),
+  "mln-terms/0.2": ajv.compile(schemaV02),
+};
 
 const DATE_OWNERS = new Set([
   "dates.trade",
   "dates.settlement",
   "dates.maturity",
   "dates.first_call_observation",
+  "dates.final_valuation",
 ]);
 
 function pointerPath(pointer: string): string {
@@ -88,7 +93,13 @@ function errorPath(error: ErrorObject): string {
   return base;
 }
 
-export function schemaDiagnostics(data: unknown, index: DocIndex, fileName: string): Diagnostic[] {
+export function schemaDiagnostics(
+  data: unknown,
+  index: DocIndex,
+  fileName: string,
+  schemaId: Terms["schema"],
+): Diagnostic[] {
+  const validate = validators[schemaId];
   if (validate(data)) return [];
   const found: Diagnostic[] = [];
   for (const error of validate.errors ?? []) {

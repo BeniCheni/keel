@@ -12,8 +12,8 @@ test("summaries match the frozen payoff counts", () => {
   if (!example.ok || !minimal.ok) return;
 
   expect(verificationSummary(example.terms)).toEqual({
-    verified: 7,
-    total: 16,
+    verified: 8,
+    total: 17,
     unverified: [
       "dates.maturity",
       "dates.observation_schedule",
@@ -28,8 +28,13 @@ test("summaries match the frozen payoff counts", () => {
   });
   expect(verificationSummary(minimal.terms)).toEqual({
     verified: 15,
-    total: 16,
-    unverified: ["dates.observation_schedule"],
+    total: 17,
+    unverified: ["dates.final_valuation", "dates.observation_schedule"],
+  });
+  expect(example.terms.dates.final_valuation).toEqual({
+    value: "2031-07-09",
+    status: "primary",
+    source: "supplement",
   });
 
   const issuer = example.terms.issuer;
@@ -61,4 +66,23 @@ test("summaries match the frozen payoff counts", () => {
   expect(example.terms.barrier.level.status).toBe("estimate");
   expect(example.terms.barrier.observation.status).toBe("primary");
   expect(example.terms.barrier.below_barrier.status).toBe("primary");
+});
+
+test("final valuation is listed immediately after the first call observation", () => {
+  const minimal = loadTerms(textOf("valid", "minimal.yaml"), "minimal.yaml");
+  expect(minimal.ok).toBe(true);
+  if (!minimal.ok) return;
+  const terms = structuredClone(minimal.terms);
+  const maturity = terms.dates.maturity;
+  const first = terms.dates.first_call_observation;
+  if (maturity.status !== "primary") throw new Error("maturity");
+  if (first.status !== "primary") throw new Error("first call");
+  terms.dates.maturity = { value: maturity.value, status: "document", source: maturity.source };
+  terms.dates.first_call_observation = { value: first.value, status: "document", source: first.source };
+  expect(verificationSummary(terms).unverified.slice(0, 4)).toEqual([
+    "dates.maturity",
+    "dates.first_call_observation",
+    "dates.final_valuation",
+    "dates.observation_schedule",
+  ]);
 });

@@ -48,7 +48,11 @@ test("schedule conflicts retain candidate order and flags without ordering their
     for (const candidate of [0, 1]) {
       expect(result.dateFlags[`dates.observation_schedule[${index}].candidates[${candidate}]`]).toEqual(["weekend"]);
     }
-    expect(verificationSummary(result.terms)).toEqual({ verified: 15, total: 16, unverified: ["dates.observation_schedule"] });
+    expect(verificationSummary(result.terms)).toEqual({
+      verified: 15,
+      total: 17,
+      unverified: ["dates.final_valuation", "dates.observation_schedule"],
+    });
   }
 });
 

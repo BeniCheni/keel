@@ -85,7 +85,7 @@ test("only a primary status verifies a payoff path", () => {
       edit.apply(terms, status);
       const summary = verificationSummary(terms);
       expect(summary.unverified, `${status} ${edit.path}`).toContain(edit.path);
-      expect(summary.total).toBe(16);
+      expect(summary.total).toBe(17);
     }
   }
 });
@@ -120,7 +120,7 @@ test("a conflict keeps both candidates and stays unverified", () => {
   const summary = verificationSummary(loaded.terms);
   expect(summary.unverified).toContain("dates.maturity");
   expect(summary.verified).toBe(14);
-  expect(summary.total).toBe(16);
+  expect(summary.total).toBe(17);
 });
 
 test("a primary term backed by an advisor source is an error", () => {
@@ -197,12 +197,16 @@ test("an absent or empty schedule stays in the total", () => {
   expect(loaded.ok).toBe(true);
   if (!loaded.ok) return;
   const absent = verificationSummary(loaded.terms);
-  expect(absent).toEqual({ verified: 15, total: 16, unverified: ["dates.observation_schedule"] });
+  expect(absent).toEqual({
+    verified: 15,
+    total: 17,
+    unverified: ["dates.final_valuation", "dates.observation_schedule"],
+  });
 
   const emptyTerms = structuredClone(loaded.terms);
   emptyTerms.dates.observation_schedule = [];
   const empty = verificationSummary(emptyTerms);
-  expect(empty.total).toBe(16);
+  expect(empty.total).toBe(17);
   expect(empty.unverified).toContain("dates.observation_schedule");
 
   const present = `    - value: 2027-01-04
@@ -215,14 +219,18 @@ test("an absent or empty schedule stays in the total", () => {
   const allPrimary = loadTerms(withSchedule(text, present), "minimal.yaml");
   expect(allPrimary.ok).toBe(true);
   if (!allPrimary.ok) return;
-  expect(verificationSummary(allPrimary.terms)).toEqual({ verified: 16, total: 16, unverified: [] });
+  expect(verificationSummary(allPrimary.terms)).toEqual({
+    verified: 16,
+    total: 17,
+    unverified: ["dates.final_valuation"],
+  });
   const mixed = structuredClone(allPrimary.terms);
   const entry = mixed.dates.observation_schedule?.[0];
   if (entry) Object.assign(entry, { status: "document" });
   const summary = verificationSummary(mixed);
-  expect(summary.total).toBe(16);
+  expect(summary.total).toBe(17);
   expect(summary.verified).toBe(15);
-  expect(summary.unverified).toEqual(["dates.observation_schedule"]);
+  expect(summary.unverified).toEqual(["dates.final_valuation", "dates.observation_schedule"]);
 });
 
 /** Replaces the body of the n-th term block named `key` with the given lines, at the block's own indent. */
@@ -340,12 +348,81 @@ test("a null value is rejected under every status except unknown", () => {
 });
 
 test("the schema marker is the whole value on line 1, never a literal the loader supplies", () => {
-  const text = textOf("valid", "minimal.yaml").replace("schema: mln-terms/0.1\n", "schema: mln-terms/0.1\n  extra\n");
-  const result = loadTerms(text, "minimal.yaml");
-  expect(result.ok).toBe(false);
-  if (!result.ok) {
-    expect(result.errors).toEqual([
-      expect.objectContaining({ code: "schema-line", path: "schema", line: 1, column: 1 }),
-    ]);
+  for (const marker of ["mln-terms/0.1", "mln-terms/0.2"]) {
+    const text = textOf("valid", "minimal.yaml").replace("schema: mln-terms/0.1\n", `schema: ${marker}\n  extra\n`);
+    const result = loadTerms(text, "minimal.yaml");
+    expect(result.ok, marker).toBe(false);
+    if (!result.ok) {
+      expect(result.errors, marker).toEqual([
+        expect.objectContaining({ code: "schema-line", path: "schema", line: 1, column: 1 }),
+      ]);
+    }
+  }
+});
+
+test("an absent final valuation stays absent and stays in the total", () => {
+  const minimal = textOf("valid", "minimal.yaml");
+  for (const schema of ["mln-terms/0.1", "mln-terms/0.2"] as const) {
+    const loaded = loadTerms(minimal.replace("schema: mln-terms/0.1\n", `schema: ${schema}\n`), "minimal.yaml");
+    expect(loaded.ok, schema).toBe(true);
+    if (!loaded.ok) continue;
+    expect(loaded.terms.schema, schema).toBe(schema);
+    expect(loaded.terms.dates.final_valuation, schema).toBeUndefined();
+    expect(Object.hasOwn(loaded.terms.dates, "final_valuation"), schema).toBe(false);
+    const summary = verificationSummary(loaded.terms);
+    expect(summary.total, schema).toBe(13 + loaded.terms.underlyings.members.length);
+    expect(summary.unverified, schema).toContain("dates.final_valuation");
+  }
+});
+
+test("final valuation stays unverified unless it is one primary term", () => {
+  const text = textOf("valid", "minimal.yaml").replace("schema: mln-terms/0.1\n", "schema: mln-terms/0.2\n");
+  const loaded = loadTerms(text, "minimal.yaml");
+  expect(loaded.ok).toBe(true);
+  if (!loaded.ok) return;
+  const absent = verificationSummary(loaded.terms);
+  expect(absent.unverified).toContain("dates.final_valuation");
+
+  const primary = structuredClone(loaded.terms);
+  primary.dates.final_valuation = { value: "2031-07-09", status: "primary", source: "supplement" };
+  expect(verificationSummary(primary).unverified).not.toContain("dates.final_valuation");
+
+  for (const status of STATUSES) {
+    const terms = structuredClone(primary);
+    const term = terms.dates.final_valuation;
+    if (term === undefined) throw new Error("missing final valuation");
+    forceStatus(term, status);
+    expect(verificationSummary(terms).unverified, status).toContain("dates.final_valuation");
+  }
+
+  const conflict = structuredClone(loaded.terms);
+  conflict.dates.final_valuation = {
+    status: "conflict",
+    candidates: [
+      { value: "2031-07-09", status: "primary", source: "supplement" },
+      { value: "2031-07-10", status: "primary", source: "supplement" },
+    ],
+  };
+  const summary = verificationSummary(conflict);
+  expect(summary.unverified).toContain("dates.final_valuation");
+  expect(summary.verified).toBe(absent.verified);
+  expect(summary.total).toBe(absent.total);
+});
+
+test("a 0.1 file never yields a final valuation key", () => {
+  const loaded = loadTerms(textOf("valid", "minimal.yaml"), "minimal.yaml");
+  expect(loaded.ok).toBe(true);
+  if (loaded.ok) {
+    expect(loaded.terms.schema).toBe("mln-terms/0.1");
+    expect(Object.hasOwn(loaded.terms.dates, "final_valuation")).toBe(false);
+  }
+  const stated = textOf("valid", "minimal.yaml").replace(
+    "underlyings:\n",
+    "  final_valuation:\n    value: 2027-03-01\n    status: primary\n    source: supplement\nunderlyings:\n",
+  );
+  const rejected = loadTerms(stated, "minimal.yaml");
+  expect(rejected.ok).toBe(false);
+  if (!rejected.ok) {
+    expect(rejected.errors.map((error) => error.code)).toContain("unknown-key");
   }
 });
