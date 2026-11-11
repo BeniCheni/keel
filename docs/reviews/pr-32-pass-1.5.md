@@ -228,3 +228,68 @@ The PM accepts both findings and contests neither, numbering them R5 and R6. The
 2. **Reproduce or disprove each disposition above.** Can a compliant build still show a call or a premium on a dated observation before the first call observation, on or before settlement, or before the trade date? Check both kinds of schedule, with the final valuation date known and not known. Does withdrawing the negative slots reopen any route that `48b995e` closed?
 3. **Re-derive "Before the first call"** with your own implementation before reading the script, and confirm that no other example's findings changed.
 4. **Check the retired codes.** Does any reference to `observation-before-settlement` or `final-valuation-before-settlement` remain in the spec?
+
+## After the third re-read
+
+Codex's third re-read is [issuecomment-6780212799](https://github.com/BeniCheni/keel/pull/32#issuecomment-6780212799), at `5abb894`, run in a GPT-6.1 Sol High sub-agent. Its formal verdict was not mergeable and its plan verdict mergeable after one Medium fix.
+
+- **Dispositions.** It closed R5, R6 and the PM's slot gap in the plan. It marked R5 formally open, because a docs commit carries no test that fails without the fix, which Severity requires.
+- **Checks.** Both quickstarts, GitHub's `verify`, every claim in the PR body and the privacy scans passed. Demo mode, mutations and Pass M were recorded as N/A.
+- **Paths.** The sub-agent read the review skill from its fresh clone. Outside it, it opened only the private list and its own temporary folder.
+
+### Beni's rulings of 2026-11-11
+
+6. **"Yes, with obligations (Recommended)"**, on "As on PR #16 and PR #28 (idea 39), may PR #32 merge with all 14 open, for this PR only, if the S03 build must land each one's test?" Every High raised on PR #32 stays open under Severity, and the shadow gate says "would escalate". Beni still merges. This is an exception for this PR only, as on PR #16 (ruling 12) and PR #28 (ruling 1). `AGENTS.md` has no exception path. **The question's count was wrong.** The PM wrote 14. The Highs are 12 finding rows (`grep -c -E '^\| (H[0-9]+|P2-[0-9]+|R[0-9]+) \| High \|' docs/reviews/pr-32-pass-1.5.md`) plus the PM's slot gap, so 13. The ruling covers every High on this PR, so its scope is unchanged, and the error is reported to Beni.
+7. **"Yes, last round (Recommended)"**, on "Should the push that fixes it be the last spec round?" As on PR #28 (ruling 3): Codex still cold-reads the fix and checks it is correct. Any further Medium or Low goes on a list that S03's build review carries, not into another spec round. A new High still goes to Beni.
+
+### The obligations on the S03 build
+
+The build's Pass 0 brief lists each High with the test that closes it. The build's PR body names, for each, a mutant that test kills. Each closes only when that test lands and fails without the fix.
+
+| High | Closing test in the S03 build |
+| --- | --- |
+| H1 | AC5: the `0/1` metrics row with `toCall` null; mutant "Dividing by a zero ratio" |
+| H2 | Honesty "No maturity before maturity" and "Chronology"; AC4, each check-5 reason |
+| H3 | Honesty "No status on a planning date"; AC4, both `estimated-date` stops; AC6, g11; AC7, no planning date in any row |
+| H4 | Honesty "No payout on an unestablished chronology or mapping"; AC4, each example under Chronology and mapping failures |
+| H5 | Honesty "An undated item bounds the status"; AC4, the trailing `date-unknown` stop; AC7, at least 100 trailing undated items |
+| P2-1 | Honesty "Chronology", an estimated maturity never `matured`; AC4, `input-unevidenced` for each of the four dates |
+| P2-2 | Honesty "Final valuation date not known"; AC4, Role unknown |
+| P2-3 | Honesty "No payout without its inputs", for `dates.first_call_observation`; AC4, its `input-unevidenced` |
+| P2-4 | AC4, Call before settlement |
+| R1 | AC4, A later listed item and The term absent; honesty "Final valuation date not known" |
+| R3 | AC4, Trade after settlement; honesty "Chronology", `settlement-before-trade` |
+| R5 | AC4, Before the first call; honesty "Chronology", `observation-before-first-call` |
+| PM slot gap | As R5, whose fix closes it, plus AC4, Two before the first call |
+
+### The Medium
+
+| Re-read # | Severity | PM disposition | Reason and fix in `6d27938` |
+| --- | --- | --- | --- |
+| R7 | Medium | Accept | Reproduced with `s03_reread3.py`. With the first call observation 2026-09-01, the dates 2026-08-28 and 2026-08-31 are both nearest slot 0, at 4 and 1 days. If every bullet of check 5 runs, the list is `observation-before-first-call` at 0 and at 1, then `listed-off-cycle` at 1. If the mapping skipped rejected dates, the last finding would drop. The Slots text said no compared date fell before the anchor, which suggested the second reading. Check 5 now says every bullet runs, and a date one bullet rejects is still checked by the later ones. The Slots text now says check 5 rejects every date before the anchor, whatever its nearest slot. Frozen as "Two before the first call", on L. The PR body no longer says such a date cannot reach slot 0 |
+
+### The PM's re-runs at `6d27938`
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Scripts restored | The six scripts in the PR body, extracted and hashed | All six match their printed SHA-256 |
+| The new example | `python3 -I s03_reread3.py`, printed in the PR body | 2026-08-28 is a Friday and 2026-08-31 a Monday, both open. Both are nearest slot 0. The findings are as frozen |
+| No frozen value changed | `python3 -I frozen20.py` and `python3 -I s03_frozen.py \| shasum -a 256` | 20 of 20 present and unchanged since `89687da`. The output hash starts `4dbe9b22`, unchanged |
+| Copy words | `grep -c -i -w 'should\|buy\|sell\|hold' docs/specs/s03-payoff-engine.md` | 0 |
+| Size of the amendment | `git diff --shortstat 5abb894 6d27938` | 1 file, 5 insertions, 4 deletions |
+
+### Authorship since the third re-read
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `6d27938` docs(specs): amend S03 after the third re-read | Claude | Codex, the final re-read |
+| The commit adding this section | Claude | Codex, the same re-read |
+
+### What the final re-read does
+
+By ruling 7 this is the last spec round.
+
+1. **Cold-read `6d27938` and this section's commit.** `git diff 5abb894 6d27938` is the whole amendment.
+2. **Check that the fix is correct.** Does check 5 now say one thing about rejected dates, and does "Two before the first call" follow from it?
+3. **Check the obligations table.** Does each of the 13 Highs name a test in the spec that would fail without its fix?
+4. **List anything else.** Put any further Medium or Low on the list for S03's build review. Report a new High to Beni.
