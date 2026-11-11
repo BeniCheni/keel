@@ -91,7 +91,7 @@ Do your own read before opening this. Everything here is a claim, not a fact. Re
 | 20 | 24 mutants, each exit 1 under `pnpm --filter @keel/core test` on Node v24.22.2, none surviving, each killed by the test the row names | The PR body's mutation table |
 | 21 | `loadTerms`, `dateFlags`, `verificationSummary` and `termDateFlags` keep their signatures; core product code does no file, network, clock or random I/O | The PR's summary |
 
-The PR body also states that Beni set Extra High in Cursor's picker before pasting the build prompt. That repeats the build prompt's own sentence. The PM asked Beni to confirm it on 2026-11-11 and had no answer when this brief was written; no command re-runs it.
+The PR body also states that Beni set Extra High in Cursor's picker before pasting the build prompt. That repeats the build prompt's own sentence. After this brief was first pushed at `2c72b93`, Beni confirmed it at 17:30 EST on 2026-11-11 in the PM's session, answering "Yes" to "Was Cursor's picker on Grok 4.7 Extra High when you pasted the S02.1 build prompt?". That is his statement; no command re-runs it.
 
 ### PM runs at `5132249`
 
