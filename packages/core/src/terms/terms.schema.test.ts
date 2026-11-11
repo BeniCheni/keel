@@ -16,12 +16,11 @@ declare const crypto: {
   };
 };
 
+declare const TextEncoder: new () => { encode(text: string): Uint8Array };
+
+/** SHA-256 of the text as UTF-8, which is what shasum prints for the file. */
 async function sha256Hex(text: string): Promise<string> {
-  const bytes = new Uint8Array(text.length);
-  for (let index = 0; index < text.length; index += 1) {
-    bytes[index] = text.charCodeAt(index);
-  }
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
@@ -115,6 +114,12 @@ test("0.1.json stays byte-identical to origin/main", async () => {
   const text = Object.values(files)[0];
   if (text === undefined) throw new Error("missing 0.1.json");
   expect(await sha256Hex(text)).toBe(SCHEMA_01_SHA256);
+});
+
+test("the digest reads a character outside ASCII as its UTF-8 bytes", async () => {
+  // U+016D and "m" share their low eight bits. `printf '\xc5\xad' | shasum -a 256` prints this digest.
+  expect(await sha256Hex("\u016d")).toBe("6f4eb234cc3cf3c870ea1f69ffcc13182f1029e91dfe7db99ba38dcc6e8b451a");
+  expect(await sha256Hex("\u016dln-terms/0.1")).not.toBe(await sha256Hex("mln-terms/0.1"));
 });
 
 test("schema 0.2 names mln-terms/0.2 and copies the first call observation shape", () => {

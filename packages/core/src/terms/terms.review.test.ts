@@ -202,3 +202,37 @@ test("a line 1 fault leaves a 0.1 file, and a file naming no known marker, judge
     "unknown-key dates.final_valuation 26:3",
   ]);
 });
+
+test("line 1 picks the schema, and a later schema key naming the other marker is schema-line and duplicate-key", () => {
+  const over02 = `${statesFinalValuation("schema: mln-terms/0.2")}schema: mln-terms/0.1\n`;
+  const last02 = over02.split("\n").length - 1;
+  expect(codesAndPaths(over02)).toEqual(["schema-line schema 1:1", `duplicate-key schema ${last02}:1`]);
+
+  const over01 = `${statesFinalValuation("schema: mln-terms/0.1")}schema: mln-terms/0.2\n`;
+  const last01 = over01.split("\n").length - 1;
+  expect(codesAndPaths(over01)).toEqual([
+    "schema-line schema 1:1",
+    "unknown-key dates.final_valuation 26:3",
+    `duplicate-key schema ${last01}:1`,
+  ]);
+});
+
+test("the schema-line message names both markers", () => {
+  const result = loadTerms(textOf("invalid", "schema-line.yaml"), "schema-line.yaml");
+  expect(result.ok).toBe(false);
+  if (result.ok) return;
+  expect(result.errors.map((error) => error.code)).toEqual(["schema-line"]);
+  const message = result.errors[0]?.message ?? "";
+  expect(message).toContain("mln-terms/0.1");
+  expect(message).toContain("mln-terms/0.2");
+});
+
+test("a final valuation candidate that is not a real date is invalid-date at that candidate", () => {
+  for (const value of ["2027-02-30", "2031-7-9"]) {
+    const conflict = `  final_valuation:\n    status: conflict\n    candidates:\n      - value: 2031-07-09\n        status: primary\n        source: supplement\n      - value: ${value}\n        status: primary\n        source: supplement\n`;
+    const text = textOf("valid", "minimal.yaml")
+      .replace("schema: mln-terms/0.1\n", "schema: mln-terms/0.2\n")
+      .replace("underlyings:\n", `${conflict}underlyings:\n`);
+    expect(codesAndPaths(text), value).toEqual(["invalid-date dates.final_valuation.candidates[1].value 32:16"]);
+  }
+});
