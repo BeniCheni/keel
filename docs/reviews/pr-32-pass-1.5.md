@@ -272,7 +272,7 @@ The build's Pass 0 brief lists each High with the test that closes it. The build
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Scripts restored | The six scripts in the PR body, extracted and hashed | All six match their printed SHA-256 |
+| Scripts restored | The six scripts the PR body printed before this round, extracted and hashed. The seventh, `s03_reread3.py`, joined the body with this round | All six match their printed SHA-256 |
 | The new example | `python3 -I s03_reread3.py`, printed in the PR body | 2026-08-28 is a Friday and 2026-08-31 a Monday, both open. Both are nearest slot 0. The findings are as frozen |
 | No frozen value changed | `python3 -I frozen20.py` and `python3 -I s03_frozen.py \| shasum -a 256` | 20 of 20 present and unchanged since `89687da`. The output hash starts `4dbe9b22`, unchanged |
 | Copy words | `grep -c -i -w 'should\|buy\|sell\|hold' docs/specs/s03-payoff-engine.md` | 0 |
