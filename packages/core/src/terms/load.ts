@@ -120,7 +120,9 @@ export function loadTerms(text: string, fileName: string): LoadResult {
   if (dataSchema === null || (lineSchema !== null && dataSchema !== lineSchema)) {
     errors.push(diagnostic(fileName, "schema-line", "schema", 1, 1));
   }
-  const schemaErrors = schemaDiagnostics(data, index, fileName, lineSchema ?? "mln-terms/0.1");
+  // Line 1 picks the schema. When line 1 is not a marker the file is already schema-line, and the parsed value picks it,
+  // so a 0.2 file is not also judged against 0.1. When neither names a marker, 0.1 judges it.
+  const schemaErrors = schemaDiagnostics(data, index, fileName, lineSchema ?? dataSchema ?? "mln-terms/0.1");
   // The source-token fault takes precedence over the parsed number's type or range at the same path.
   errors.push(...schemaErrors.filter((error) => !integerFaultPaths.has(error.path)));
   if (schemaErrors.length === 0) {

@@ -161,3 +161,44 @@ test("negative zero is wrong-type on each integer term and its candidates; minus
     }
   }
 });
+
+const FINAL_VALUATION = "  final_valuation:\n    value: 2027-03-01\n    status: primary\n    source: supplement\n";
+
+/** minimal.yaml stating the final valuation date, with its line 1 replaced by the given text. */
+function statesFinalValuation(firstLines: string): string {
+  return textOf("valid", "minimal.yaml")
+    .replace("schema: mln-terms/0.1\n", `${firstLines}\n`)
+    .replace("underlyings:\n", `${FINAL_VALUATION}underlyings:\n`);
+}
+
+function codesAndPaths(text: string): string[] {
+  const result = loadTerms(text, "minimal.yaml");
+  expect(result.ok).toBe(false);
+  return result.ok ? [] : result.errors.map((error) => `${error.code} ${error.path} ${error.line}:${error.column}`);
+}
+
+test("a 0.2 file with a line 1 fault is schema-line alone, not also judged against 0.1", () => {
+  const faults = [
+    "# synthetic\nschema: mln-terms/0.2",
+    "schema: mln-terms/0.2 # note",
+    "schema: mln-terms/0.2 ",
+    'schema: "mln-terms/0.2"',
+  ];
+  for (const fault of faults) {
+    expect(codesAndPaths(statesFinalValuation(fault)), fault).toEqual(["schema-line schema 1:1"]);
+  }
+  const example = textOf("valid", "example-autocall.yaml");
+  expect(example.startsWith("schema: mln-terms/0.2\n")).toBe(true);
+  expect(codesAndPaths(`# synthetic\n${example}`)).toEqual(["schema-line schema 1:1"]);
+});
+
+test("a line 1 fault leaves a 0.1 file, and a file naming no known marker, judged against 0.1", () => {
+  expect(codesAndPaths(statesFinalValuation("# synthetic\nschema: mln-terms/0.1"))).toEqual([
+    "schema-line schema 1:1",
+    "unknown-key dates.final_valuation 27:3",
+  ]);
+  expect(codesAndPaths(statesFinalValuation("schema: mln-terms/0.3"))).toEqual([
+    "schema-line schema 1:1",
+    "unknown-key dates.final_valuation 26:3",
+  ]);
+});
