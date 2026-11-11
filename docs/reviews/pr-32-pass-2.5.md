@@ -381,7 +381,7 @@ Added by the PM for the records PR. The Pass 2.5 seat wrote no file. This brief 
   - Demo mode is N/A, because the README has no demo step (`grep -c -i demo README.md` prints 0, idea 50).
 - **Closed by this records PR:** the final re-read's Medium on line 275 of `docs/reviews/pr-32-pass-1.5.md`. The row was true when written. `06f8ac9` added it at 14:51 UTC on 2026-11-11, while the PR body held six script blocks, and the body went to seven at 14:52 UTC. That timing comes from GitHub's `userContentEdits` for the PR, counting `<details>` in each version. The row now says so.
 - **Still open:**
-  - The 13 Highs: H1 to H5, P2-1 to P2-4, R1, R3, R5 and the PM's slot gap. By ruling 6, the S03 build must land each closing test in the table "The obligations on the S03 build" in `docs/reviews/pr-32-pass-1.5.md`. The S03 build's Pass 0 brief lists all 13.
+  - The 13 Highs: H1 to H5, P2-1 to P2-4, R1, R3, R5 and the PM's slot gap. By ruling 6, the S03 build must land each closing test in the table "The obligations on the S03 build" in `docs/reviews/pr-32-pass-1.5.md`. The S03 build's Pass 0 brief, not yet written, must list all 13 with their closing tests.
   - The rest of the list for S03's build review, under ruling 7:
     - The final re-read's Medium on line 3 of `docs/specs/s03-payoff-engine.md`, which dates the third amendment to 2026-11-10 though `6d27938` is dated 2026-11-11. A records PR cannot change a spec, so it goes to the next ordinary docs PR.
     - This seat's Low on check 2's order.
