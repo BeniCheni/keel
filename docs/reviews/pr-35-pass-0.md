@@ -26,7 +26,7 @@ Later seats: Pass 1.5 is the PM. Pass 2 is Codex, covering any Claude-authored c
 1. **Fable 5.2 for every Fable seat, Beni, 2026-11-11 at 17:39 EST, in the PM's session, standing.** His words: "Correction: Fable 5.2 is the current latest version from Claude. We're using that for the Pass 1 prompt and future prompts when Fable is desired."
 2. **This PR, Beni, 2026-11-11 at 18:52 EST, in the PM's session.** He answered "Yes, open it" to "Shall I open the AGENTS.md PR moving the Fable pins to 5.2?".
 
-The occasion: PR #34's Pass 2 stopped on the mismatch today, before running anything. The review skill tells Pass 2 to "confirm the Claude seats used the Fable pin or declared the fallback", and `AGENTS.md` named Fable 5.1. PR #34's briefs carry ruling 1 as their ruling 3.
+The occasion: PR #34's Pass 2 stopped on the mismatch today, before the substantive read. (Corrected on 2026-11-12 in records PR #36, after Codex's cold read. This sentence first said "before running anything", but that seat had already checked its fresh clone, and its comment says "before the substantive read". The Pass 1.5 brief records the same correction to the PR body.) The review skill tells Pass 2 to "confirm the Claude seats used the Fable pin or declared the fallback", and `AGENTS.md` named Fable 5.1. PR #34's briefs carry ruling 1 as their ruling 3.
 
 ## Authorship record
 
