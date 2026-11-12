@@ -135,3 +135,56 @@ print(json.dumps(out, indent=1, ensure_ascii=True))
 ```
 
 At `5132249` the first two rows report `anchor count 0`, because the lines they revert do not exist yet.
+
+## After Pass 2
+
+Pass 2's comment is [issuecomment-6810327772](https://github.com/BeniCheni/keel/pull/34#issuecomment-6810327772), posted at 19:07 EST. Reviewed head `be7e30e`, post-fix head `902a9ec`, verdict mergeable after fixes. Codex accepted all nine Pass 1 findings and every disposition above, including finding 1's rule, and contested nothing. It found one thing new.
+
+| Pass 2 # | Severity | PM disposition | Reason |
+| --- | --- | --- | --- |
+| 1 | High, surviving mutant on a provenance boundary | Accept | Reproduced. Each of Pass 2's three mutants in `checks.ts` passes the whole core suite at `be7e30e` (177 passed). One skips the source-kind check, one skips the missing-source check, and one skips the source checks on candidates, each for `dates.final_valuation` only. Each fails exactly the new test at `902a9ec` (1 failed, 177 passed): `final valuation and its candidates require a source matching their primary status`. Pass 2's probe shows the first mutant letting a document-backed date load as `primary` and count as verified, which breaks hard rule 6. The High closes under Severity with `902a9ec`'s test, subject to Pass 2.5's cold read of that commit |
+
+Process notes from Pass 2's comment:
+
+- Codex stopped before its substantive read, because `AGENTS.md` names Fable 5.1 and the skill tells Pass 2 to confirm the Fable pin. Beni reconciled it in the Pass 2 session. The comment records the outcome under "Human-review resolutions": Fable 5.2 Extra for Pass 1 and High for Pass 2.5, under rulings 3 and 4. The PM did not see that exchange, so this brief does not quote it. It is ruling 6.
+- The comment says "Beni supplied the fresh clone", where the prompt had Codex make its own. It records an empty `git status` and a `git reflog` of only the clone and the PR checkout on entry, so the clone was fresh.
+- Codex sampled Pass 1's extra mutants on Node 26.13.0 and replayed all 24 builder rows there, as asked.
+- The private-list check found 0 on every surface, Codex's own comment included.
+- PR #35, opened at 18:54 EST, moves the Fable pins in `AGENTS.md`. It has not merged, so `AGENTS.md` on `main` still names Fable 5.1.
+
+### Authorship since Pass 2
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `902a9ec` test(core): pin final valuation source provenance | Codex | Claude, Pass 2.5, fresh session, Fable 5.2 High by ruling 3 |
+
+### The PM's re-runs at `902a9ec`
+
+In a fresh clone with a fresh `mktemp -d` as `KEEL_DATA_DIR`:
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Install and verify | `pnpm install --frozen-lockfile`, `pnpm verify`, on v24.22.2 and v26.13.0 | Exit 0 for each. Core 178, tooling 122, eight steps ok, status clean |
+| CI | `gh run list --repo BeniCheni/keel --commit 902a9ecd62f147b31bfbf1c0f5a2b81363f04b6d --json databaseId,event,conclusion,status` | Run 43124329982, `pull_request`, success |
+| Authors | `git log --format='%h %an <%ae>' origin/main..HEAD` | `902a9ec` Codex `<noreply@openai.com>`, `be7e30e` and `a5d0863` Claude, `5132249` Cursor |
+| The commit | `git show --stat 902a9ec` | One file, `terms.honesty.test.ts`, 37 insertions |
+| Honesty counts | `git grep -c -E '^[[:space:]]*(test\|it)(\.each\([^)]*\))?\(' HEAD -- '*.honesty.test.ts'` | Schedule 14, terms 12 |
+| Pass 2's three mutants | The driver above with its `M` list replaced by the three rows below, at `be7e30e` and at `902a9ec`, Node 24.22.2 | All three exit 0 with 177 passed at `be7e30e`. At `902a9ec` all three exit 1, each failing only the new test |
+
+The three rows, each one exact edit in `packages/core/src/terms/checks.ts`:
+
+```python
+M = [
+ ("C1-source-kind", "packages/core/src/terms/checks.ts", '      else if (source.kind !== term.status) {', '      else if (source.kind !== term.status && dateOwner(path) !== "dates.final_valuation") {'),
+ ("C2-source-missing", "packages/core/src/terms/checks.ts", '      if (!source) errors.push(diagnostic(fileName, "source-missing", sourcePath, pos.line, pos.column));', '      if (!source) { if (dateOwner(path) !== "dates.final_valuation") errors.push(diagnostic(fileName, "source-missing", sourcePath, pos.line, pos.column)); }'),
+ ("C3-candidate-source", "packages/core/src/terms/checks.ts", '    if (term.status === "primary" || term.status === "document" || term.status === "advisor") {', '    if ((term.status === "primary" || term.status === "document" || term.status === "advisor") && (dateOwner(path) !== "dates.final_valuation" || path === dateOwner(path))) {'),
+]
+```
+
+### What Pass 2.5 does
+
+1. Cold-read `902a9ec`.
+2. Re-run every number it reports at `902a9ec`.
+3. Judge Pass 2's High: whether it is High, and whether `902a9ec` closes it under Severity. Check that every other High is closed. Pass 1 raised none.
+4. Evaluate the merge gate in shadow mode, write the executive brief, and give Beni the handoff block. The PR is still a draft.
+5. Never open the private list. Codex ran it, and Pass 2.5 cites its counts.
