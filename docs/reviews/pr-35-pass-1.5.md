@@ -74,3 +74,16 @@ for old, new in zip(revs, revs[1:]):
     for l in lines:
         print("  " + l[:110])
 ```
+
+## After Pass 2
+
+Pass 2's comment is [issuecomment-6811197709](https://github.com/BeniCheni/keel/pull/35#issuecomment-6811197709), posted at 19:59 EST. Verdict mergeable at `20da0de`, with no fix commit. Codex closed Pass 1's Low against the edited body and PR #34's branch, and raised nothing new. It ran `body_edits.py` above against GitHub's revisions and got the counts in the appendix. Its private-list check found 0 matching lines in the PR title, the edited body, the existing comments and its own comment, and it cited Pass 1's zero for the unchanged diff and commit message.
+
+The authorship record is unchanged: one Claude commit, `20da0de`, cold-read by Codex at Pass 1. No Codex commit exists, so Pass 2.5 has no cold read to give.
+
+### What Pass 2.5 does
+
+1. Runs in a fresh Claude session on Fable 5.2 High, by ruling 1. `AGENTS.md` on `main` still names Fable 5.1 High for this seat, and the PR's own head names Fable 5.2 High.
+2. Re-runs every number it reports at `20da0de`.
+3. Evaluates the merge gate in shadow mode, writes the executive brief, and gives Beni the handoff block. The PR is still a draft. The squash's `Co-authored-by` trailers are Claude, the author and the Pass 2.5 seat, and Codex, Passes 1 and 2.
+4. Never opens the private list, and cites Codex's counts.
