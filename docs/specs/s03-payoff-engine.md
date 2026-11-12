@@ -1,6 +1,6 @@
 # S03: Payoff engine
 
-- Status: drafted 2026-11-10 by the PM (Claude), on Beni's ruling of 2026-11-08 to split the engine work ("Split, schedule first") and his rulings of 2026-11-10, recorded under Decisions. Amended the same day after Codex's plan challenge, after its Pass 2, and after each of its three re-reads of the fixes (`docs/reviews/pr-32-pass-1.5.md`). No code exists yet.
+- Status: drafted 2026-11-10 by the PM (Claude), on Beni's ruling of 2026-11-08 to split the engine work ("Split, schedule first") and his rulings of 2026-11-10, recorded under Decisions. Amended the same day after Codex's plan challenge, after its Pass 2 and after its first two re-reads of the fixes, and on 2026-11-11 after its third re-read (`docs/reviews/pr-32-pass-1.5.md`). No code exists yet.
 - Release: non-release slice toward `v0.1.0`. Starts only after this spec merges and S02.1's build merges, because it reads `dates.final_valuation` from schema 0.2.
 - Builder: Cursor, Grok 4.7 Extra High (sensitive-path slice), in one draft PR on branch `s03/payoff-engine`. Codex adds the Pass M reference at Pass 2 (see Pass M).
 - Sensitive paths the build touches: `packages/plugin-mln/**` and `fixtures/golden/**`, including its `expected/` files. At Pass 2 Codex also adds `tools/reference/**`. This spec PR touches none.

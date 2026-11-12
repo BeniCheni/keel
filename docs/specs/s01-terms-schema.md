@@ -1,6 +1,6 @@
 # S01: Terms schema 0.1 and strict loader
 
-- Status: revised 2026-10-30 by the PM (Claude) after the Codex plan challenge on PR #1 (Pass 1 findings 10 to 14; dispositions in `docs/reviews/pr-1-pass-1.5.md`). Amended 2026-11-02 by the PM for Beni's rulings of 2026-11-01 on PR #13 (`docs/reviews/pr-13-pass-1.5.md`), to match the merged loader.
+- Status: revised 2026-10-30 by the PM (Claude) after the Codex plan challenge on PR #1 (Pass 1 findings 10 to 14; dispositions in `docs/reviews/pr-1-pass-1.5.md`). Amended 2026-11-02 by the PM for Beni's rulings of 2026-11-01 on PR #13 (`docs/reviews/pr-13-pass-1.5.md`), to match the merged loader. Amended 2026-11-12 by the PM to match S02.1 (`docs/specs/s02.1-final-valuation.md`, built in PR #34): the summary's new `dates.final_valuation` path, the generator's version 2, the example fixture's move to schema 0.2, and the two frozen summaries.
 - Release: non-release slice toward `v0.1.0`. Starts only after S00 is merged.
 - Builder: Cursor, Grok 4.7 Extra High (sensitive-path slice).
 - Sensitive paths touched: `schemas/**`, `packages/core/**`, `tools/tripwire/allowlist.txt`.
@@ -101,19 +101,20 @@ Referential checks run only after the schema passes. A file with both kinds of f
 4. **Verification summary.** `verificationSummary(terms)` returns `{ verified, total, unverified }`. Every payoff term is critical, so there is one list. The payoff paths, in this fixed order:
    1. `dates.maturity`
    2. `dates.first_call_observation`
-   3. `dates.observation_schedule`, counted as one path. It is verified only if present, nonempty, and every entry is `primary`. Absent counts as unverified.
-   4. `underlyings.members[i].initial`, one path per member, in member order
-   5. `underlyings.performance_rounding`
-   6. `call.level`, `call.non_call_months`, `call.frequency`
-   7. `premium.rate_per_year`, `premium.accrual`
-   8. `barrier.level`, `barrier.observation`, `barrier.below_barrier`
+   3. `dates.final_valuation`, added by S02.1. It is verified only when present as one `primary` term. Absent counts as unverified, so a 0.1 file, which cannot state it, always lists it.
+   4. `dates.observation_schedule`, counted as one path. It is verified only if present, nonempty, and every entry is `primary`. Absent counts as unverified.
+   5. `underlyings.members[i].initial`, one path per member, in member order
+   6. `underlyings.performance_rounding`
+   7. `call.level`, `call.non_call_months`, `call.frequency`
+   8. `premium.rate_per_year`, `premium.accrual`
+   9. `barrier.level`, `barrier.observation`, `barrier.below_barrier`
 
    A path is verified only when its status is `primary`. `total` is the number of paths; `unverified` lists the unverified paths in the order above.
 5. **Date flags.** `dateFlags(isoDate)` returns `['weekend']` for a Saturday or Sunday and `[]` otherwise, computed from the ISO date alone (no clock, no time zone). The loader flags every known date value, conflict candidates included. It never rejects a weekend date.
-6. **Fixture generator.** `tools/generators/terms/`, registered in `fixtures:regen` as `terms` version 1 with a fixed seed. It owns `fixtures/synthetic/terms/`. Fixtures are never hand-typed.
-   - `valid/example-autocall.yaml`: a fictional "Example Bank SA" note on tickers ALFA, BRVO, CHRL and DLTA. Its statuses are fixed by this spec (below); the seed chooses the values only.
+6. **Fixture generator.** `tools/generators/terms/`, registered in `fixtures:regen` as `terms` with a fixed seed: version 1 here, version 2 since S02.1. It owns `fixtures/synthetic/terms/`. Fixtures are never hand-typed.
+   - `valid/example-autocall.yaml`: a fictional "Example Bank SA" note on tickers ALFA, BRVO, CHRL and DLTA. Its statuses are fixed by this spec (below); the seed chooses the values only. Since S02.1 its line 1 names `mln-terms/0.2` and it states `dates.final_valuation`.
    - `valid/minimal.yaml`: only required fields, four members, every term `primary`.
-   - `invalid/`: each file applies exactly one mutation to `minimal.yaml`, so it violates exactly one rule. At least one file per error code except `yaml-syntax`, and one file per variant where a code has several: `unknown-key` for a nested key (`call.levle`) and a top-level key; `status-fields` for `unknown` with a non-null value and for `estimate` without `rule`; `source-kind` for `primary` citing an `advisor`-kind source; `invalid-date` for `2027-02-30`; and `source-path` for each of `..`, a leading `/`, `C:/`, `//server/share` and a backslash.
+   - `invalid/`: each file applies exactly one mutation to `minimal.yaml`, so it violates exactly one rule. Since S02.1, `invalid-date-final-valuation.yaml` applies its one mutation to `minimal.yaml` moved to schema 0.2, because the rule it tests exists only there. At least one file per error code except `yaml-syntax`, and one file per variant where a code has several: `unknown-key` for a nested key (`call.levle`) and a top-level key; `status-fields` for `unknown` with a non-null value and for `estimate` without `rule`; `source-kind` for `primary` citing an `advisor`-kind source; `invalid-date` for `2027-02-30`; and `source-path` for each of `..`, a leading `/`, `C:/`, `//server/share` and a backslash.
    - Fixture CUSIPs pass the check digit and start with `ZZZ`. `tools/tripwire/allowlist.txt` lists each exactly, with glob `fixtures/synthetic/terms/**` and reason "synthetic fixture".
 
 ### Statuses in `example-autocall.yaml`, and the frozen summary
@@ -123,6 +124,7 @@ Referential checks run only after the schema passes. A file with both kinds of f
 | `dates.trade` | `primary`, on a Saturday |
 | `dates.maturity` | `conflict`: one `document` candidate, one `advisor` candidate |
 | `dates.first_call_observation` | `primary` |
+| `dates.final_valuation` | `primary`, added by S02.1 |
 | `dates.observation_schedule` | absent |
 | ALFA and BRVO `initial` | `primary` |
 | CHRL `initial` | `document` |
@@ -140,8 +142,8 @@ Referential checks run only after the schema passes. A file with both kinds of f
 
 ```json
 {
-  "verified": 7,
-  "total": 16,
+  "verified": 8,
+  "total": 17,
   "unverified": [
     "dates.maturity",
     "dates.observation_schedule",
@@ -159,7 +161,7 @@ Referential checks run only after the schema passes. A file with both kinds of f
 On `minimal.yaml` it returns exactly:
 
 ```json
-{ "verified": 15, "total": 16, "unverified": ["dates.observation_schedule"] }
+{ "verified": 15, "total": 17, "unverified": ["dates.final_valuation", "dates.observation_schedule"] }
 ```
 
 ## Honesty tests (`terms.honesty.test.ts`)

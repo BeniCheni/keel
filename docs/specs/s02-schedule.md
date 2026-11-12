@@ -1,6 +1,6 @@
 # S02: Observation schedule and exchange calendar
 
-- Status: drafted 2026-11-08 by the PM (Claude), on Beni's ruling of 2026-11-08 to split the engine work and build the schedule first. Amended the same day after Codex's plan challenge (`docs/reviews/pr-28-pass-1.5.md`). No code exists yet.
+- Status: drafted 2026-11-08 by the PM (Claude), on Beni's ruling of 2026-11-08 to split the engine work and build the schedule first. Amended the same day after Codex's plan challenge (`docs/reviews/pr-28-pass-1.5.md`). Built in PR #30. Amended 2026-11-12 by the PM to match S02.1 (`docs/specs/s02.1-final-valuation.md`, built in PR #34): `termDateFlags` gains `dates.final_valuation` when the term is present with a known value, and so does the frozen object below.
 - Release: non-release slice toward `v0.1.0`. Starts only after this spec merges.
 - Builder: Cursor, Grok 4.7 Extra High (sensitive-path slice), in one draft PR on branch `s02/schedule`.
 - Sensitive paths the build touches: `packages/core/**`. This spec PR touches none.
@@ -222,7 +222,8 @@ Entry 0's `flags` are `weekend` in case 2, `exchange-holiday` in cases 4, 5 and 
   "dates.settlement": [],
   "dates.maturity.candidates[0]": [],
   "dates.maturity.candidates[1]": ["weekend"],
-  "dates.first_call_observation": ["weekend"]
+  "dates.first_call_observation": ["weekend"],
+  "dates.final_valuation": []
 }
 ```
 
