@@ -1,0 +1,19 @@
+{
+  "name": "@keel/plugin-mln",
+  "version": "0.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run --config vitest.config.mjs"
+  },
+  "dependencies": {
+    "@keel/core": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "5.0.5"
+  }
+}

@@ -1,0 +1,341 @@
+{
+  "synthetic": true,
+  "case": "g10-truncate-provisional",
+  "evaluation": {
+    "kind": "evaluated",
+    "asOf": "2026-12-15",
+    "calendar": "nyse-rules-1",
+    "schedule": "listed",
+    "status": "called",
+    "rows": [
+      {
+        "index": 0,
+        "kind": "call",
+        "scheduleIndex": 0,
+        "date": "2026-09-01",
+        "dateOrigin": "listed",
+        "dateStatus": "primary",
+        "premiumMonths": 6,
+        "members": [
+          {
+            "ticker": "ALFA",
+            "close": "99.217425",
+            "sources": [
+              "synthetic-close"
+            ],
+            "ratio": "9897/10000"
+          },
+          {
+            "ticker": "BRVO",
+            "close": "76.470975",
+            "sources": [
+              "synthetic-close"
+            ],
+            "ratio": "9499/10000"
+          },
+          {
+            "ticker": "CHRL",
+            "close": "148.008",
+            "sources": [
+              "synthetic-close"
+            ],
+            "ratio": "6167/5000"
+          },
+          {
+            "ticker": "DLTA",
+            "close": "98.121438",
+            "sources": [
+              "synthetic-close"
+            ],
+            "ratio": "2063/2000"
+          }
+        ],
+        "worst": {
+          "ticker": "BRVO",
+          "ratio": "9499/10000"
+        },
+        "outcome": "not-called",
+        "payoutCents": null,
+        "reasons": []
+      },
+      {
+        "index": 1,
+        "kind": "call",
+        "scheduleIndex": 1,
+        "date": "2026-12-01",
+        "dateOrigin": "listed",
+        "dateStatus": "primary",
+        "premiumMonths": 9,
+        "members": [
+          {
+            "ticker": "ALFA",
+            "close": "95.2375",
+            "sources": [
+              "synthetic-close"
+            ],
+            "ratio": "19/20"
+          },
+          {
+            "ticker": "BRVO",
+            "close": "102.98365",
+            "sources": [
+              "synthetic-close"
+            ],
+            "ratio": "12793/10000"
+          },
+          {
+            "ticker": "CHRL",
+            "close": "151.836",
+            "sources": [
+              "synthetic-close"
+            ],
+            "ratio": "12653/10000"
+          },
+          {
+            "ticker": "DLTA",
+            "close": "110.677938",
+            "sources": [
+              "synthetic-close"
+            ],
+            "ratio": "2327/2000"
+          }
+        ],
+        "worst": {
+          "ticker": "ALFA",
+          "ratio": "19/20"
+        },
+        "outcome": "called",
+        "payoutCents": 106375,
+        "reasons": []
+      }
+    ],
+    "next": null,
+    "payoutCents": 106375,
+    "reasons": [],
+    "unverified": [
+      "underlyings.members[3].initial"
+    ],
+    "provisional": true,
+    "assumptions": [
+      {
+        "code": "per-1000-principal"
+      },
+      {
+        "code": "cents-half-up"
+      },
+      {
+        "code": "premium-months-by-index"
+      },
+      {
+        "code": "final-call-then-barrier"
+      }
+    ]
+  },
+  "payouts": {
+    "kind": "payouts",
+    "calendar": "nyse-rules-1",
+    "schedule": "listed",
+    "calls": [
+      {
+        "scheduleIndex": 0,
+        "date": "2026-09-01",
+        "evidenced": true,
+        "premiumMonths": 6,
+        "payoutCents": 104250
+      },
+      {
+        "scheduleIndex": 1,
+        "date": "2026-12-01",
+        "evidenced": true,
+        "premiumMonths": 9,
+        "payoutCents": 106375
+      },
+      {
+        "scheduleIndex": 2,
+        "date": "2027-03-01",
+        "evidenced": true,
+        "premiumMonths": 12,
+        "payoutCents": 108500
+      },
+      {
+        "scheduleIndex": 3,
+        "date": "2027-06-01",
+        "evidenced": true,
+        "premiumMonths": 15,
+        "payoutCents": 110625
+      },
+      {
+        "scheduleIndex": 4,
+        "date": "2027-09-01",
+        "evidenced": true,
+        "premiumMonths": 18,
+        "payoutCents": 112750
+      },
+      {
+        "scheduleIndex": 5,
+        "date": "2027-12-01",
+        "evidenced": true,
+        "premiumMonths": 21,
+        "payoutCents": 114875
+      },
+      {
+        "scheduleIndex": 6,
+        "date": "2028-03-01",
+        "evidenced": true,
+        "premiumMonths": 24,
+        "payoutCents": 117000
+      },
+      {
+        "scheduleIndex": 7,
+        "date": "2028-06-01",
+        "evidenced": true,
+        "premiumMonths": 27,
+        "payoutCents": 119125
+      },
+      {
+        "scheduleIndex": 8,
+        "date": "2028-09-01",
+        "evidenced": true,
+        "premiumMonths": 30,
+        "payoutCents": 121250
+      },
+      {
+        "scheduleIndex": 9,
+        "date": "2028-12-01",
+        "evidenced": true,
+        "premiumMonths": 33,
+        "payoutCents": 123375
+      },
+      {
+        "scheduleIndex": 10,
+        "date": "2029-03-01",
+        "evidenced": true,
+        "premiumMonths": 36,
+        "payoutCents": 125500
+      },
+      {
+        "scheduleIndex": 11,
+        "date": "2029-06-01",
+        "evidenced": true,
+        "premiumMonths": 39,
+        "payoutCents": 127625
+      },
+      {
+        "scheduleIndex": 12,
+        "date": "2029-09-04",
+        "evidenced": true,
+        "premiumMonths": 42,
+        "payoutCents": 129750
+      },
+      {
+        "scheduleIndex": 13,
+        "date": "2029-12-03",
+        "evidenced": true,
+        "premiumMonths": 45,
+        "payoutCents": 131875
+      },
+      {
+        "scheduleIndex": 14,
+        "date": "2030-03-01",
+        "evidenced": true,
+        "premiumMonths": 48,
+        "payoutCents": 134000
+      },
+      {
+        "scheduleIndex": 15,
+        "date": "2030-06-03",
+        "evidenced": true,
+        "premiumMonths": 51,
+        "payoutCents": 136125
+      },
+      {
+        "scheduleIndex": 16,
+        "date": "2030-09-03",
+        "evidenced": true,
+        "premiumMonths": 54,
+        "payoutCents": 138250
+      },
+      {
+        "scheduleIndex": 17,
+        "date": "2030-12-02",
+        "evidenced": true,
+        "premiumMonths": 57,
+        "payoutCents": 140375
+      }
+    ],
+    "final": {
+      "date": "2031-02-26",
+      "evidenced": true,
+      "premiumMonths": 60,
+      "aboveCallCents": 142500,
+      "atOrAboveBarrierCents": 100000
+    },
+    "unverified": [],
+    "provisional": false,
+    "assumptions": [
+      {
+        "code": "per-1000-principal"
+      },
+      {
+        "code": "cents-half-up"
+      },
+      {
+        "code": "premium-months-by-index"
+      },
+      {
+        "code": "final-call-then-barrier"
+      }
+    ]
+  },
+  "metrics": {
+    "kind": "metrics",
+    "asOf": "2026-12-15",
+    "date": "2026-12-15",
+    "members": [
+      {
+        "ticker": "ALFA",
+        "close": "101.102125",
+        "sources": [
+          "synthetic-close"
+        ],
+        "ratio": "2017/2000"
+      },
+      {
+        "ticker": "BRVO",
+        "close": "49.3143",
+        "sources": [
+          "synthetic-close"
+        ],
+        "ratio": "3063/5000"
+      },
+      {
+        "ticker": "CHRL",
+        "close": "111.132",
+        "sources": [
+          "synthetic-close"
+        ],
+        "ratio": "9261/10000"
+      },
+      {
+        "ticker": "DLTA",
+        "close": "118.630388",
+        "sources": [
+          "synthetic-close"
+        ],
+        "ratio": "12471/10000"
+      }
+    ],
+    "worst": {
+      "ticker": "BRVO",
+      "ratio": "3063/5000"
+    },
+    "toBarrier": "21/1021",
+    "toCall": "1687/3063",
+    "belowBarrier": false,
+    "atOrAboveCall": false,
+    "unverified": [
+      "underlyings.members[3].initial"
+    ],
+    "provisional": true
+  }
+}

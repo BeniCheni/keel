@@ -1,0 +1,1812 @@
+{
+  "synthetic": true,
+  "case": "g04-final-above-call",
+  "asOf": "2031-03-03",
+  "calendar": "nyse-rules-1",
+  "terms": {
+    "schema": "mln-terms/0.2",
+    "id": "note-min",
+    "category": "mln",
+    "structure": "autocall-snowball-worst-of",
+    "issuer": {
+      "status": "primary",
+      "value": "Example Bank SA",
+      "source": "supplement"
+    },
+    "dates": {
+      "trade": {
+        "status": "primary",
+        "value": "2026-03-02",
+        "source": "supplement"
+      },
+      "settlement": {
+        "status": "primary",
+        "value": "2026-03-04",
+        "source": "supplement"
+      },
+      "maturity": {
+        "status": "primary",
+        "value": "2031-03-03",
+        "source": "supplement"
+      },
+      "first_call_observation": {
+        "status": "primary",
+        "value": "2026-09-01",
+        "source": "supplement"
+      },
+      "final_valuation": {
+        "status": "primary",
+        "value": "2031-02-26",
+        "source": "supplement"
+      },
+      "observation_schedule": [
+        {
+          "status": "primary",
+          "value": "2026-09-01",
+          "source": "supplement"
+        },
+        {
+          "status": "primary",
+          "value": "2026-12-01",
+          "source": "supplement"
+        },
+        {
+          "status": "primary",
+          "value": "2027-03-01",
+          "source": "supplement"
+        },
+        {
+          "status": "primary",
+          "value": "2027-06-01",
+          "source": "supplement"
+        },
+        {
+          "status": "primary",
+          "value": "2027-09-01",
+          "source": "supplement"
+        },
+        {
+          "status": "primary",
+          "value": "2027-12-01",
+          "source": "supplement"
+        },
+        {
+          "status": "primary",
+          "value": "2028-03-01",
+          "source": "supplement"
+        },
+        {
+          "status": "primary",
+          "value": "2028-06-01",
+          "source": "supplement"
+        },
+        {
+          "status": "primary",
+          "value": "2028-09-01",
+          "source": "supplement"
+        },
+        {
+          "status": "primary",
+          "value": "2028-12-01",
+          "source": "supplement"
+        },
+        {
+          "status": "primary",
+          "value": "2029-03-01",
+          "source": "supplement"
+        },
+        {
+          "status": "primary",
+          "value": "2029-06-01",
+          "source": "supplement"
+        },
+        {
+          "status": "primary",
+          "value": "2029-09-04",
+          "source": "supplement"
+        },
+        {
+          "status": "primary",
+          "value": "2029-12-03",
+          "source": "supplement"
+        },
+        {
+          "status": "primary",
+          "value": "2030-03-01",
+          "source": "supplement"
+        },
+        {
+          "status": "primary",
+          "value": "2030-06-03",
+          "source": "supplement"
+        },
+        {
+          "status": "primary",
+          "value": "2030-09-03",
+          "source": "supplement"
+        },
+        {
+          "status": "primary",
+          "value": "2030-12-02",
+          "source": "supplement"
+        },
+        {
+          "status": "primary",
+          "value": "2031-02-26",
+          "source": "supplement"
+        }
+      ]
+    },
+    "underlyings": {
+      "basket": "worst_of",
+      "members": [
+        {
+          "ticker": "ALFA",
+          "initial": {
+            "status": "primary",
+            "value": "100.25",
+            "source": "supplement"
+          }
+        },
+        {
+          "ticker": "BRVO",
+          "initial": {
+            "status": "primary",
+            "value": "80.5",
+            "source": "supplement"
+          }
+        },
+        {
+          "ticker": "CHRL",
+          "initial": {
+            "status": "primary",
+            "value": "120",
+            "source": "supplement"
+          }
+        },
+        {
+          "ticker": "DLTA",
+          "initial": {
+            "status": "primary",
+            "value": "95.125",
+            "source": "supplement"
+          }
+        }
+      ],
+      "performance_rounding": {
+        "status": "primary",
+        "value": "half-up-4dp",
+        "source": "supplement"
+      }
+    },
+    "call": {
+      "level": {
+        "status": "primary",
+        "value": 9500,
+        "source": "supplement"
+      },
+      "non_call_months": {
+        "status": "primary",
+        "value": 6,
+        "source": "supplement"
+      },
+      "frequency": {
+        "status": "primary",
+        "value": "quarterly",
+        "source": "supplement"
+      }
+    },
+    "premium": {
+      "rate_per_year": {
+        "status": "primary",
+        "value": 850,
+        "source": "supplement"
+      },
+      "accrual": {
+        "status": "primary",
+        "value": "simple",
+        "source": "supplement"
+      }
+    },
+    "barrier": {
+      "level": {
+        "status": "primary",
+        "value": 6000,
+        "source": "supplement"
+      },
+      "observation": {
+        "status": "primary",
+        "value": "final",
+        "source": "supplement"
+      },
+      "below_barrier": {
+        "status": "primary",
+        "value": "one-for-one-worst",
+        "source": "supplement"
+      }
+    },
+    "economics": {
+      "issue_price": {
+        "status": "primary",
+        "value": 10000,
+        "source": "supplement"
+      }
+    },
+    "sources": {
+      "supplement": {
+        "kind": "primary",
+        "file": "sources/supplement.pdf"
+      }
+    }
+  },
+  "schedule": {
+    "kind": "listed",
+    "entries": [
+      {
+        "index": 0,
+        "date": "2026-09-01",
+        "term": {
+          "status": "primary",
+          "value": "2026-09-01",
+          "source": "supplement"
+        }
+      },
+      {
+        "index": 1,
+        "date": "2026-12-01",
+        "term": {
+          "status": "primary",
+          "value": "2026-12-01",
+          "source": "supplement"
+        }
+      },
+      {
+        "index": 2,
+        "date": "2027-03-01",
+        "term": {
+          "status": "primary",
+          "value": "2027-03-01",
+          "source": "supplement"
+        }
+      },
+      {
+        "index": 3,
+        "date": "2027-06-01",
+        "term": {
+          "status": "primary",
+          "value": "2027-06-01",
+          "source": "supplement"
+        }
+      },
+      {
+        "index": 4,
+        "date": "2027-09-01",
+        "term": {
+          "status": "primary",
+          "value": "2027-09-01",
+          "source": "supplement"
+        }
+      },
+      {
+        "index": 5,
+        "date": "2027-12-01",
+        "term": {
+          "status": "primary",
+          "value": "2027-12-01",
+          "source": "supplement"
+        }
+      },
+      {
+        "index": 6,
+        "date": "2028-03-01",
+        "term": {
+          "status": "primary",
+          "value": "2028-03-01",
+          "source": "supplement"
+        }
+      },
+      {
+        "index": 7,
+        "date": "2028-06-01",
+        "term": {
+          "status": "primary",
+          "value": "2028-06-01",
+          "source": "supplement"
+        }
+      },
+      {
+        "index": 8,
+        "date": "2028-09-01",
+        "term": {
+          "status": "primary",
+          "value": "2028-09-01",
+          "source": "supplement"
+        }
+      },
+      {
+        "index": 9,
+        "date": "2028-12-01",
+        "term": {
+          "status": "primary",
+          "value": "2028-12-01",
+          "source": "supplement"
+        }
+      },
+      {
+        "index": 10,
+        "date": "2029-03-01",
+        "term": {
+          "status": "primary",
+          "value": "2029-03-01",
+          "source": "supplement"
+        }
+      },
+      {
+        "index": 11,
+        "date": "2029-06-01",
+        "term": {
+          "status": "primary",
+          "value": "2029-06-01",
+          "source": "supplement"
+        }
+      },
+      {
+        "index": 12,
+        "date": "2029-09-04",
+        "term": {
+          "status": "primary",
+          "value": "2029-09-04",
+          "source": "supplement"
+        }
+      },
+      {
+        "index": 13,
+        "date": "2029-12-03",
+        "term": {
+          "status": "primary",
+          "value": "2029-12-03",
+          "source": "supplement"
+        }
+      },
+      {
+        "index": 14,
+        "date": "2030-03-01",
+        "term": {
+          "status": "primary",
+          "value": "2030-03-01",
+          "source": "supplement"
+        }
+      },
+      {
+        "index": 15,
+        "date": "2030-06-03",
+        "term": {
+          "status": "primary",
+          "value": "2030-06-03",
+          "source": "supplement"
+        }
+      },
+      {
+        "index": 16,
+        "date": "2030-09-03",
+        "term": {
+          "status": "primary",
+          "value": "2030-09-03",
+          "source": "supplement"
+        }
+      },
+      {
+        "index": 17,
+        "date": "2030-12-02",
+        "term": {
+          "status": "primary",
+          "value": "2030-12-02",
+          "source": "supplement"
+        }
+      },
+      {
+        "index": 18,
+        "date": "2031-02-26",
+        "term": {
+          "status": "primary",
+          "value": "2031-02-26",
+          "source": "supplement"
+        }
+      }
+    ]
+  },
+  "closes": [
+    {
+      "ticker": "ALFA",
+      "date": "2026-08-31",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2026-08-31",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2026-08-31",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2026-08-31",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2026-09-01",
+      "value": "117.863925",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2026-09-01",
+      "value": "62.84635",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2026-09-01",
+      "value": "120.912",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2026-09-01",
+      "value": "118.925275",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2026-09-02",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2026-09-02",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2026-09-02",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2026-09-02",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2026-11-30",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2026-11-30",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2026-11-30",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2026-11-30",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2026-12-01",
+      "value": "123.076925",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2026-12-01",
+      "value": "54.8366",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2026-12-01",
+      "value": "123.876",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2026-12-01",
+      "value": "71.87645",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2026-12-02",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2026-12-02",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2026-12-02",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2026-12-02",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2027-02-26",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2027-02-26",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2027-02-26",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2027-02-26",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2027-03-01",
+      "value": "110.806325",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2027-03-01",
+      "value": "63.4018",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2027-03-01",
+      "value": "143.172",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2027-03-01",
+      "value": "117.098875",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2027-03-02",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2027-03-02",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2027-03-02",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2027-03-02",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2027-05-28",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2027-05-28",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2027-05-28",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2027-05-28",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2027-06-01",
+      "value": "67.94945",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2027-06-01",
+      "value": "103.94965",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2027-06-01",
+      "value": "131.796",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2027-06-01",
+      "value": "67.205813",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2027-06-02",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2027-06-02",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2027-06-02",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2027-06-02",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2027-08-31",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2027-08-31",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2027-08-31",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2027-08-31",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2027-09-01",
+      "value": "85.55335",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2027-09-01",
+      "value": "77.9884",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2027-09-01",
+      "value": "133.14",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2027-09-01",
+      "value": "101.622038",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2027-09-02",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2027-09-02",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2027-09-02",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2027-09-02",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2027-11-30",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2027-11-30",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2027-11-30",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2027-11-30",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2027-12-01",
+      "value": "118.6158",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2027-12-01",
+      "value": "88.92835",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2027-12-01",
+      "value": "79.02",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2027-12-01",
+      "value": "95.7338",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2027-12-02",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2027-12-02",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2027-12-02",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2027-12-02",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2028-02-29",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2028-02-29",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2028-02-29",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2028-02-29",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2028-03-01",
+      "value": "90.80645",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2028-03-01",
+      "value": "86.8112",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2028-03-01",
+      "value": "137.76",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2028-03-01",
+      "value": "96.1904",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2028-03-02",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2028-03-02",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2028-03-02",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2028-03-02",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2028-05-31",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2028-05-31",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2028-05-31",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2028-05-31",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2028-06-01",
+      "value": "92.019475",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2028-06-01",
+      "value": "65.1245",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2028-06-01",
+      "value": "82.644",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2028-06-01",
+      "value": "73.141613",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2028-06-02",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2028-06-02",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2028-06-02",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2028-06-02",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2028-08-31",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2028-08-31",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2028-08-31",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2028-08-31",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2028-09-01",
+      "value": "70.8166",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2028-09-01",
+      "value": "52.81605",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2028-09-01",
+      "value": "145.884",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2028-09-01",
+      "value": "81.255775",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2028-09-05",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2028-09-05",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2028-09-05",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2028-09-05",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2028-11-30",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2028-11-30",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2028-11-30",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2028-11-30",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2028-12-01",
+      "value": "82.78645",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2028-12-01",
+      "value": "103.90135",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2028-12-01",
+      "value": "143.46",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2028-12-01",
+      "value": "110.402075",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2028-12-04",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2028-12-04",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2028-12-04",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2028-12-04",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2029-02-28",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2029-02-28",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2029-02-28",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2029-02-28",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2029-03-01",
+      "value": "122.134575",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2029-03-01",
+      "value": "76.61185",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2029-03-01",
+      "value": "107.88",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2029-03-01",
+      "value": "89.056025",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2029-03-02",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2029-03-02",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2029-03-02",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2029-03-02",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2029-05-31",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2029-05-31",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2029-05-31",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2029-05-31",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2029-06-01",
+      "value": "109.082025",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2029-06-01",
+      "value": "60.6487",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2029-06-01",
+      "value": "148.224",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2029-06-01",
+      "value": "107.120263",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2029-06-04",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2029-06-04",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2029-06-04",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2029-06-04",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2029-08-31",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2029-08-31",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2029-08-31",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2029-08-31",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2029-09-04",
+      "value": "65.934425",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2029-09-04",
+      "value": "92.0276",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2029-09-04",
+      "value": "126.876",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2029-09-04",
+      "value": "107.139288",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2029-09-05",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2029-09-05",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2029-09-05",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2029-09-05",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2029-11-30",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2029-11-30",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2029-11-30",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2029-11-30",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2029-12-03",
+      "value": "125.061875",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2029-12-03",
+      "value": "96.28605",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2029-12-03",
+      "value": "129.192",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2029-12-03",
+      "value": "72.123775",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2029-12-04",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2029-12-04",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2029-12-04",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2029-12-04",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2030-02-28",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2030-02-28",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2030-02-28",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2030-02-28",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2030-03-01",
+      "value": "103.63845",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2030-03-01",
+      "value": "89.6287",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2030-03-01",
+      "value": "108.384",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2030-03-01",
+      "value": "94.0596",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2030-03-04",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2030-03-04",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2030-03-04",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2030-03-04",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2030-05-31",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2030-05-31",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2030-05-31",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2030-05-31",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2030-06-03",
+      "value": "108.12965",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2030-06-03",
+      "value": "69.14145",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2030-06-03",
+      "value": "134.364",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2030-06-03",
+      "value": "78.6113",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2030-06-04",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2030-06-04",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2030-06-04",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2030-06-04",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2030-08-30",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2030-08-30",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2030-08-30",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2030-08-30",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2030-09-03",
+      "value": "80.01955",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2030-09-03",
+      "value": "90.5786",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2030-09-03",
+      "value": "83.076",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2030-09-03",
+      "value": "64.2284",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2030-09-04",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2030-09-04",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2030-09-04",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2030-09-04",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2030-11-29",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2030-11-29",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2030-11-29",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2030-11-29",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2030-12-02",
+      "value": "111.69855",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2030-12-02",
+      "value": "96.4712",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2030-12-02",
+      "value": "137.184",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2030-12-02",
+      "value": "90.3307",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2030-12-03",
+      "value": "120.3",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2030-12-03",
+      "value": "96.6",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2030-12-03",
+      "value": "144",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2030-12-03",
+      "value": "114.15",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2031-02-25",
+      "value": "50.125",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2031-02-25",
+      "value": "40.25",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2031-02-25",
+      "value": "60",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2031-02-25",
+      "value": "47.5625",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2031-02-26",
+      "value": "95.2375",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2031-02-26",
+      "value": "96.86565",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2031-02-26",
+      "value": "151.14",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2031-02-26",
+      "value": "92.394913",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2031-02-27",
+      "value": "50.125",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2031-02-27",
+      "value": "40.25",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2031-02-27",
+      "value": "60",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2031-02-27",
+      "value": "47.5625",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "ALFA",
+      "date": "2031-03-03",
+      "value": "77.0722",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "2031-03-03",
+      "value": "49.69265",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "2031-03-03",
+      "value": "128.46",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "2031-03-03",
+      "value": "86.649363",
+      "source": "synthetic-close"
+    }
+  ]
+}

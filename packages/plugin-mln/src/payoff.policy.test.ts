@@ -1,0 +1,42 @@
+// @ts-expect-error TS2591
+import { mkdtempSync, writeFileSync } from "node:fs";
+// @ts-expect-error TS2591
+import { tmpdir } from "node:os";
+// @ts-expect-error TS2591
+import { join } from "node:path";
+import { expect, test } from "vitest";
+// @ts-expect-error TS7016
+import { cusipCheckDigit } from "../../../tools/tripwire/scan.mjs";
+// @ts-expect-error TS7016
+import { assertScanClean, drawAllowed, scanTree, seededValueRejected } from "../../../tools/generators/golden/generate.mjs";
+import { repoRoot } from "./test-support/access.test.ts";
+
+function plantedCusip(): string {
+  const body = `${"0".repeat(7)}A`;
+  return `${body}${cusipCheckDigit(body)}`;
+}
+
+test("a seeded CUSIP is rejected and stops after 64 draws", () => {
+  const token = plantedCusip();
+  expect(seededValueRejected(token)).toBe("cusip");
+  expect(seededValueRejected(`1${"0".repeat(8)}`)).toBe("digits");
+  expect(seededValueRejected("1.25")).toBeNull();
+  expect(drawAllowed("g-clean", () => "1.25")).toBe("1.25");
+  expect(() => drawAllowed("g-planted", () => token)).toThrow(/g-planted/);
+});
+
+test("a scan error is an error", () => {
+  expect(() => assertScanClean({ error: "origin/main unavailable", hits: [] })).toThrow(/tripwire error/);
+});
+
+test("a planted token is a hit only after the new file is committed", () => {
+  const dir = mkdtempSync(join(tmpdir(), "keel-plant-"));
+  writeFileSync(join(dir, "planted.txt"), `${plantedCusip()}\n`);
+  let message = "";
+  try {
+    scanTree(dir, repoRoot());
+  } catch (error) {
+    message = error instanceof Error ? error.message : "";
+  }
+  expect(message).toMatch(/cusip/);
+});
