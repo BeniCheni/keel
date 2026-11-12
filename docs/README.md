@@ -30,6 +30,7 @@ Every slice moves through up to four rungs: proposal (the research behind the pr
 | S03 Payoff engine (spec PR #32) | toward `v0.1.0` (non-release) | `specs/s03-payoff-engine.md` | none (no UI) | `reviews/pr-32-pass-0.md`, `reviews/pr-32-pass-1.5.md`, `reviews/pr-32-pass-2.5.md` (executive brief) | spec merged 2026-11-11 at squash `7c47d10`, reviewed head `06f8ac9`; 13 Highs stay open by Beni's ruling 6 of 2026-11-11, and the S03 build must land each closing test; Pass 2.5 on Fable 5.2 High by his ruling 8; builds after S02.1's build merges |
 | S02.1 build (PR #34) | toward `v0.1.0` (non-release) | `specs/s02.1-final-valuation.md` | none (no UI) | `reviews/pr-34-pass-0.md`, `reviews/pr-34-pass-1.5.md`, `reviews/pr-34-pass-2.5.md` (executive brief) | merged 2026-11-11 at squash `3804dc3`, reviewed head `902a9ec`; Claude seats on Fable 5.2 by Beni's rulings of 2026-11-11; closes Medium 2.5-1 and idea 29; Pass 2's High closed by `902a9ec` |
 | Fable pins to 5.2 (PR #35) | n/a | none (review policy) | none | `reviews/pr-35-pass-0.md`, `reviews/pr-35-pass-1.5.md`, `reviews/pr-35-pass-2.5.md` (executive brief) | merged 2026-11-11 at squash `9d74d05`, reviewed head `20da0de`; by Beni's ruling of 2026-11-11 |
+| Docs after S02.1 (PR #37) | n/a | amends `specs/s01-terms-schema.md`, `specs/s02-schedule.md`, `specs/s02.1-final-valuation.md` and `specs/s03-payoff-engine.md` | none | `reviews/pr-37-pass-0.md` | in review (fast-track); cold read by Codex |
 
 Folders:
 
