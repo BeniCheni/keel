@@ -40,7 +40,7 @@ Allowed: the diff is docs outside sensitive paths, and this is not a release or 
 2. **S01's path order.** Does the amended list match the order of the `consider` calls in `packages/core/src/terms/summary.ts`? Does the new item's rule match the code: verified only when present as one `primary` term?
 3. **S02.1's line 1 rule.** Does the added sentence describe what `load.ts` does for a file whose line 1 is not a marker? Try a 0.2 file with a comment on line 1, a 0.1 file the same way, and a file naming an unknown marker.
 4. **S02.1's fixture text.** Do the fixture section and AC4 now match the manifest and the generator: version 2, the two entries appended, and the comment above the 0.2 mutation?
-5. **S03's status line.** Are the amendment dates right? `git show -s --format='%h %cI' c456237 d6c22f7 48b995e 7563d4f 6d27938`.
+5. **S03's status line.** Are the amendment dates right? Those commits reached `main` only inside PR #32's squash, so fetch them first: `git fetch origin refs/pull/32/head`, then `git show -s --format='%h %cI' c456237 d6c22f7 48b995e 7563d4f 6d27938`. (The fetch was added after the cold review, which found the command failing without it.)
 6. **README line 7.** Is it accurate now? Does anything else in the README still describe the core as it stood before S02 and S02.1?
 7. **The ideas.** Do ideas 59 to 62 state their sources fairly, continue the numbering from 58, and sit in the ranked table? Is idea 29's taken-up row right?
 8. **Stale claims elsewhere.** Does any other spec or doc still state a value or behaviour that PR #34 or PR #35 changed?
