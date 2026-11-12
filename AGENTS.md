@@ -16,9 +16,9 @@ The specs in `docs/specs/` are the build authority. The product research behind 
 | Planner (PM) | Claude, in Claude Code or Cowork | Opus 5.5 High | Sonnet 5.5 High | Slice specs, build prompts, Pass 0, 1.5 and 2.5 briefs, executive briefs, records | Writes code; reviews a PR it wrote any line of |
 | Designer | Claude Design | n/a | n/a | Design briefs and prototypes against `packages/ui/tokens.css` | Commits prototypes (`design/` stays local) |
 | Builder | Cursor | Grok 4.7 High; Extra High for design-heavy or sensitive-path slices, and for cold reads | none | One slice per draft PR, every commit green, a claims list in the PR body. On Beni's word, the one cold read of a records or fast-track PR it wrote none of, unless that PR records or reports on a PR with any Cursor-authored commit | Reviews its own work; merges a release |
-| Pass 1 reviewer | Claude Code, fresh session, fresh clone | Fable 5.1 Extra on sensitive-path PRs; Opus 5.5 High otherwise | Opus 5.5 High | Cold review, fixes what it reproduces, one PR comment | Reviews a PR any Claude session wrote (Codex takes Pass 1 then) |
+| Pass 1 reviewer | Claude Code, fresh session, fresh clone | Fable 5.2 Extra on sensitive-path PRs; Opus 5.5 High otherwise | Opus 5.5 High | Cold review, fixes what it reproduces, one PR comment | Reviews a PR any Claude session wrote (Codex takes Pass 1 then) |
 | Pass 2 adjudicator | Codex | GPT-6.1 Sol High; Extra High on sensitive-path PRs | none | Adjudicates Pass 1, adds its own read, runs Pass M, one PR comment. Also Pass 1 on Claude-authored PRs, which includes the plan challenge on every spec | Gives the cold read of a commit it wrote |
-| Pass 2.5 synthesis | Claude, fresh session | Fable 5.1 High on sensitive-path PRs; Opus 5.5 High otherwise | Opus 5.5 High | Re-runs every number at the head, gives the cold read of any Codex-authored commit, writes the executive brief, evaluates the merge gate | Runs in a session that wrote the build or any fix |
+| Pass 2.5 synthesis | Claude, fresh session | Fable 5.2 High on sensitive-path PRs; Opus 5.5 High otherwise | Opus 5.5 High | Re-runs every number at the head, gives the cold read of any Codex-authored commit, writes the executive brief, evaluates the merge gate | Runs in a session that wrote the build or any fix |
 | Merge logistics | Cursor, on Beni's word | Grok 4.7 Medium | none | Runs the merge and tag commands Beni approved | Merges or tags without Beni's word |
 
 Independence rules:
@@ -26,9 +26,9 @@ Independence rules:
 - The builder reviews nothing it built. A reviewer builds nothing it will review. No vendor gives the only cold read of its own work.
 - **Authorship record.** The Pass 0 brief lists every commit with its authoring vendor (`git log --format='%h %an' <base>..<head>`), and the Pass 1.5 brief extends it with fix commits. Before the gate, every commit has a cold read from a vendor that did not author it. On a Claude-authored PR: Codex takes Pass 1; Codex's Pass 2 covers only the Claude-authored commits after Pass 1; any Codex-authored commit gets its cold read from the fresh Claude session at Pass 2.5. If no pinned seat is eligible for a commit, stop and escalate.
 - The PM session and the Pass 1 session are different sessions. The sealed appendix in the Pass 0 brief is their only channel.
-- Fable 5.1 pins apply to the Claude seats only; Codex keeps its own pin on every PR. Fable 5.1 seats work only on synthetic data in a fresh clone.
+- Fable pins apply to the Claude seats only; Codex keeps its own pin on every PR. Fable seats work only on synthetic data in a fresh clone.
 
-Model pins are as of 2026-10-29, except the Builder cold-read effort, which is as of 2026-11-07. If a pinned model is unavailable, use the fallback and say so in the PR comment. A seat with no fallback stops and escalates.
+Model pins are as of 2026-10-29, except the Builder cold-read effort, which is as of 2026-11-07, and the Fable pins, which are as of 2026-11-11. If a pinned model is unavailable, use the fallback and say so in the PR comment. A seat with no fallback stops and escalates.
 
 ## Hard rules
 
@@ -47,7 +47,7 @@ Model pins are as of 2026-10-29, except the Builder cold-read effort, which is a
 
 ## Sensitive paths
 
-A PR touching any of these is a sensitive-path PR: Fable 5.1 pins apply, fast-track is barred, and Beni merges it.
+A PR touching any of these is a sensitive-path PR: Fable pins apply, fast-track is barred, and Beni merges it.
 
 - `packages/core/**` (domain model, schedule, alert evaluation)
 - `packages/plugin-mln/**` (payoff engine)

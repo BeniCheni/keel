@@ -18,6 +18,7 @@ All notable changes to keel are recorded here. Versions follow semver. Dates are
 
 - `AGENTS.md`: `main` moves only by a pinned PR squash merge; the `main` ruleset now also requires the `verify` check and allows squash merges only. Records PRs (only `docs/reviews/**` and their index rows) need no review passes and write no records of their own. Builders push the next commit only after CI is green on the last. Follow-up slices may be numbered `sNN.M`.
 - The review skill's handoff block spells every `Co-authored-by` trailer out in full, resolved in the reviewed clone (idea 8).
+- `AGENTS.md`: the Fable pins move from Fable 5.1 to Fable 5.2: Pass 1 Extra and Pass 2.5 High on sensitive-path PRs, by Beni's ruling of 2026-11-11. The fallbacks and Codex's pin are unchanged.
 - S00 repo tooling merged as squash commit `e9ab4ba` (PR #3). Its `Co-authored-by: Cursor <>` trailer is empty by a handoff-block error; Cursor authored the slice's two build commits, `8b9dfee` and `3c8b544`. Beni ruled to record this rather than rewrite `main` (`docs/reviews/pr-3-pass-2.5.md`).
 
 ### Deliberately not done
