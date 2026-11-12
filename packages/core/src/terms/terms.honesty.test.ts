@@ -409,6 +409,43 @@ test("final valuation stays unverified unless it is one primary term", () => {
   expect(summary.total).toBe(absent.total);
 });
 
+test("final valuation and its candidates require a source matching their primary status", () => {
+  const text = textOf("valid", "minimal.yaml")
+    .replace("schema: mln-terms/0.1\n", "schema: mln-terms/0.2\n")
+    .replace(
+      "sources:\n",
+      "sources:\n  doc-source:\n    kind: document\n    file: sources/doc-source.pdf\n",
+    );
+  for (const [source, code] of [
+    ["doc-source", "source-kind"],
+    ["missing-source", "source-missing"],
+  ] as const) {
+    const direct = `    value: 2031-07-09
+    status: primary
+    source: ${source}
+`;
+    const conflict = `    status: conflict
+    candidates:
+      - value: 2031-07-09
+        status: primary
+        source: supplement
+      - value: 2031-07-10
+        status: primary
+        source: ${source}
+`;
+    for (const [body, path] of [
+      [direct, "dates.final_valuation.source"],
+      [conflict, "dates.final_valuation.candidates[1].source"],
+    ] as const) {
+      const stated = text.replace("underlyings:\n", `  final_valuation:\n${body}underlyings:\n`);
+      expect(loadTerms(stated, "minimal.yaml"), path).toMatchObject({
+        ok: false,
+        errors: [{ code, path }],
+      });
+    }
+  }
+});
+
 test("a 0.1 file never yields a final valuation key", () => {
   const loaded = loadTerms(textOf("valid", "minimal.yaml"), "minimal.yaml");
   expect(loaded.ok).toBe(true);
