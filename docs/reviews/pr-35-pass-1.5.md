@@ -16,7 +16,13 @@ Codex, GPT-6.1 Sol Extra High, because `AGENTS.md` is a sensitive path. No fallb
 
 ## PR body edit
 
-At 19:18 EST the PM reworded those two paragraphs with `gh pr edit 35 --body-file` and added a line marking them "Edited after Pass 1". `diff` of the body before and after shows those three changes and nothing else. The body read back from GitHub is byte-identical to the file sent. The repo tripwire's `scanRepo` gated the edit: no error and 0 hits on the new body, and a generated address added to the same temporary repository gave exactly 1 email hit. Codex's private-list check ran before the edit, so Pass 2 runs it again over the body.
+At 19:18 EST the PM reworded those two paragraphs with `gh pr edit 35 --body-file` and added a line marking them "Edited after Pass 1". GitHub's edit history of the body shows that edit and nothing else (the script in the appendix). The repo tripwire's `scanRepo` gated the edit: no error and 0 hits on the new body, and a generated address added to the same temporary repository gave exactly 1 email hit. Codex's private-list check ran before the edit, so Pass 2 runs it again over the body.
+
+## During Pass 2
+
+Codex's Pass 2 stopped before posting, on one sentence of the body. The "Why" paragraph said PR #34's Pass 2 stopped "before running anything". PR #34's Pass 2 comment says only "before the substantive read", and that seat had cloned and read its instructions before it stopped. So Pass 2 could not verify the broader claim. It also could not open the PM's local copies of the body, which this brief first cited for the edit; the appendix now cites GitHub's edit history instead.
+
+At 19:52 EST the PM changed "before running anything" to "before the substantive read", linked PR #34's Pass 2 comment, and added a line marking the change "Edited during Pass 2". The new body passed the same tripwire gate: 0 hits, with the control giving exactly 1. The head did not move. Pass 2 runs the private-list check again over this body.
 
 ## Authorship record
 
@@ -51,5 +57,20 @@ The PM's checks after the edit:
 | Head | `gh pr view 35 --repo BeniCheni/keel --json headRefOid` | `20da0de081ef72d1033136c582204f55daeed434` |
 | CI at the head | `gh run list --repo BeniCheni/keel --commit 20da0de081ef72d1033136c582204f55daeed434 --json databaseId,event,conclusion` | Run 43123354970, `pull_request`, success |
 | PR #34's pins | `git grep -n 'Fable 5\.1' origin/s02.1/final-valuation -- AGENTS.md` | Four lines: 19, 21, 29 and 50 |
-| Body diff | `diff` of the body saved before the edit against the body sent | Lines 9 and 32 changed, two lines added after 33 |
-| Body read back | `cmp` of the body sent against `gh pr view 35 --json body --jq .body` | Identical |
+| Body edit history | `gh api graphql -f query='query{repository(owner:"BeniCheni",name:"keel"){pullRequest(number:35){body userContentEdits(first:20){nodes{editedAt diff}}}}}' \| python3 -I body_edits.py` | 3 revisions, and the latest equals the live body. 23:54Z to 00:18Z: 2 lines removed, 5 added, the two reworded paragraphs and the "Edited after Pass 1" note. 00:18Z to 00:52Z: 2 removed, 5 added, the timing sentence and the "Edited during Pass 2" note |
+
+`body_edits.py`, which reads GitHub's revisions of the body and prints each edit's changed lines:
+
+```python
+# Reads GitHub's edit history of a PR body (GraphQL JSON on stdin) and prints, per edit, the lines removed and added.
+import sys, json, difflib
+pr = json.load(sys.stdin)["data"]["repository"]["pullRequest"]
+revs = sorted(pr["userContentEdits"]["nodes"], key=lambda n: n["editedAt"])
+print("revisions", len(revs), "| latest equals live body:", revs[-1]["diff"] == pr["body"])
+for old, new in zip(revs, revs[1:]):
+    lines = [l for l in difflib.unified_diff(old["diff"].splitlines(), new["diff"].splitlines(), lineterm="", n=0)
+             if l[:1] in "+-" and not l.startswith(("+++", "---"))]
+    print(f"{old['editedAt']} -> {new['editedAt']}: {sum(l[0] == '-' for l in lines)} removed, {sum(l[0] == '+' for l in lines)} added")
+    for l in lines:
+        print("  " + l[:110])
+```
