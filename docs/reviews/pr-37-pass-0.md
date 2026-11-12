@@ -16,7 +16,7 @@ Codex, GPT-6.1 Sol High. The PR touches no sensitive path, so the High effort ap
 
 ## Rulings the PR records
 
-All three came from Beni on 2026-11-11, in sessions the cold review cannot see. The records on `main` hold them, and Beni's merge confirms them.
+All three came from Beni on 2026-11-11, in sessions the cold review cannot see. The records on `main` quote them, and Beni's merge confirms them.
 
 1. **"Yes, in the prompt (Recommended)", 16:23 EST, in the PM's session.** `0.2.json`'s `$id`, `title` and `schema` constant read `mln-terms/0.2`, and the manifest's `version` line moves from 1 to 2. `docs/reviews/pr-34-pass-0.md`, ruling 1, quotes the question.
 2. **"Yes, fix the spec (Recommended)", 18:23 EST, in the PM's session.** Spec line 57 is met by the generator's comment. `docs/reviews/pr-34-pass-1.5.md`, ruling 5.
@@ -36,7 +36,7 @@ Allowed: the diff is docs outside sensitive paths, and this is not a release or 
 
 ## What to check, beyond the skill's standing checks
 
-1. **The frozen values.** Do S01's two summaries and S02's `termDateFlags` object now equal what the tests on `main` assert? `packages/core/src/terms/terms.summary.test.ts` and `packages/core/src/schedule/schedule.flags.test.ts` hold them.
+1. **The frozen values.** Do S01's two summaries and S02's `termDateFlags` object now equal what the tests on `main` assert? They are in `packages/core/src/terms/terms.summary.test.ts` and `packages/core/src/schedule/schedule.flags.test.ts`.
 2. **S01's path order.** Does the amended list match the order of the `consider` calls in `packages/core/src/terms/summary.ts`? Does the new item's rule match the code: verified only when present as one `primary` term?
 3. **S02.1's line 1 rule.** Does the added sentence describe what `load.ts` does for a file whose line 1 is not a marker? Try a 0.2 file with a comment on line 1, a 0.1 file the same way, and a file naming an unknown marker.
 4. **S02.1's fixture text.** Do the fixture section and AC4 now match the manifest and the generator: version 2, the two entries appended, and the comment above the 0.2 mutation?
