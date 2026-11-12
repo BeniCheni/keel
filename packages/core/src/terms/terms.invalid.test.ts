@@ -124,6 +124,56 @@ test("an alias the parser cannot resolve is a diagnostic, not a throw", () => {
   }
 });
 
+function integerAndUnknown(): string {
+  return textOf("valid", "minimal.yaml")
+    .replace("schema: mln-terms/0.1\n", "schema: mln-terms/0.1\nzzextra: 1\n")
+    .replace(
+      "  level:\n    value: 9500\n    status: primary\n    source: supplement\n  non_call_months:",
+      "  level:\n    value: 09500\n    status: primary\n    source: supplement\n  non_call_months:",
+    );
+}
+
+test("an integer token fault and an unknown key are both reported", () => {
+  const result = loadTerms(integerAndUnknown(), "minimal.yaml");
+  expect(result.ok).toBe(false);
+  if (result.ok) return;
+  expect(result.errors).toHaveLength(2);
+  expect(result.errors.map((error) => `${error.code} ${error.path}`)).toEqual(
+    expect.arrayContaining(["wrong-type call.level.value", "unknown-key zzextra"]),
+  );
+});
+
+test("two faults whose path order reverses their line order come out in line order", () => {
+  const result = loadTerms(integerAndUnknown(), "minimal.yaml");
+  expect(result.ok).toBe(false);
+  if (result.ok) return;
+  const paths = result.errors.map((error) => error.path);
+  expect(paths).toEqual(["zzextra", "call.level.value"]);
+  const byPath = [...paths].sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
+  expect(byPath).toEqual(["call.level.value", "zzextra"]);
+});
+
+test("the final valuation fixtures each report their one manifest error", () => {
+  const expected = [
+    ["final-valuation-in-0.1.yaml", "unknown-key", "dates.final_valuation"],
+    ["invalid-date-final-valuation.yaml", "invalid-date", "dates.final_valuation.value"],
+  ] as const;
+  for (const [file, code, path] of expected) {
+    const row = termsManifest.invalid.find((item) => item.file === file);
+    expect(row, file).toEqual(expect.objectContaining({ code, path }));
+    if (row === undefined) continue;
+    expect(row.line, file).toEqual(expect.any(Number));
+    expect(row.column, file).toEqual(expect.any(Number));
+    const result = loadTerms(textOf("invalid", file), file);
+    expect(result.ok, file).toBe(false);
+    if (!result.ok) {
+      expect(result.errors, file).toEqual([
+        expect.objectContaining({ code, path, line: row.line, column: row.column }),
+      ]);
+    }
+  }
+});
+
 test("an explicit tag is yaml-syntax on a key as on a value", () => {
   const minimal = textOf("valid", "minimal.yaml");
   const onKey = loadTerms(minimal.replace("id: note-min", "!!str id: note-min"), "minimal.yaml");

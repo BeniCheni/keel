@@ -48,7 +48,11 @@ test("schedule conflicts retain candidate order and flags without ordering their
     for (const candidate of [0, 1]) {
       expect(result.dateFlags[`dates.observation_schedule[${index}].candidates[${candidate}]`]).toEqual(["weekend"]);
     }
-    expect(verificationSummary(result.terms)).toEqual({ verified: 15, total: 16, unverified: ["dates.observation_schedule"] });
+    expect(verificationSummary(result.terms)).toEqual({
+      verified: 15,
+      total: 17,
+      unverified: ["dates.final_valuation", "dates.observation_schedule"],
+    });
   }
 });
 
@@ -155,5 +159,80 @@ test("negative zero is wrong-type on each integer term and its candidates; minus
         site.owner[site.key] = original;
       }
     }
+  }
+});
+
+const FINAL_VALUATION = "  final_valuation:\n    value: 2027-03-01\n    status: primary\n    source: supplement\n";
+
+/** minimal.yaml stating the final valuation date, with its line 1 replaced by the given text. */
+function statesFinalValuation(firstLines: string): string {
+  return textOf("valid", "minimal.yaml")
+    .replace("schema: mln-terms/0.1\n", `${firstLines}\n`)
+    .replace("underlyings:\n", `${FINAL_VALUATION}underlyings:\n`);
+}
+
+function codesAndPaths(text: string): string[] {
+  const result = loadTerms(text, "minimal.yaml");
+  expect(result.ok).toBe(false);
+  return result.ok ? [] : result.errors.map((error) => `${error.code} ${error.path} ${error.line}:${error.column}`);
+}
+
+test("a 0.2 file with a line 1 fault is schema-line alone, not also judged against 0.1", () => {
+  const faults = [
+    "# synthetic\nschema: mln-terms/0.2",
+    "schema: mln-terms/0.2 # note",
+    "schema: mln-terms/0.2 ",
+    'schema: "mln-terms/0.2"',
+  ];
+  for (const fault of faults) {
+    expect(codesAndPaths(statesFinalValuation(fault)), fault).toEqual(["schema-line schema 1:1"]);
+  }
+  const example = textOf("valid", "example-autocall.yaml");
+  expect(example.startsWith("schema: mln-terms/0.2\n")).toBe(true);
+  expect(codesAndPaths(`# synthetic\n${example}`)).toEqual(["schema-line schema 1:1"]);
+});
+
+test("a line 1 fault leaves a 0.1 file, and a file naming no known marker, judged against 0.1", () => {
+  expect(codesAndPaths(statesFinalValuation("# synthetic\nschema: mln-terms/0.1"))).toEqual([
+    "schema-line schema 1:1",
+    "unknown-key dates.final_valuation 27:3",
+  ]);
+  expect(codesAndPaths(statesFinalValuation("schema: mln-terms/0.3"))).toEqual([
+    "schema-line schema 1:1",
+    "unknown-key dates.final_valuation 26:3",
+  ]);
+});
+
+test("line 1 picks the schema, and a later schema key naming the other marker is schema-line and duplicate-key", () => {
+  const over02 = `${statesFinalValuation("schema: mln-terms/0.2")}schema: mln-terms/0.1\n`;
+  const last02 = over02.split("\n").length - 1;
+  expect(codesAndPaths(over02)).toEqual(["schema-line schema 1:1", `duplicate-key schema ${last02}:1`]);
+
+  const over01 = `${statesFinalValuation("schema: mln-terms/0.1")}schema: mln-terms/0.2\n`;
+  const last01 = over01.split("\n").length - 1;
+  expect(codesAndPaths(over01)).toEqual([
+    "schema-line schema 1:1",
+    "unknown-key dates.final_valuation 26:3",
+    `duplicate-key schema ${last01}:1`,
+  ]);
+});
+
+test("the schema-line message names both markers", () => {
+  const result = loadTerms(textOf("invalid", "schema-line.yaml"), "schema-line.yaml");
+  expect(result.ok).toBe(false);
+  if (result.ok) return;
+  expect(result.errors.map((error) => error.code)).toEqual(["schema-line"]);
+  const message = result.errors[0]?.message ?? "";
+  expect(message).toContain("mln-terms/0.1");
+  expect(message).toContain("mln-terms/0.2");
+});
+
+test("a final valuation candidate that is not a real date is invalid-date at that candidate", () => {
+  for (const value of ["2027-02-30", "2031-7-9"]) {
+    const conflict = `  final_valuation:\n    status: conflict\n    candidates:\n      - value: 2031-07-09\n        status: primary\n        source: supplement\n      - value: ${value}\n        status: primary\n        source: supplement\n`;
+    const text = textOf("valid", "minimal.yaml")
+      .replace("schema: mln-terms/0.1\n", "schema: mln-terms/0.2\n")
+      .replace("underlyings:\n", `${conflict}underlyings:\n`);
+    expect(codesAndPaths(text), value).toEqual(["invalid-date dates.final_valuation.candidates[1].value 32:16"]);
   }
 });

@@ -49,6 +49,11 @@ function copySources(raw: unknown): Record<string, SourceRecord> {
   return sources;
 }
 
+function schemaId(raw: unknown): Terms["schema"] {
+  if (raw === "mln-terms/0.1" || raw === "mln-terms/0.2") return raw;
+  return "mln-terms/0.1";
+}
+
 function copyMember(raw: unknown): Member {
   if (!isRecord(raw)) throw new Error("expected member");
   return { ticker: stringField(raw.ticker), initial: copyTerm<string>(raw.initial) };
@@ -67,6 +72,9 @@ export function projectTerms(raw: unknown): Terms {
     maturity: copyTerm<string>(raw.dates.maturity),
     first_call_observation: copyTerm<string>(raw.dates.first_call_observation),
   };
+  if (raw.dates.final_valuation !== undefined) {
+    dates.final_valuation = copyTerm<string>(raw.dates.final_valuation);
+  }
   if (raw.dates.observation_schedule !== undefined) {
     if (!Array.isArray(raw.dates.observation_schedule)) throw new Error("expected schedule");
     dates.observation_schedule = raw.dates.observation_schedule.map((item) => copyTerm<string>(item));
@@ -79,7 +87,7 @@ export function projectTerms(raw: unknown): Terms {
   if (raw.economics.fees !== undefined) economics.fees = copyTerm<number>(raw.economics.fees);
 
   const terms: Terms = {
-    schema: "mln-terms/0.1",
+    schema: schemaId(raw.schema),
     id: stringField(raw.id),
     category: "mln",
     structure: "autocall-snowball-worst-of",

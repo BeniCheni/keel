@@ -2,7 +2,7 @@ import type { Diagnostic } from "./types.ts";
 
 const TEXT: Record<string, string> = {
   "yaml-syntax": "The terms text is not valid YAML",
-  "schema-line": "Line 1 is not the schema marker mln-terms/0.1",
+  "schema-line": "Line 1 is not the schema marker mln-terms/0.1 or mln-terms/0.2",
   "duplicate-key": "This key is repeated in the same mapping",
   alias: "An anchor or alias is present in the terms text",
   "unknown-key": "This key is not defined by the terms schema",

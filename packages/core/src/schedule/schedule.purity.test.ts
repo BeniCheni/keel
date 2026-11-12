@@ -11,6 +11,18 @@ import { loadExample, loadMinimal } from "./samples.ts";
 import { sameTwice } from "./test-support/same-twice.ts";
 import type { ExchangeCalendar } from "./types.ts";
 
+interface ListedDirent {
+  name: string;
+  isDirectory(): boolean;
+  isFile(): boolean;
+}
+
+// packages/core keeps `types` empty, so the node builtin has no declarations. The call is the recursive listing.
+// @ts-expect-error TS2591
+import { readdirSync as readDirectory } from "node:fs";
+
+const readdirSync = readDirectory as (path: string, options: { withFileTypes: true }) => ListedDirent[];
+
 declare const performance: { now: () => number };
 declare const crypto: { getRandomValues: (value: unknown) => unknown; randomUUID: () => string };
 declare const console: Record<string, (...args: unknown[]) => unknown>;
@@ -218,10 +230,34 @@ for (const snippet of POSITIVES) {
   });
 }
 
+function scheduleRoot(): string {
+  const url = import.meta.url;
+  if (!url.startsWith("file://")) throw new Error("schedule purity test is not a file URL");
+  const file = decodeURIComponent(url.slice("file://".length));
+  const slash = file.lastIndexOf("/");
+  if (slash < 0) throw new Error("schedule purity test has no directory");
+  return file.slice(0, slash);
+}
+
+/** Non-test .ts files under schedule/, including folders below the first level. */
+function listedProductSources(dir: string, prefix: string): string[] {
+  const found: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const rel = prefix === "" ? entry.name : `${prefix}/${entry.name}`;
+    if (entry.isDirectory()) found.push(...listedProductSources(`${dir}/${entry.name}`, rel));
+    else if (entry.isFile() && rel.endsWith(".ts") && !rel.endsWith(".test.ts")) found.push(`./${rel}`);
+  }
+  return found;
+}
+
 test("schedule sources pass the purity checker", () => {
   const files = Object.entries(sources).filter(([file]) => !file.endsWith(".test.ts"));
   expect(files.length).toBeGreaterThan(0);
   expect(files.map(([file]) => file)).toContain("./test-support/same-twice.ts");
+  const listed = listedProductSources(scheduleRoot(), "").sort();
+  const globbed = files.map(([file]) => file).sort();
+  expect(globbed).toEqual(listed);
+  expect(listed).toContain("./test-support/nested/depth-marker.ts");
   const joined = files.map(([, text]) => text).join("\n");
   expect(joined).toContain("export function nyseRulesCalendar");
   expect(joined).toContain("export function observationSchedule");

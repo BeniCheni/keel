@@ -35,6 +35,7 @@ test("termDateFlags on example-autocall matches the frozen object", () => {
     "dates.maturity.candidates[0]": [],
     "dates.maturity.candidates[1]": ["weekend"],
     "dates.first_call_observation": ["weekend"],
+    "dates.final_valuation": [],
   });
 });
 
@@ -118,4 +119,47 @@ underlyings:
     "dates.observation_schedule[0]",
     "dates.trade",
   ]);
+});
+
+function withFinalValuation(body: string, schedule = ""): string {
+  return textOf("valid", "minimal.yaml")
+    .replace("schema: mln-terms/0.1\n", "schema: mln-terms/0.2\n")
+    .replace("underlyings:\n", `  final_valuation:\n${body}${schedule}underlyings:\n`);
+}
+
+test("a Saturday final valuation flags weekend, and a conflict flags each candidate", () => {
+  const calendar = nyseRulesCalendar();
+  const saturday = loadTerms(
+    withFinalValuation(
+      "    value: 2026-03-21\n    status: primary\n    source: supplement\n",
+      "  observation_schedule:\n    - value: 2026-09-01\n      status: primary\n      source: supplement\n",
+    ),
+    "minimal.yaml",
+  );
+  expect(saturday.ok).toBe(true);
+  if (saturday.ok) {
+    const flags = termDateFlags(saturday.terms, calendar);
+    expect(flags["dates.final_valuation"]).toEqual(["weekend"]);
+    const keys = Object.keys(flags);
+    expect(keys.indexOf("dates.final_valuation")).toBe(keys.indexOf("dates.first_call_observation") + 1);
+    expect(keys.indexOf("dates.observation_schedule[0]")).toBe(keys.indexOf("dates.final_valuation") + 1);
+  }
+
+  const conflict = loadTerms(
+    withFinalValuation(
+      "    status: conflict\n    candidates:\n      - value: 2026-03-21\n        status: primary\n        source: supplement\n      - value: 2026-03-23\n        status: primary\n        source: supplement\n",
+    ),
+    "minimal.yaml",
+  );
+  expect(conflict.ok).toBe(true);
+  if (conflict.ok) {
+    const flags = termDateFlags(conflict.terms, calendar);
+    expect(flags["dates.final_valuation"]).toBeUndefined();
+    expect(flags["dates.final_valuation.candidates[0]"]).toEqual(["weekend"]);
+    expect(flags["dates.final_valuation.candidates[1]"]).toEqual([]);
+  }
+
+  const unknown = loadTerms(withFinalValuation("    value: null\n    status: unknown\n"), "minimal.yaml");
+  expect(unknown.ok).toBe(true);
+  if (unknown.ok) expect(termDateFlags(unknown.terms, calendar)["dates.final_valuation"]).toBeUndefined();
 });

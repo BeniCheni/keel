@@ -4,7 +4,7 @@ import { indexDocument, positionAt } from "./locate.ts";
 import { diagnostic } from "./messages.ts";
 import { projectTerms } from "./project.ts";
 import { schemaDiagnostics } from "./schema-map.ts";
-import type { Diagnostic, LoadResult } from "./types.ts";
+import type { Diagnostic, LoadResult, Terms } from "./types.ts";
 
 const INTEGER_OWNERS = new Set([
   "call.level",
@@ -18,8 +18,7 @@ const INTEGER_OWNERS = new Set([
 
 const PLAIN_INTEGER = /^(?:0|-?[1-9][0-9]*)$/;
 const MAX_SAFE = BigInt(Number.MAX_SAFE_INTEGER);
-const SCHEMA_VALUE = "mln-terms/0.1";
-const SCHEMA_LINE = `schema: ${SCHEMA_VALUE}`;
+const SCHEMA_IDS = ["mln-terms/0.1", "mln-terms/0.2"] as const;
 
 function isIntegerValuePath(path: string): boolean {
   if (!path.endsWith(".value")) return false;
@@ -34,17 +33,25 @@ function integerCode(raw: string): "wrong-type" | "out-of-range" | null {
   return null;
 }
 
-function schemaLineOk(text: string): boolean {
+/** The marker named by line 1, or null when that line is not exactly one of the two schema lines. */
+function schemaOnLine(text: string): Terms["schema"] | null {
   const end = text.indexOf("\n");
   const line = end === -1 ? text : text.slice(0, end);
   const stripped = line.endsWith("\r") ? line.slice(0, -1) : line;
-  return stripped === SCHEMA_LINE;
+  for (const id of SCHEMA_IDS) {
+    if (stripped === `schema: ${id}`) return id;
+  }
+  return null;
 }
 
-/** True when the parsed root is a mapping whose schema value is the marker and nothing more (a continuation line would extend it). */
-function carriesMarker(data: unknown): boolean {
-  if (typeof data !== "object" || data === null || Array.isArray(data)) return false;
-  return (data as Record<string, unknown>).schema === SCHEMA_VALUE;
+/** The parsed schema value when it is exactly a marker. A continuation line makes the value longer, so it is not a marker. */
+function schemaInData(data: unknown): Terms["schema"] | null {
+  if (typeof data !== "object" || data === null || Array.isArray(data)) return null;
+  const value = (data as Record<string, unknown>).schema;
+  for (const id of SCHEMA_IDS) {
+    if (value === id) return id;
+  }
+  return null;
 }
 
 function dedupe(errors: Diagnostic[]): Diagnostic[] {
@@ -80,7 +87,8 @@ export function loadTerms(text: string, fileName: string): LoadResult {
   }
   const index = indexDocument(doc, text, counter);
   const errors: Diagnostic[] = [];
-  if (!schemaLineOk(text)) errors.push(diagnostic(fileName, "schema-line", "schema", 1, 1));
+  const lineSchema = schemaOnLine(text);
+  if (lineSchema === null) errors.push(diagnostic(fileName, "schema-line", "schema", 1, 1));
   for (const site of index.tags) {
     errors.push(diagnostic(fileName, "yaml-syntax", site.path, site.pos.line, site.pos.column));
   }
@@ -108,8 +116,13 @@ export function loadTerms(text: string, fileName: string): LoadResult {
     if (!errors.some((error) => error.code === "alias")) errors.push(diagnostic(fileName, "alias", "", 1, 1));
     return { ok: false, errors: dedupe(errors) };
   }
-  if (!carriesMarker(data)) errors.push(diagnostic(fileName, "schema-line", "schema", 1, 1));
-  const schemaErrors = schemaDiagnostics(data, index, fileName);
+  const dataSchema = schemaInData(data);
+  if (dataSchema === null || (lineSchema !== null && dataSchema !== lineSchema)) {
+    errors.push(diagnostic(fileName, "schema-line", "schema", 1, 1));
+  }
+  // Line 1 picks the schema. When line 1 is not a marker the file is already schema-line, and the parsed value picks it,
+  // so a 0.2 file is not also judged against 0.1. When neither names a marker, 0.1 judges it.
+  const schemaErrors = schemaDiagnostics(data, index, fileName, lineSchema ?? dataSchema ?? "mln-terms/0.1");
   // The source-token fault takes precedence over the parsed number's type or range at the same path.
   errors.push(...schemaErrors.filter((error) => !integerFaultPaths.has(error.path)));
   if (schemaErrors.length === 0) {

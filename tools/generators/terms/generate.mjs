@@ -2,7 +2,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 export const name = "terms";
-export const version = 1;
+export const version = 2;
 export const seed = "keel-s01-terms-1";
 export const trees = ["fixtures/synthetic/terms"];
 
@@ -467,11 +467,13 @@ function buildExample(bag, rng) {
   const firstCall = addDays(trade, pickInt(rng, 120, 240));
   const maturityDocument = addDays(trade, pickInt(rng, 1500, 2200));
   const maturityAdvisor = addDays(maturityDocument, pickInt(rng, 1, 14));
+  const earlierMaturity = maturityDocument < maturityAdvisor ? maturityDocument : maturityAdvisor;
+  const finalValuation = addDays(earlierMaturity, -5);
   const rule = "Named barrier fraction.";
   const note = "Recorded accrual default.";
   if (BANNED.test(rule) || BANNED.test(note)) throw new Error("example prose is not product text");
   const tree = map([
-    key("schema", scalar("mln-terms/0.1")),
+    key("schema", scalar("mln-terms/0.2")),
     key("id", scalar(makeId(rng))),
     key("category", scalar("mln")),
     key("structure", scalar("autocall-snowball-worst-of")),
@@ -502,6 +504,7 @@ function buildExample(bag, rng) {
           ]),
         ),
         key("first_call_observation", dateTerm(firstCall, "primary", "supplement")),
+        key("final_valuation", dateTerm(finalValuation, "primary", "supplement")),
       ]),
     ),
     key(
@@ -841,6 +844,27 @@ function mutations() {
         );
       },
     },
+    {
+      file: "final-valuation-in-0.1.yaml",
+      code: "unknown-key",
+      path: "dates.final_valuation",
+      apply(tree) {
+        descend(tree, ["dates"]).entries.push(
+          key("final_valuation", dateTerm("2027-03-01", "primary", "supplement"), "error"),
+        );
+      },
+    },
+    {
+      // minimal.yaml moved to 0.2, then one invalid date. The date is a 0.2-only rule.
+      file: "invalid-date-final-valuation.yaml",
+      code: "invalid-date",
+      path: "dates.final_valuation.value",
+      apply(tree) {
+        findEntry(tree, "schema").value = scalar("mln-terms/0.2");
+        descend(tree, ["dates"]).entries.push(key("final_valuation", dateTerm("2027-03-01", "primary", "supplement")));
+        setValueToken(descend(tree, ["dates", "final_valuation"]), "2027-02-30", "error");
+      },
+    },
   ];
 }
 
@@ -892,6 +916,12 @@ function build() {
   return { bag, files, cusips: example.cusips, manifest };
 }
 
+const SCHEMA_02 = new Set(["valid/example-autocall.yaml", "invalid/invalid-date-final-valuation.yaml"]);
+
+function schemaMarkerFor(rel) {
+  return SCHEMA_02.has(rel) ? "schema: mln-terms/0.2" : "schema: mln-terms/0.1";
+}
+
 function assertProductText(files) {
   for (const file of files) {
     const lines = file.text.split("\n");
@@ -901,8 +931,9 @@ function assertProductText(files) {
     const first = lines[0];
     if (file.rel.endsWith("schema-line.yaml")) {
       if (first !== "# synthetic") throw new Error("schema-line fixture drifted");
-    } else if (file.rel.endsWith(".yaml") && first !== "schema: mln-terms/0.1") {
-      throw new Error(`schema marker drifted in ${file.rel}`);
+    } else if (file.rel.endsWith(".yaml")) {
+      const marker = schemaMarkerFor(file.rel);
+      if (first !== marker) throw new Error(`schema marker drifted in ${file.rel}`);
     }
   }
 }

@@ -24,6 +24,7 @@ function eachTerm(terms: Terms, visit: (path: string, term: Term<unknown>) => vo
   one("dates.settlement", terms.dates.settlement);
   one("dates.maturity", terms.dates.maturity);
   one("dates.first_call_observation", terms.dates.first_call_observation);
+  one("dates.final_valuation", terms.dates.final_valuation);
   terms.dates.observation_schedule?.forEach((item, index) => {
     one(`dates.observation_schedule[${index}]`, item);
   });
@@ -55,6 +56,7 @@ function isDateTerm(path: string): boolean {
     owner === "dates.settlement" ||
     owner === "dates.maturity" ||
     owner === "dates.first_call_observation" ||
+    owner === "dates.final_valuation" ||
     /^dates\.observation_schedule\[\d+\]$/.test(owner)
   );
 }
@@ -97,6 +99,7 @@ export function collectDateFlags(terms: Terms): Record<string, DateFlag[]> {
   add("dates.settlement", terms.dates.settlement);
   add("dates.maturity", terms.dates.maturity);
   add("dates.first_call_observation", terms.dates.first_call_observation);
+  if (terms.dates.final_valuation !== undefined) add("dates.final_valuation", terms.dates.final_valuation);
   terms.dates.observation_schedule?.forEach((item, index) => {
     add(`dates.observation_schedule[${index}]`, item);
   });

@@ -40,6 +40,7 @@ export function termDateFlags(terms: Terms, calendar: ExchangeCalendar): Record<
   add("dates.settlement", terms.dates.settlement);
   add("dates.maturity", terms.dates.maturity);
   add("dates.first_call_observation", terms.dates.first_call_observation);
+  if (terms.dates.final_valuation !== undefined) add("dates.final_valuation", terms.dates.final_valuation);
   const list = terms.dates.observation_schedule;
   if (list !== undefined) {
     for (let index = 0; index < list.length; index += 1) {
