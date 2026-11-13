@@ -74,3 +74,31 @@ The PR body's claims table holds the PM's runs, with the four probe scripts prin
 - Marking L's item 18 `estimate` or `assumed` changes only `unverified` and `provisional`, on four dates and in `payoutSchedule`.
 - `loadTerms` refuses a zero initial level as `out-of-range`. Set by hand on loaded terms, the same level makes `evaluateNote` and `noteMetrics` throw.
 - `pnpm verify` exits 0 at `d09bbda` on both Nodes.
+
+## Pass 1's stop and the builder ruling (2026-11-13)
+
+Codex's Pass 1 ran in a GPT-6.1 Sol High sub-agent and checked the head `d09bbda`. It stopped before posting a comment. The reason: `AGENTS.md`'s Seats table makes Cursor the builder, while the spec then named Codex, and `AGENTS.md` says to stop when it and a prompt disagree. Beni relayed the stop to the PM.
+
+Codex was right to stop. The 15:28 EST question had taken "Codex writes the commit" as given and asked only who takes Pass 2, so Beni had never ruled on the builder seat. The answer the PM recommended, "Codex, adjudicating", also broke `AGENTS.md`'s independence rule "The builder reviews nothing it built", because Codex would have adjudicated a review of its own build.
+
+The PM asked in its session at 17:10 EST: "Codex's PR #40 Pass 1 stopped on a real conflict: AGENTS.md makes Cursor the builder, and the S03.1 spec names Codex. Codex building also breaks AGENTS.md's "the builder reviews nothing it built", so the "Codex, adjudicating" Pass 2 I recommended at 15:28 can't stand either. Does S03.1 override AGENTS.md's builder seat?"
+
+Beni answered **"No (Recommended)"** at 17:14 EST. The option read: "Cursor builds S03.1 (generator, two golden cases, guard tests) and never touches tools/reference. Codex amends the reference at Pass 2, as ruling 2 had it do in S03. Every seat is the AGENTS.md default, so the 15:28 Pass 2 ruling is superseded. I amend PR #40, and Codex's Pass 1 restarts on the new head." The alternative he declined was "Yes": Codex builds, and Pass 2 needs another seat.
+
+`ab9737e` applies it to the spec and the index row. With it:
+- Cursor builds S03.1 and never edits `tools/reference/**`.
+- Codex amends the reference at Pass 2.
+- Pass M at Cursor's head disagrees on g12 alone until Pass 2.
+- AC1 to AC3 hold after Pass 2.
+
+The authorship record gains one row:
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `ab9737e` | Claude | Codex, at Pass 1 |
+
+Pass 1 restarts at `ab9737e`. Item 8 under What to check now reads:
+
+8. **The seats.** With Cursor building and Codex amending the reference at Pass 2, does every S03.1 seat fall within `AGENTS.md`? Does Decision 2's account of the disagreement expected at Cursor's head fit the skill's Pass M rule, given that Beni has already ruled on it? Is the split of AC1 to AC3 and the mutants between Cursor's PR body and Codex's Pass 2 comment complete?
+
+The other items stand, read at the new head.
