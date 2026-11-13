@@ -784,3 +784,16 @@ test("an absent final valuation term is unverified and adds no final assumption"
   expect(result.provisional).toBe(true);
   expect(result.assumptions).toEqual([{ code: "per-1000-principal" }, { code: "cents-half-up" }, { code: "premium-months-by-index" }]);
 });
+
+test("an initial level the loader would refuse stops the call instead of leaving the member out", () => {
+  const closes = uniform("2026-09-01", "19/20");
+  for (const value of ["0", "0.000", "1e2"]) {
+    const terms = listedTerms();
+    terms.underlyings.members[2] = { ticker: "CHRL", initial: primary(value) };
+    expect(() => evaluateNote(terms, nyse, closes, "2026-09-01"), value).toThrow("initial level did not solve");
+    expect(() => noteMetrics(terms, closes, "2026-09-01"), value).toThrow("initial level did not solve");
+    // With no close for that member the row has its reason, and nothing is computed from the level.
+    const without = closes.filter((close) => close.ticker !== "CHRL");
+    expect(evaluated(evaluateNote(terms, nyse, without, "2026-09-01")).reasons, value).toEqual([{ code: "close-missing", ticker: "CHRL" }]);
+  }
+});

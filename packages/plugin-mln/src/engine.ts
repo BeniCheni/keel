@@ -164,11 +164,13 @@ function resolveMember(
   if (reason === null && hasValue(initial) && closeText !== null) {
     const initialFrac = parseDecimal(initial.value);
     const closeFrac = parseDecimal(closeText);
-    if (initialFrac !== null && closeFrac !== null && initialFrac.p !== 0n) {
-      raw = divFrac(closeFrac, initialFrac);
-      rounded = roundRatio(raw, rounding);
-      ratio = formatRatio(rounded);
-    }
+    // The loader admits only a positive decimal here, and check 1 only a valid close. Anything else
+    // has no ratio, and a member with no ratio and no reason would drop out of the worst-of.
+    if (initialFrac === null || initialFrac.p === 0n) throw new Error("initial level did not solve");
+    if (closeFrac === null) throw new Error("close did not solve");
+    raw = divFrac(closeFrac, initialFrac);
+    rounded = roundRatio(raw, rounding);
+    ratio = formatRatio(rounded);
   }
   return { level: { ticker, close: closeText, sources, ratio }, reason, raw, rounded };
 }
