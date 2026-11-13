@@ -634,3 +634,153 @@ test("an undated first item is next up to the settlement date and unknown after 
   expect(after.next).toBeNull();
   expect(after.reasons).toEqual([{ code: "date-unknown", index: 0 }]);
 });
+
+// Checks, paths and shared fields that had a surviving mutant.
+
+test("each way a readable close can be invalid is reported at its index", () => {
+  const closes: Close[] = [
+    closeValue("ALFA", "2026-09-01", "95.2375"),
+    closeValue("ALFA", "2026-02-30", "95.2375"),
+    closeValue("BRVO", "2026-09-01", "95."),
+    closeValue("CHRL", "2026-09-01", "0.0"),
+    closeValue("DLTA", "2026-09-01", "90.36875", "Not A Source"),
+    closeValue("DLTA", "2026-09-01", "1e2"),
+  ];
+  const expected = [1, 2, 3, 4, 5].map((index) => ({ code: "close-invalid", index }));
+  expect(unavailable(evaluateNote(baseTerms(), nyse, closes, "2026-09-01"))).toEqual(expected);
+  expect(unavailable(noteMetrics(baseTerms(), closes, "2026-09-01"))).toEqual(expected);
+});
+
+test("an input finding is returned ahead of a terms finding", () => {
+  const terms = baseTerms();
+  terms.dates.trade = unknownTerm();
+  expect(unavailable(evaluateNote(terms, nyse, [], "2026-13-01"))).toEqual([{ code: "as-of-invalid" }]);
+  expect(unavailable(finalPayout(terms, nyse, "19/020"))).toEqual([{ code: "ratio-invalid" }]);
+  expect(unavailable(noteMetrics(baseTerms(), [closeValue("ALFA", "2026-09-01", "0")], "2026-09-01"))).toEqual([
+    { code: "close-invalid", index: 0 },
+  ]);
+});
+
+test("a leap day is real only in a leap year", () => {
+  expect(unavailable(evaluateNote(baseTerms(), nyse, [], "2100-02-29"))).toEqual([{ code: "as-of-invalid" }]);
+  expect(unavailable(evaluateNote(baseTerms(), nyse, [], "2027-02-29"))).toEqual([{ code: "as-of-invalid" }]);
+  expect(evaluateNote(baseTerms(), nyse, [], "2028-02-29").kind).toBe("evaluated");
+  expect(evaluateNote(baseTerms(), nyse, [], "2000-02-29").kind).toBe("evaluated");
+});
+
+test("a first call with two equally near whole-month offsets has none", () => {
+  for (const months of [6, 7]) {
+    const terms = baseTerms();
+    terms.dates.trade = primary("2026-02-27");
+    terms.dates.settlement = primary("2026-03-01");
+    terms.dates.first_call_observation = primary("2026-09-16");
+    terms.call.non_call_months = primary(months);
+    expect(unavailable(payoutSchedule(terms, nyse)), String(months)).toEqual([{ code: "non-call-months-mismatch" }]);
+  }
+});
+
+test("an item after the final valuation is found by its date, and by its place", () => {
+  const dated = listedTerms();
+  const datedList = dated.dates.observation_schedule;
+  if (datedList === undefined) throw new Error("list");
+  datedList[18] = primary("2031-02-27");
+  expect(unavailable(evaluateNote(dated, nyse, [], "2026-09-01"))).toEqual([{ code: "listed-after-final-valuation", index: 18 }]);
+  const placed = listedTerms();
+  placed.dates.observation_schedule?.push(unknownTerm());
+  expect(unavailable(evaluateNote(placed, nyse, [], "2026-09-01"))).toEqual([{ code: "listed-after-final-valuation", index: 19 }]);
+});
+
+test("noteMetrics takes its date from a member's close only", () => {
+  const closes = [...uniform("2026-08-31", "9/10"), closeValue("ZZZZ", "2026-09-01", "1")];
+  const result = noteMetrics(baseTerms(), closes, "2026-09-01");
+  expect(result.kind).toBe("metrics");
+  if (result.kind !== "metrics") return;
+  expect(result.date).toBe("2026-08-31");
+  expect(result.asOf).toBe("2026-09-01");
+});
+
+const UNVERIFIED_ORDER = [
+  "dates.trade",
+  "dates.settlement",
+  "dates.maturity",
+  "dates.first_call_observation",
+  "dates.final_valuation",
+  "dates.observation_schedule",
+  "underlyings.members[0].initial",
+  "underlyings.members[1].initial",
+  "underlyings.members[2].initial",
+  "underlyings.members[3].initial",
+  "underlyings.performance_rounding",
+  "call.level",
+  "call.non_call_months",
+  "call.frequency",
+  "premium.rate_per_year",
+  "premium.accrual",
+  "barrier.level",
+  "barrier.observation",
+  "barrier.below_barrier",
+];
+
+/** L with one path, or every path, moved from `primary` to `document`. */
+function unverifiedTerms(path: string | null): Terms {
+  const terms = listedTerms();
+  const hit = (name: string) => path === null || path === name;
+  const doc = <T>(term: { value: T }): { value: T; status: "document"; source: string } => ({
+    value: term.value,
+    status: "document",
+    source: "supplement",
+  });
+  const text = (term: Terms["dates"]["trade"]) => (term.status === "primary" ? doc(term) : term);
+  const count = (term: Terms["call"]["level"]) => (term.status === "primary" ? doc(term) : term);
+  if (hit("dates.trade")) terms.dates.trade = text(terms.dates.trade);
+  if (hit("dates.settlement")) terms.dates.settlement = text(terms.dates.settlement);
+  if (hit("dates.maturity")) terms.dates.maturity = text(terms.dates.maturity);
+  if (hit("dates.first_call_observation")) terms.dates.first_call_observation = text(terms.dates.first_call_observation);
+  if (hit("dates.final_valuation") && terms.dates.final_valuation !== undefined) terms.dates.final_valuation = text(terms.dates.final_valuation);
+  const schedule = terms.dates.observation_schedule;
+  if (hit("dates.observation_schedule") && schedule !== undefined && schedule[5] !== undefined) schedule[5] = text(schedule[5]);
+  terms.underlyings.members.forEach((member, index) => {
+    if (hit(`underlyings.members[${index}].initial`)) member.initial = text(member.initial);
+  });
+  if (hit("underlyings.performance_rounding")) terms.underlyings.performance_rounding = text(terms.underlyings.performance_rounding);
+  if (hit("call.level")) terms.call.level = count(terms.call.level);
+  if (hit("call.non_call_months")) terms.call.non_call_months = count(terms.call.non_call_months);
+  if (hit("call.frequency")) terms.call.frequency = text(terms.call.frequency);
+  if (hit("premium.rate_per_year")) terms.premium.rate_per_year = count(terms.premium.rate_per_year);
+  if (hit("premium.accrual")) terms.premium.accrual = text(terms.premium.accrual);
+  if (hit("barrier.level")) terms.barrier.level = count(terms.barrier.level);
+  if (hit("barrier.observation")) terms.barrier.observation = text(terms.barrier.observation);
+  if (hit("barrier.below_barrier")) terms.barrier.below_barrier = text(terms.barrier.below_barrier);
+  return terms;
+}
+
+function unverifiedOf(result: { kind: string }): string[] {
+  if (!("unverified" in result) || !Array.isArray(result.unverified)) throw new Error(JSON.stringify(result));
+  return result.unverified as string[];
+}
+
+test("every unverified path a function reads is listed, in the fixed order", () => {
+  const closes = uniform("2026-09-01", "9/10");
+  const isInitial = (path: string) => path.startsWith("underlyings.members[");
+  const metricsReads = (path: string) => isInitial(path) || ["underlyings.performance_rounding", "call.level", "barrier.level"].includes(path);
+  const all = unverifiedTerms(null);
+  expect(unverifiedOf(evaluateNote(all, nyse, closes, "2026-09-01"))).toEqual(UNVERIFIED_ORDER);
+  expect(unverifiedOf(payoutSchedule(all, nyse))).toEqual(UNVERIFIED_ORDER.filter((path) => !isInitial(path)));
+  expect(unverifiedOf(finalPayout(all, nyse, "19/20"))).toEqual(UNVERIFIED_ORDER.filter((path) => !isInitial(path)));
+  expect(unverifiedOf(noteMetrics(all, closes, "2026-09-01"))).toEqual(UNVERIFIED_ORDER.filter(metricsReads));
+  for (const path of UNVERIFIED_ORDER) {
+    const terms = unverifiedTerms(path);
+    expect(unverifiedOf(evaluateNote(terms, nyse, closes, "2026-09-01")), path).toEqual([path]);
+    expect(unverifiedOf(payoutSchedule(terms, nyse)), path).toEqual(isInitial(path) ? [] : [path]);
+    expect(unverifiedOf(finalPayout(terms, nyse, "19/20")), path).toEqual(isInitial(path) ? [] : [path]);
+    expect(unverifiedOf(noteMetrics(terms, closes, "2026-09-01")), path).toEqual(metricsReads(path) ? [path] : []);
+  }
+});
+
+test("an absent final valuation term is unverified and adds no final assumption", () => {
+  const terms = withList(dropFinal(baseTerms()), [primary("2026-09-01"), primary("2026-12-01")]);
+  const result = evaluated(evaluateNote(terms, nyse, [], "2026-08-31"));
+  expect(result.unverified).toEqual(["dates.final_valuation"]);
+  expect(result.provisional).toBe(true);
+  expect(result.assumptions).toEqual([{ code: "per-1000-principal" }, { code: "cents-half-up" }, { code: "premium-months-by-index" }]);
+});
