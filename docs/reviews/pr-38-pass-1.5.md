@@ -301,3 +301,62 @@ console.log(JSON.stringify([d.daysApart("10000-01-01", "9999-12-01"), e.wholeMon
 | --- | --- | --- |
 | `3e48b83` Add independent S03 payoff reference for Pass M | Codex | Claude, Pass 2.5, fresh session |
 | `f24e2f3` Bound S03 evaluation when evidenced observations run out | Codex | Claude, Pass 2.5, fresh session |
+| `fd4fd79` Count cycle slots past year 9999 in Pass M | Codex | Claude, Pass 2.5, fresh session |
+
+## After Pass 2
+
+Pass 2's comment is [issuecomment-6861673765](https://github.com/BeniCheni/keel/pull/38#issuecomment-6861673765), posted at 13:34 EST. Reviewed head `d052141`, final head `fd4fd79`, verdict mergeable after fixes, subject to Pass 2.5. The read ran in a Codex sub-agent on GPT-6.1 Sol Extra High. Codex accepted all 14 Pass 1 findings and every disposition above, finding 8's throw included, and contested nothing. It resumed after ruling C, which its comment cites from this brief. Its four findings:
+
+| Pass 2 # | Severity | PM disposition | Reason |
+| --- | --- | --- | --- |
+| 1 | High | Accept | Pass 1's finding 1, fixed under ruling A in `f24e2f3`. Reproduced: with the run-out return set back to `live` at `fd4fd79`, three tests fail: both new `an exhausted ... schedule cannot stay live` tests and the seeded property test. The High closes under Severity with `f24e2f3`'s tests, subject to Pass 2.5's cold read |
+| 2 | Medium | Accept | The old slot search gave up when a probe passed year 9999. Fixed in `f24e2f3`. Reproduced: with `if (slot.year > 9999) return null;` after the slot line in `nearestSlot`, two tests fail, the exact-match test and the year-10000 test |
+| 3 | Medium | Accept | Pass 1's finding 7, fixed in `f24e2f3` at the seeded-ratio draw site. The golden files are byte-identical to `d052141` (`git diff --quiet d052141 fd4fd79 -- fixtures/golden` exits 0). The PM did not re-run Codex's two redraw mutants |
+| 4 | High | Accept | The reference left out slots in year 10000, the Pass M disagreement that ruling C settled. `fd4fd79` amends only the reference's slot arithmetic, after the engine read, as Codex's comment says. It also adds an engine test. Reproduced: with `if (slot.year > 9999) continue;` in `nearestSlot`, exactly that test fails. With the amendment, the engine and the reference agree on ruling C's case at 104958 |
+
+So no High is open at `fd4fd79`, subject to Pass 2.5's cold read of `3e48b83`, `f24e2f3` and `fd4fd79`. Process notes:
+
+- Codex's three commit subjects are not in the repository's `type(scope): subject` form. They do not change a result.
+- The private-list check found 0 on every surface: the diff, commit messages, title, body, issue comments, inline comments, review bodies and Codex's own comment. No comment has been posted since (`gh api repos/BeniCheni/keel/issues/38/comments --jq length` printed `2` at 13:40 EST: Pass 1's and Pass 2's).
+- The PR body has not been edited since Cursor opened the PR (`gh api graphql` on `pullRequest(number:38){userContentEdits{totalCount}}` prints `0`), so its counts and claims predate every fix. Pass 1's finding 12 and Pass 2's adjudication of it record the gaps.
+
+### The PM's re-runs at `fd4fd79`
+
+In the fresh clone with a fresh `mktemp -d` as `KEEL_DATA_DIR`, Python 3.9.6 for the reference:
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Install and verify | `pnpm install --frozen-lockfile`, `pnpm verify`, on v24.22.2 and v26.13.0 | Exit 0 for each. Core 178, plugin 210, tooling 123, eight steps ok, status clean |
+| CI | `gh run view 43483419088 --repo BeniCheni/keel --json conclusion,headSha,jobs` | `success` at `fd4fd79`, attempt 1, all four cells and the `verify` job |
+| Authors | `git log --format='%an' origin/main..HEAD \| sort \| uniq -c` | 8 Claude, 3 Codex, 1 Cursor |
+| Pass M | `python3 -I tools/reference/payoff.py fixtures/golden/` | Exit 0, `cases 11, disagreements 0`, 11 lines `agree` |
+| Control 1 | The same on a copy of `fixtures/golden/` with g01's `evaluation.payoutCents` raised by 1 | Exit 1, `g01-called-first: disagree $.evaluation.payoutCents`, `cases 11, disagreements 1` |
+| Control 2 | The same on a copy with g01's last `evaluation.assumptions` entry removed | Exit 1, `g01-called-first: disagree $.evaluation.assumptions[4]`, `cases 11, disagreements 1` |
+| Ruling C's case | `case.mjs` and `ref.py` above, Node v24.22.2 | Engine and reference both: one call 9999-12-01, 6 months, 104250; final 9999-12-31, 7 months, `aboveCallCents` 104958 |
+| Golden bytes | `git diff --quiet d052141 fd4fd79 -- fixtures/golden` | Exit 0 |
+| Dependencies | `git diff --quiet d052141 fd4fd79 -- pnpm-lock.yaml package.json packages/plugin-mln/package.json` | Exit 0 |
+| Tripwire | `node tools/tripwire/cli.mjs .` | Exit 0, no output |
+
+The three mutants, run with this brief's driver, with its `M` list replaced by these rows and the planted-file block removed, on Node v24.22.2. Status was clean after:
+
+```python
+M = [
+ ("Run-out returns live (ruling A reverted)", "packages/plugin-mln/src/engine.ts", 'return evaluated(prepared, asOf, "unknown", rows, null, null, [{ code: prepared.finalState.reason }]);', 'return evaluated(prepared, asOf, "live", rows, null, null, []);', "plugin"),
+ ("Slots capped at 9999 (skip)", "packages/plugin-mln/src/events.ts", "    const slot = addMonths(start, index * step);\n", "    const slot = addMonths(start, index * step);\n    if (slot.year > 9999) continue;\n", "plugin"),
+ ("Old out-of-range exit (return null)", "packages/plugin-mln/src/events.ts", "    const slot = addMonths(start, index * step);\n", "    const slot = addMonths(start, index * step);\n    if (slot.year > 9999) return null;\n", "plugin"),
+]
+```
+
+| Mutant | Result at `fd4fd79` |
+| --- | --- |
+| Run-out returns `live` | Exit 1, 3 of 210 failed: `an exhausted estimated schedule cannot stay live when the final valuation is in conflict`, `an exhausted listed schedule cannot stay live when the final valuation is in conflict`, `results stay well formed across a fixed seed` |
+| Slots capped at 9999, skipped | Exit 1, 1 of 210 failed: `the nearest cycle slot may fall after the last representable contract date` |
+| The old out-of-range exit | Exit 1, 2 of 210 failed: `mapping an exact match at the last representable date needs no later date`, `the nearest cycle slot may fall after the last representable contract date` |
+
+### What Pass 2.5 does
+
+1. Cold-read `3e48b83`, `f24e2f3` and `fd4fd79`: `git diff d052141 fd4fd79`. They are the reference, the finding 1 fix with the slot rewrite and the generator redraw, and the reference amendment with its engine test.
+2. Re-run every number it reports at `fd4fd79`, Pass M and its two controls included.
+3. Judge each High: Pass 1's finding 1 and Pass 2's finding 4. Check that each closes under Severity, and that every one of PR #32's 13 Highs still closes at the head.
+4. Evaluate the merge gate in shadow mode, write the executive brief and give Beni the handoff block. The PR is still a draft. Sensitive paths are touched, so the gate is "would escalate" at best.
+5. Never open the private list. Codex ran it, and Pass 2.5 cites its counts.
