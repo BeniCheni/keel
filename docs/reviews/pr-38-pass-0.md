@@ -134,7 +134,7 @@ In a fresh clone with a fresh `mktemp -d` as `KEEL_DATA_DIR`, on Node v24.22.2 a
 
 These were done to sharpen the questions. They are not findings.
 
-- `grep -n -E 'parseFloat|parseInt|toFixed|Number\(|Math\.'` over product files under `packages/plugin-mln/src/` finds `Math.floor` only in `dates.ts`'s civil-date conversion.
+- `grep -n -E 'parseFloat|parseInt|toFixed|Number\(|Math\.'` over product files under `packages/plugin-mln/src/` finds 18 lines: 16 in `dates.ts`'s civil-date code (14 `Math.floor`, one `Math.min`, one `Math.abs`) and two `Number(` in `fraction.ts`. (Corrected on 2026-11-13 in the Pass 1.5 commit, after Pass 1 found it wrong. This line first said the grep "finds `Math.floor` only in `dates.ts`'s civil-date conversion".)
 - `grep -n economics` over the same product files finds nothing.
 - The test `an undated item bounds the status` (`payoff.honesty.test.ts`, line 306) builds 17 `primary` items and one `unknown` item on the base terms, which keep the final valuation term. It sets `asOf` one day after the 17th date and expects `unknown` with `date-unknown` at index 17.
 - `tools/generators/golden/generate.mjs` rejects a seeded value with 9 or more integer digits (line 67) or a 9-character token passing the CUSIP check (line 70).
