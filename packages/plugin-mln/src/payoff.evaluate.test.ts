@@ -511,3 +511,126 @@ test("an unknown final valuation is reported by the payout", () => {
   terms.dates.final_valuation = unknownTerm();
   expect(unavailable(payoutSchedule(terms, nyse))).toEqual([{ code: "final-valuation-unknown" }]);
 });
+
+// Boundaries: each test below sits on the date or the level where a rule changes its answer.
+
+function notCalledThrough(count: number): Close[] {
+  return entryDates()
+    .slice(0, count)
+    .flatMap((date) => uniform(date, "3/5"));
+}
+
+function finalRow(closes: Close[]): Evaluation {
+  const others = uniform("2031-02-26", "1/1").filter((close) => !closes.some((item) => item.ticker === close.ticker));
+  return evaluated(evaluateNote(listedTerms(), nyse, [...notCalledThrough(18), ...closes, ...others], "2031-02-26"));
+}
+
+test("the final row rounds the ratio before the call test", () => {
+  const result = finalRow([closeValue("BRVO", "2031-02-26", "76.470975")]);
+  const last = result.rows[18];
+  expect(last?.kind).toBe("final");
+  expect(last?.worst).toEqual({ ticker: "BRVO", ratio: "19/20" });
+  expect(last?.outcome).toBe("final-above-call");
+  expect(result.status).toBe("final-fixed");
+  expect(result.payoutCents).toBe(142500);
+});
+
+test("the final row rounds the ratio before the barrier test", () => {
+  const result = finalRow([closeValue("BRVO", "2031-02-26", "48.295975")]);
+  const last = result.rows[18];
+  expect(last?.worst).toEqual({ ticker: "BRVO", ratio: "3/5" });
+  expect(last?.outcome).toBe("final-at-or-above-barrier");
+  expect(result.payoutCents).toBe(100000);
+});
+
+test("the final row pays one-for-one on the rounded ratio", () => {
+  const result = finalRow([closeValue("CHRL", "2031-02-26", "71.99388")]);
+  const last = result.rows[18];
+  expect(last?.worst).toEqual({ ticker: "CHRL", ratio: "5999/10000" });
+  expect(last?.outcome).toBe("final-below-barrier");
+  expect(result.payoutCents).toBe(59990);
+});
+
+test("a first call on the settlement date is unavailable", () => {
+  const terms = baseTerms();
+  terms.dates.settlement = primary("2026-09-01");
+  terms.call.non_call_months = primary(0);
+  expect(unavailable(evaluateNote(terms, nyse, [], "2026-09-01"))).toEqual([{ code: "first-call-before-settlement" }]);
+});
+
+test("a first call the day after settlement is in order", () => {
+  const terms = baseTerms();
+  terms.dates.settlement = primary("2026-08-31");
+  terms.call.non_call_months = primary(0);
+  const result = payoutSchedule(terms, nyse);
+  expect(result.kind).toBe("payouts");
+  if (result.kind !== "payouts") return;
+  expect(result.calls[0]).toEqual({ scheduleIndex: 0, date: "2026-09-01", evidenced: true, premiumMonths: 0, payoutCents: 100000 });
+});
+
+test("settlement on the trade date is in order", () => {
+  const terms = baseTerms();
+  terms.dates.trade = primary("2026-03-04");
+  expect(evaluated(evaluateNote(terms, nyse, [], "2026-08-31")).status).toBe("live");
+  expect(payoutSchedule(terms, nyse).kind).toBe("payouts");
+});
+
+test("a final valuation on the maturity date is in order", () => {
+  const estimated = baseTerms();
+  estimated.dates.final_valuation = primary("2031-03-03");
+  const pay = payoutSchedule(estimated, nyse);
+  expect(pay.kind).toBe("payouts");
+  if (pay.kind !== "payouts") return;
+  expect(pay.calls).toHaveLength(18);
+  expect(pay.final).toEqual({ date: "2031-03-03", evidenced: true, premiumMonths: 60, aboveCallCents: 142500, atOrAboveBarrierCents: 100000 });
+  expect(pay.assumptions.some((item) => item.code === "estimated-after-final-valuation-left-out")).toBe(false);
+
+  const listed = listedTerms();
+  listed.dates.final_valuation = primary("2031-03-03");
+  const schedule = listed.dates.observation_schedule;
+  if (schedule === undefined) throw new Error("list");
+  schedule[18] = primary("2031-03-03");
+  const closes = [...notCalledThrough(18), ...uniform("2031-03-03", "19/20")];
+  const before = evaluated(evaluateNote(listed, nyse, closes, "2031-03-02"));
+  expect(before.status).toBe("live");
+  expect(before.next).toEqual({ kind: "final", scheduleIndex: null, date: "2031-03-03", evidenced: true });
+  const on = evaluated(evaluateNote(listed, nyse, closes, "2031-03-03"));
+  expect(on.status).toBe("matured");
+  expect(on.rows).toHaveLength(19);
+  expect(on.rows[18]?.date).toBe("2031-03-03");
+  expect(on.payoutCents).toBe(142500);
+});
+
+test("a final valuation on the first call date is in order", () => {
+  const terms = baseTerms();
+  terms.dates.final_valuation = primary("2026-09-01");
+  const pay = payoutSchedule(terms, nyse);
+  expect(pay.kind).toBe("payouts");
+  if (pay.kind !== "payouts") return;
+  expect(pay.calls).toEqual([]);
+  expect(pay.final).toEqual({ date: "2026-09-01", evidenced: true, premiumMonths: 6, aboveCallCents: 104250, atOrAboveBarrierCents: 100000 });
+  expect(pay.assumptions).toContainEqual({ code: "estimated-after-final-valuation-left-out", count: 18 });
+  const result = evaluated(evaluateNote(terms, nyse, uniform("2026-09-01", "19/20"), "2026-09-01"));
+  expect(result.rows.map((row) => row.kind)).toEqual(["final"]);
+  expect(result.status).toBe("final-fixed");
+  expect(result.payoutCents).toBe(104250);
+});
+
+test("an undated first item is next up to the settlement date and unknown after it", () => {
+  const terms = listedTerms();
+  const schedule = terms.dates.observation_schedule;
+  if (schedule === undefined) throw new Error("list");
+  schedule[0] = unknownTerm();
+  for (const asOf of ["2026-03-03", "2026-03-04"]) {
+    const result = evaluated(evaluateNote(terms, nyse, [], asOf));
+    expect(result.status, asOf).toBe("live");
+    expect(result.rows, asOf).toEqual([]);
+    expect(result.reasons, asOf).toEqual([]);
+    expect(result.next, asOf).toEqual({ kind: "call", scheduleIndex: 0, date: null, evidenced: false });
+  }
+  const after = evaluated(evaluateNote(terms, nyse, [], "2026-03-05"));
+  expect(after.status).toBe("unknown");
+  expect(after.rows).toEqual([]);
+  expect(after.next).toBeNull();
+  expect(after.reasons).toEqual([{ code: "date-unknown", index: 0 }]);
+});
