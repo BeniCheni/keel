@@ -10,14 +10,29 @@ function run(command, args) {
   return result.status;
 }
 
+function firstNonzero(codes) {
+  for (const code of codes) {
+    if (code !== 0) return code;
+  }
+  return 0;
+}
+
 export const steps = [
   {
     name: "typecheck",
-    run: () => run("pnpm", ["exec", "tsc", "-p", "packages/core", "--noEmit"]),
+    run: () =>
+      firstNonzero([
+        run("pnpm", ["exec", "tsc", "-p", "packages/core", "--noEmit"]),
+        run("pnpm", ["exec", "tsc", "-p", "packages/plugin-mln", "--noEmit"]),
+      ]),
   },
   {
     name: "tests",
-    run: () => run("pnpm", ["--filter", "@keel/core", "test"]),
+    run: () =>
+      firstNonzero([
+        run("pnpm", ["--filter", "@keel/core", "test"]),
+        run("pnpm", ["--filter", "@keel/plugin-mln", "test"]),
+      ]),
   },
   {
     name: "tooling",

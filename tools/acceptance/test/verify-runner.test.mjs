@@ -1,7 +1,8 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, rmSync, writeFileSync } from "node:fs";
+import { basename, join } from "node:path";
 import { expect, test } from "vitest";
 import { steps } from "../../verify/steps.mjs";
-import { NESTED_RUN_TIMEOUT_MS, repoRoot, run } from "./helpers.mjs";
+import { NESTED_RUN_TIMEOUT_MS, repoRoot, repoTempPath, run } from "./helpers.mjs";
 
 const names = ["typecheck", "tests", "tooling", "tripwire", "network", "determinism", "copy", "boundaries"];
 
@@ -65,4 +66,27 @@ test("verify:<step> runs one step and passes its status through", () => {
   expect(one(["copy", "--stub", "--fail", "copy"]).status).toBe(1);
   expect(one(["copy", "--stub"]).status).toBe(0);
   expect(one(["copy"]).status).toBe(0);
+}, NESTED_RUN_TIMEOUT_MS);
+
+test("a failure in the plugin alone fails the tests step and the typecheck step", () => {
+  const src = join(repoRoot, "packages/plugin-mln/src");
+  // Both plants are test files, so the plugin's own purity listing never reads them.
+  const failing = repoTempPath(src, ".test.ts");
+  try {
+    writeFileSync(failing, 'import { expect, test } from "vitest";\ntest("planted", () => {\n  expect(1).toBe(2);\n});\n');
+    const tests = one(["tests"]);
+    expect(tests.status).not.toBe(0);
+    expect(`${tests.stdout}\n${tests.stderr}`).toContain(basename(failing));
+  } finally {
+    rmSync(failing, { force: true });
+  }
+  const mistyped = repoTempPath(src, ".test.ts");
+  try {
+    writeFileSync(mistyped, 'export const planted: number = "text";\n');
+    const typecheck = one(["typecheck"]);
+    expect(typecheck.status).not.toBe(0);
+    expect(`${typecheck.stdout}\n${typecheck.stderr}`).toContain(basename(mistyped));
+  } finally {
+    rmSync(mistyped, { force: true });
+  }
 }, NESTED_RUN_TIMEOUT_MS);
