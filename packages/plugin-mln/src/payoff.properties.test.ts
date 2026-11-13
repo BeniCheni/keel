@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { addDaysIso } from "./dates.ts";
+import { addDaysIso, addMonthsIso } from "./dates.ts";
 import { finalPayout, evaluateNote } from "./index.ts";
 import { baseTerms, calendar, entryDates, listedTerms } from "./test-support/access.test.ts";
 import { uniform } from "./test-support/closes.ts";
@@ -71,11 +71,39 @@ function expectWellFormed(result: Evaluation, terms: Terms): void {
   } else if (result.status === "unknown") {
     expect(result.next).toBeNull();
     expect(result.payoutCents).toBeNull();
+    expect(result.reasons.length).toBeGreaterThan(0);
   } else {
     expect(result.status).toBe("live");
     expect(result.reasons).toEqual([]);
     expect(result.payoutCents).toBeNull();
+    expect(result.next).not.toBeNull();
   }
+}
+
+/** A list of `count` items whose last has no date, on terms whose final valuation date sits on slot `count`. */
+function trailingTerms(count: number, dates: string[]): Terms {
+  const terms = baseTerms();
+  const slot = count === 18 ? "2031-02-26" : addMonthsIso("2026-09-01", 3 * count);
+  if (slot === null) throw new Error("slot");
+  terms.dates.final_valuation = primary(slot);
+  terms.dates.observation_schedule = [...dates.slice(0, count - 1).map((date) => primary(date)), unknownTerm()];
+  return terms;
+}
+
+/** True when the evaluation stopped on the list's last item, and that item has no date. */
+function endsOnTrailingUndated(result: Evaluation, terms: Terms): boolean {
+  const list = terms.dates.observation_schedule ?? [];
+  const last = list[list.length - 1];
+  const reason = result.reasons[0];
+  return (
+    last !== undefined &&
+    last.status === "unknown" &&
+    result.status === "unknown" &&
+    result.reasons.length === 1 &&
+    reason !== undefined &&
+    reason.code === "date-unknown" &&
+    reason.index === list.length - 1
+  );
 }
 
 test("results stay well formed across a fixed seed", () => {
@@ -84,21 +112,28 @@ test("results stay well formed across a fixed seed", () => {
   const bases = [baseTerms(), listedTerms()];
   let evaluations = 0;
   let trailing = 0;
-  const trailTerms = baseTerms();
-  trailTerms.dates.observation_schedule = [...dates.slice(0, 17).map((date) => primary(date)), unknownTerm()];
-  const trailCloses = dates.slice(0, 17).flatMap((date) => uniform(date, "3/5"));
-  let cursor = addDaysIso(dates[16] ?? "", 1);
-  for (let i = 0; i < 100 && cursor !== null; i += 1) {
-    const first = evaluateNote(trailTerms, nyse, trailCloses, cursor);
-    const second = evaluateNote(trailTerms, nyse, trailCloses, cursor);
+  const lengths = new Set<number>();
+  for (let i = 0; i < 150; i += 1) {
+    const count = 1 + Math.floor(rng() * 18);
+    const trailTerms = trailingTerms(count, dates);
+    const trailCloses = dates.slice(0, count - 1).flatMap((date) => uniform(date, "3/5"));
+    const lastDated = count === 1 ? "2026-03-04" : dates[count - 2];
+    const asOf = addDaysIso(lastDated ?? "", 1 + Math.floor(rng() * 400));
+    if (asOf === null) throw new Error("trail date");
+    const first = evaluateNote(trailTerms, nyse, trailCloses, asOf);
+    const second = evaluateNote(trailTerms, nyse, trailCloses, asOf);
     expect(second).toEqual(first);
-    if (first.kind !== "evaluated") throw new Error("trail");
-    expect(first.reasons[0]?.code).toBe("date-unknown");
+    if (first.kind !== "evaluated") throw new Error(JSON.stringify(first));
+    expect(first.status, `${count} ${asOf}`).not.toBe("live");
+    expect(endsOnTrailingUndated(first, trailTerms), `${count} ${asOf}`).toBe(true);
     expectWellFormed(first, trailTerms);
     evaluations += 1;
-    trailing += 1;
-    cursor = addDaysIso(cursor, 1);
+    if (endsOnTrailingUndated(first, trailTerms)) {
+      trailing += 1;
+      lengths.add(count);
+    }
   }
+  expect(lengths.size).toBeGreaterThanOrEqual(10);
   for (let i = 0; i < 900; i += 1) {
     const terms = bases[Math.floor(rng() * bases.length)] ?? baseTerms();
     const start = addDaysIso("2026-03-02", Math.floor(rng() * 1800));
@@ -111,6 +146,7 @@ test("results stay well formed across a fixed seed", () => {
     if (first.kind !== "evaluated") throw new Error(JSON.stringify(first));
     expectWellFormed(first, terms);
     evaluations += 1;
+    if (endsOnTrailingUndated(first, terms)) trailing += 1;
   }
   expect(evaluations).toBeGreaterThanOrEqual(1000);
   expect(trailing).toBeGreaterThanOrEqual(100);
