@@ -32,6 +32,7 @@ Every slice moves through up to four rungs: proposal (the research behind the pr
 | Fable pins to 5.2 (PR #35) | n/a | none (review policy) | none | `reviews/pr-35-pass-0.md`, `reviews/pr-35-pass-1.5.md`, `reviews/pr-35-pass-2.5.md` (executive brief) | merged 2026-11-11 at squash `9d74d05`, reviewed head `20da0de`; by Beni's ruling of 2026-11-11 |
 | Docs after S02.1 (PR #37) | n/a | amends `specs/s01-terms-schema.md`, `specs/s02-schedule.md`, `specs/s02.1-final-valuation.md` and `specs/s03-payoff-engine.md` | none | `reviews/pr-37-pass-0.md` | merged 2026-11-12 at squash `9f0745f`, reviewed head `b15e52f` (fast-track); cold review by Codex, then its re-reads, the last finding it mergeable at `b15e52f` |
 | S03 build (PR #38) | toward `v0.1.0` (non-release) | `specs/s03-payoff-engine.md` | none (no UI) | `reviews/pr-38-pass-0.md`, `reviews/pr-38-pass-1.5.md`, `reviews/pr-38-pass-2.5.md` (executive brief) | merged 2026-11-13 at squash `67a1d92`, reviewed head `fd4fd79`, before the reference fix Beni had ruled into it; by his ruling "Follow-up PR" that fix moves to slice S03.1; lands PR #32's 13 Highs with their closing tests; Beni's rulings A, B and C of 2026-11-13 |
+| S03.1 Reference `k` rule and two golden cases (spec PR #40) | toward `v0.1.0` (non-release) | `specs/s03.1-reference-k.md`; amends `specs/s03-payoff-engine.md` | none (no UI) | `reviews/pr-40-pass-0.md` | spec in review; Codex builds, by ruling 2 of 2026-11-10, and adjudicates at Pass 2, by Beni's ruling of 2026-11-13 |
 
 Folders:
 
