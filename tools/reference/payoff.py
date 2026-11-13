@@ -124,27 +124,29 @@ def rounded(value, rule):
     return Fraction(integer, scale)
 
 
-def add_months(start, months):
+def slot_ordinal(start, months):
     year, month = divmod(start.year * 12 + start.month - 1 + months, 12)
     month += 1
-    return date(year, month, min(start.day, monthrange(year, month)[1]))
+    # Gregorian month lengths repeat every 400 years. Use a representative
+    # year for datetime and add back the elapsed cycles to compare any slot.
+    cycles, year_in_cycle = divmod(year - 1, 400)
+    representative_year = year_in_cycle + 1
+    day = min(start.day, monthrange(representative_year, month)[1])
+    return date(representative_year, month, day).toordinal() + cycles * 146_097
 
 
 def nearest_slot(anchor, target, step):
     anchor = date.fromisoformat(anchor)
     target = date.fromisoformat(target)
+    target_ordinal = target.toordinal()
     months = (target.year - anchor.year) * 12 + target.month - anchor.month
     center = max(0, months // step)
     candidates = range(max(0, center - 1), center + 2)
-    distances = sorted(
-        (abs((target - add_months(anchor, slot * step)).days), slot)
-        for slot in candidates if anchor.year * 12 + anchor.month - 1 + slot * step < 120_000
-    )
-    best_distance, best_slot = distances[0]
-    if len(distances) > 1 and distances[1][0] == best_distance:
-        return None
-    return best_slot
-
+    best, second = sorted(
+        (abs(target_ordinal - slot_ordinal(anchor, slot * step)), slot)
+        for slot in candidates
+    )[:2]
+    return None if best[0] == second[0] else best[1]
 
 def premium_payout(terms, months):
     rate = value(terms, "premium.rate_per_year")

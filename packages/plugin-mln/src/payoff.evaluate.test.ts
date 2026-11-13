@@ -852,3 +852,26 @@ test("mapping an exact match at the last representable date needs no later date"
     aboveCallCents: 104250, atOrAboveBarrierCents: 100000,
   });
 });
+
+test("the nearest cycle slot may fall after the last representable contract date", () => {
+  const yaml = readGolden("g01-called-first").yaml
+    .replace("2026-03-02", "9999-05-28")
+    .replace("2026-03-04", "9999-06-01")
+    .replace("2026-09-01", "9999-12-01")
+    .replace("2031-02-26", "9999-12-31")
+    .replace("2031-03-03", "9999-12-31")
+    .replace('value: "quarterly"', 'value: "monthly"');
+  const parsed = loadTerms(yaml, "synthetic.yaml");
+  if (!parsed.ok) throw new Error(JSON.stringify(parsed.errors));
+  const pay = payoutSchedule(parsed.terms, nyse);
+  expect(pay.kind).toBe("payouts");
+  if (pay.kind !== "payouts") return;
+  expect(pay.schedule).toBe("estimated");
+  expect(pay.calls).toEqual([{
+    scheduleIndex: 0, date: "9999-12-01", evidenced: true, premiumMonths: 6, payoutCents: 104250,
+  }]);
+  expect(pay.final).toEqual({
+    date: "9999-12-31", evidenced: true, premiumMonths: 7,
+    aboveCallCents: 104958, atOrAboveBarrierCents: 100000,
+  });
+});
