@@ -287,12 +287,11 @@ test("an unknown final valuation date is never a fixed or matured note", () => {
     },
   ]) {
     const terms = make(baseTerms());
-    const result = evaluateNote(terms, nyse, uniform("2031-02-26", "19/20"), "2031-03-03");
-    if (result.kind === "evaluated") {
-      expect(result.status).not.toBe("final-fixed");
-      expect(result.status).not.toBe("matured");
-      expect(result.rows.some((row) => row.kind === "final")).toBe(false);
-    }
+    const result = evaluated(evaluateNote(terms, nyse, uniform("2031-02-26", "19/20"), "2031-03-03"));
+    expect(result.status).toBe("unknown");
+    expect(result.status).not.toBe("final-fixed");
+    expect(result.status).not.toBe("matured");
+    expect(result.rows.some((row) => row.kind === "final")).toBe(false);
   }
   const role = baseTerms();
   role.dates.observation_schedule = [primary("2026-09-01")];
@@ -354,4 +353,149 @@ test("calls do not change their inputs", () => {
   noteMetrics(terms, closes, "2026-09-01");
   expect(terms).toEqual(termsBefore);
   expect(closes).toEqual(closesBefore);
+});
+
+function calledOnFirst(terms: Terms, asOf = "2026-09-01"): Evaluation {
+  return evaluated(evaluateNote(terms, nyse, uniform("2026-09-01", "19/20"), asOf));
+}
+
+test("an estimated final valuation date fixes nothing", () => {
+  const dates = entryDates().slice(0, 18);
+  const closes = [...dates.flatMap((date) => uniform(date, "3/5")), ...uniform("2031-02-26", "19/20")];
+  for (const make of [estimate, assumed]) {
+    const terms = listedTerms();
+    terms.dates.final_valuation = make("2031-02-26");
+    for (const asOf of ["2031-02-26", "2031-03-03", "2031-06-02"]) {
+      const result = evaluated(evaluateNote(terms, nyse, closes, asOf));
+      expect(result.status, `${make.name} ${asOf}`).toBe("unknown");
+      expect(result.reasons, `${make.name} ${asOf}`).toEqual([{ code: "estimated-date", scheduleIndex: null, date: "2031-02-26" }]);
+      expect(result.payoutCents, `${make.name} ${asOf}`).toBeNull();
+      expect(result.rows, `${make.name} ${asOf}`).toHaveLength(18);
+      expect(result.rows.some((row) => row.kind === "final"), `${make.name} ${asOf}`).toBe(false);
+    }
+    const pay = payoutSchedule(terms, nyse);
+    if (pay.kind !== "payouts") throw new Error(make.name);
+    expect(pay.final.evidenced, make.name).toBe(false);
+    expect(pay.calls.every((row) => row.evidenced), make.name).toBe(true);
+    expect(pay.unverified, make.name).toEqual(["dates.final_valuation"]);
+  }
+});
+
+test("a document, advisor or user date is evidence", () => {
+  const closes = [...uniform("2026-09-01", "3/5"), ...uniform("2026-12-01", "19/20")];
+  const second: Array<Terms["dates"]["trade"]> = [
+    { value: "2026-12-01", status: "document", source: "supplement" },
+    { value: "2026-12-01", status: "advisor", source: "supplement" },
+    { value: "2026-12-01", status: "user" },
+  ];
+  for (const item of second) {
+    const terms = listedTerms();
+    const schedule = terms.dates.observation_schedule;
+    if (schedule === undefined) throw new Error("list");
+    schedule[1] = item;
+    const result = evaluated(evaluateNote(terms, nyse, closes, "2026-12-01"));
+    expect(result.status, item.status).toBe("called");
+    expect(result.rows[1]?.dateStatus, item.status).toBe(item.status);
+    expect(result.payoutCents, item.status).toBe(106375);
+  }
+  const stated = baseTerms();
+  stated.dates.first_call_observation = { value: "2026-09-01", status: "document", source: "supplement" };
+  const first = calledOnFirst(stated);
+  expect(first.status).toBe("called");
+  expect(first.rows[0]?.dateOrigin).toBe("stated");
+  expect(first.rows[0]?.dateStatus).toBe("document");
+  const term = listedTerms();
+  term.dates.final_valuation = { value: "2031-02-26", status: "advisor", source: "supplement" };
+  const pay = payoutSchedule(term, nyse);
+  if (pay.kind !== "payouts") throw new Error("payouts");
+  expect(pay.final.evidenced).toBe(true);
+});
+
+test("an event of unknown role stops as unknown role, even on a planning date", () => {
+  const terms = dropFinal(baseTerms());
+  terms.dates.observation_schedule = [estimate("2026-09-01")];
+  const result = calledOnFirst(terms);
+  expect(result.status).toBe("unknown");
+  expect(result.rows).toEqual([]);
+  expect(result.reasons).toEqual([{ code: "final-valuation-absent" }]);
+});
+
+test("with a conflicting final valuation, only a date before every candidate can call", () => {
+  const onCandidate = baseTerms();
+  onCandidate.dates.final_valuation = conflictTerm("2026-09-01", "2026-12-01");
+  const stopped = calledOnFirst(onCandidate);
+  expect(stopped.status).toBe("unknown");
+  expect(stopped.rows).toEqual([]);
+  expect(stopped.reasons).toEqual([{ code: "final-valuation-conflict" }]);
+
+  const before = baseTerms();
+  before.dates.final_valuation = conflictTerm("2026-12-01", "2027-03-01");
+  const called = calledOnFirst(before);
+  expect(called.status).toBe("called");
+  expect(called.rows).toHaveLength(1);
+  expect(called.payoutCents).toBe(104250);
+  const reached = evaluated(evaluateNote(before, nyse, uniform("2026-09-01", "3/5"), "2026-12-01"));
+  expect(reached.status).toBe("unknown");
+  expect(reached.rows).toHaveLength(1);
+  expect(reached.reasons).toEqual([{ code: "final-valuation-conflict" }]);
+
+  const listed = baseTerms();
+  listed.dates.observation_schedule = [primary("2026-09-01")];
+  listed.dates.final_valuation = conflictTerm("2026-12-01", "2027-03-01");
+  const listedCall = calledOnFirst(listed);
+  expect(listedCall.status).toBe("called");
+  expect(listedCall.payoutCents).toBe(104250);
+});
+
+test("a later item with no date does not show an earlier item is a call", () => {
+  for (const make of [(terms: Terms) => dropFinal(terms), (terms: Terms) => ({ ...terms, dates: { ...terms.dates, final_valuation: unknownTerm() } })]) {
+    const terms = make(baseTerms());
+    terms.dates.observation_schedule = [primary("2026-09-01"), unknownTerm()];
+    const result = calledOnFirst(terms);
+    expect(result.status).toBe("unknown");
+    expect(result.rows).toEqual([]);
+    expect(result.reasons[0]?.code).toMatch(/^final-valuation-(absent|unknown)$/);
+  }
+});
+
+test("each chronology and mapping example gives no payout from any function", () => {
+  const monthly = baseTerms();
+  monthly.call.frequency = primary("monthly");
+  const before = listedTerms();
+  const beforeList = before.dates.observation_schedule;
+  if (beforeList === undefined) throw new Error("list");
+  beforeList[0] = primary("2026-08-31");
+  const two = listedTerms();
+  const twoList = two.dates.observation_schedule;
+  if (twoList === undefined) throw new Error("list");
+  twoList[0] = primary("2026-08-28");
+  twoList[1] = primary("2026-08-31");
+  const mismatch = baseTerms();
+  mismatch.call.non_call_months = primary(7);
+  const early = baseTerms();
+  early.dates.settlement = primary("2027-03-04");
+  early.call.non_call_months = primary(0);
+  const anchored = dropFinal(baseTerms());
+  anchored.dates.first_call_observation = primary("2026-03-03");
+  anchored.call.non_call_months = primary(0);
+  anchored.dates.observation_schedule = [primary("2026-03-05"), primary("2026-06-03")];
+  const trade = baseTerms();
+  trade.dates.trade = primary("2026-09-02");
+  const examples: Array<{ name: string; terms: Terms; first: string }> = [
+    { name: "off cycle", terms: { ...baseTerms(), dates: { ...baseTerms().dates, observation_schedule: [primary("2026-09-01"), primary("2027-12-01")] } }, first: "listed-off-cycle" },
+    { name: "no nearest slot", terms: { ...monthly, dates: { ...monthly.dates, observation_schedule: [primary("2026-09-01"), primary("2026-09-16")] } }, first: "listed-off-cycle" },
+    { name: "before the first call", terms: before, first: "observation-before-first-call" },
+    { name: "two before the first call", terms: two, first: "observation-before-first-call" },
+    { name: "mismatched offset", terms: mismatch, first: "non-call-months-mismatch" },
+    { name: "call before settlement", terms: early, first: "first-call-before-settlement" },
+    { name: "listed, anchored before settlement", terms: anchored, first: "first-call-before-settlement" },
+    { name: "trade after settlement", terms: trade, first: "settlement-before-trade" },
+  ];
+  expect(examples).toHaveLength(8);
+  for (const example of examples) {
+    const closes = uniform("2026-09-01", "19/20");
+    for (const result of [evaluateNote(example.terms, nyse, closes, "2031-03-03"), payoutSchedule(example.terms, nyse), finalPayout(example.terms, nyse, "19/20")]) {
+      expect(unavailable(result)[0]?.code, example.name).toBe(example.first);
+    }
+  }
 });
