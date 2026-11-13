@@ -185,7 +185,7 @@ Written by the PM after the merge. Everything above this heading is the seat's c
   - `git rev-parse origin/main` prints `67a1d92ad98561578f8f4b14efe2088e8a17e6cc`. Its one parent is `9f0745f7fd1431f07450d43c4f4b93fea21cb603`, which is also `git merge-base 9f0745f fd4fd79`, so the base did not move during review.
   - The tree `c4ab7e7377f63a0093cc32709209d150f3022046` equals the reviewed head's, and `git diff --quiet fd4fd79 origin/main` exits 0.
   - The squash message equals the handoff block's subject and body. `git log -1 --format='%(trailers:key=Co-authored-by)' 67a1d92` prints Cursor, Claude and Codex in full, which matches `git log --format='%an <%ae>' 9f0745f..fd4fd79` (8 Claude, 3 Codex, 1 Cursor).
-  - No tag points at the squash (`git tag --points-at 67a1d92` prints nothing), and none should: this is not a release.
+  - No tag points at the squash (`git tag --points-at 67a1d92` prints nothing), as expected for a PR that is not a release.
   - The branch `s03/payoff-engine` is gone (`git ls-remote --heads origin s03/payoff-engine` prints nothing).
   - `pnpm install --frozen-lockfile` and `pnpm verify` exit 0 on Node 24.22.2 and on 26.13.0: core 178, plugin 210 and tooling 123 tests passed, and `git status --porcelain --untracked-files=all` prints nothing afterwards.
   - Push run 43497154170 on `67a1d92` succeeded on attempt 1, with all four cells and `verify` (`gh run view 43497154170 --json headSha,event,conclusion,attempt,jobs`).
