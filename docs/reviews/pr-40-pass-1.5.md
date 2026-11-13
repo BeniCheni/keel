@@ -54,3 +54,26 @@ From `git log --format='%h %an' ab9737e..faae442`.
 4. Check that each new or changed AC can fail, and that AC6's two-step form fails on a Git error.
 5. Re-run the PR body's new "After the plan challenge" table.
 6. Run `pnpm install --frozen-lockfile && pnpm verify` on both Nodes, the tripwire with counts per class, and the private-list check over the diff, the commit messages, the title and body, every comment, both briefs on `docs/pr-40-records`, and its own comment.
+
+## After Pass 2
+
+Codex's Pass 2 ([issuecomment-6867211522](https://github.com/BeniCheni/keel/pull/40#issuecomment-6867211522), posted at 18:08 EST) read `faae442` in a GPT-6.1 Sol High sub-agent. Its verdict was not mergeable, because the High stays open by Beni's ruling until S03.1 lands. It closed all seven Mediums, and agreed that Decision 6, AC12 and its three mutants would close the High once built. In scratch it ran AC12's comparisons with a loop-only skip and the three mutants, and each mutant failed. It found two new Mediums, both reproduced by the PM at `9ec6fd0` on both Nodes with its printed `sparse-contract.mjs`:
+
+| Pass 2 # | Severity | PM disposition | Reason |
+| --- | --- | --- | --- |
+| P2-1 | Medium | Accept | `noteMetrics` on `[bad]` gives `close-invalid` at index 0, and on `[, bad]` at index 1. Check 1 numbers closes by their place in the array as given, before the loop Decision 6 changes. So Decision 6's promise that a hole changes no result was too wide. In `831c337` the equality holds when check 1 finds nothing wrong, check 1 does not change, and AC12 pins index 1 for an invalid close after a leading hole. S03's contract says how `close-invalid` counts |
+| P2-2 | Medium | Accept | Scope allowed plugin test files "for the case list and the frozen values", which leaves out AC12's test in `payoff.metrics.test.ts`. In `831c337` the clause also names AC12's test of Decision 6 |
+
+Codex also confirmed that a `null` element makes both closes APIs throw in check 1, and that the `Close` type rejects `null` under `--strict`. So `null` is outside the contract, which admits only what the type allows. The PM agrees, and no change is needed.
+
+### Authorship since Pass 2
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `831c337` | Claude | Codex, at a Pass 2 re-read |
+
+`831c337` is Claude's, so it needs a cold read from Codex before Pass 2.5. That re-read is scoped to `git diff faae442 831c337` and to the PR body's "After Pass 2" section.
+
+### Then Pass 2.5
+
+A fresh Claude session on Opus 5.5 High, since PR #40 touches no sensitive path. It re-runs every number at the head, writes the executive brief, and evaluates the gate in shadow mode. No Codex commit exists on this PR, so it has none to cold-read. The open High is the one expected item for the gate: Beni's ruling of 17:43 EST keeps it open until S03.1's build.
