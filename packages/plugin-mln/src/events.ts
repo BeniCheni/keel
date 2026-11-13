@@ -1,5 +1,5 @@
 import type { EstimatedSchedule, ListedSchedule, Term, Terms } from "@keel/core";
-import { addMonthsIso, compareIso, daysApart } from "./dates.ts";
+import { addMonths, compareIso, parseIso, serialFromCivil } from "./dates.ts";
 import type { PayoffReason } from "./types.ts";
 import { evidencedStatus, readFinal, type DatedStatus, type FinalState, type SolvedTerms } from "./read.ts";
 
@@ -19,48 +19,32 @@ export interface EventPlan {
 }
 
 export function nearestSlot(anchor: string, step: number, date: string): number | null {
-  if (step <= 0) return null;
+  const start = parseIso(anchor);
+  const target = parseIso(date);
+  if (step <= 0 || start === null || target === null) return null;
+  const targetDay = serialFromCivil(target.year, target.month, target.day);
+  const monthOffset = (target.year - start.year) * 12 + target.month - start.month;
+  const center = Math.max(0, Math.floor(monthOffset / step));
   let bestIndex = 0;
-  let bestDist = -1;
+  let bestDistance = Infinity;
   let tied = false;
-  for (let index = 0; index < 2400; index += 1) {
-    const slot = addMonthsIso(anchor, index * step);
-    if (slot === null) return null;
-    const dist = daysApart(slot, date);
-    if (dist === null) return null;
-    if (bestDist < 0 || dist < bestDist) {
-      bestDist = dist;
+  // Clamping keeps slots in their own month. The nearest slot is in this month or adjacent cycles.
+  for (let index = Math.max(0, center - 1); index <= center + 1; index += 1) {
+    const slot = addMonths(start, index * step);
+    const distance = Math.abs(serialFromCivil(slot.year, slot.month, slot.day) - targetDay);
+    if (distance < bestDistance) {
+      bestDistance = distance;
       bestIndex = index;
       tied = false;
-    } else if (dist === bestDist) {
+    } else if (distance === bestDistance) {
       tied = true;
     }
-    if (slot > date && dist > bestDist) break;
   }
-  if (tied) return null;
-  return bestIndex;
+  return tied ? null : bestIndex;
 }
 
 export function wholeMonthOffset(settlement: string, target: string): number | null {
-  let bestN = 0;
-  let bestDist = -1;
-  let tied = false;
-  for (let months = 0; months < 2400; months += 1) {
-    const cursor = addMonthsIso(settlement, months);
-    if (cursor === null) return null;
-    const dist = daysApart(cursor, target);
-    if (dist === null) return null;
-    if (bestDist < 0 || dist < bestDist) {
-      bestDist = dist;
-      bestN = months;
-      tied = false;
-    } else if (dist === bestDist) {
-      tied = true;
-    }
-    if (cursor > target && dist > bestDist) break;
-  }
-  if (tied) return null;
-  return bestN;
+  return nearestSlot(settlement, 1, target);
 }
 
 function evidencedDate(origin: PlannedEvent["origin"], status: PlannedEvent["status"], date: string | null): boolean {

@@ -3,7 +3,7 @@ import { addDaysIso, addMonthsIso } from "./dates.ts";
 import { finalPayout, evaluateNote } from "./index.ts";
 import { baseTerms, calendar, entryDates, listedTerms } from "./test-support/access.test.ts";
 import { uniform } from "./test-support/closes.ts";
-import { primary, unknownTerm } from "./test-support/edit.ts";
+import { conflictTerm, primary, unknownTerm } from "./test-support/edit.ts";
 import type { Evaluation, Terms } from "./types.ts";
 
 const nyse = calendar();
@@ -134,6 +134,25 @@ test("results stay well formed across a fixed seed", () => {
     }
   }
   expect(lengths.size).toBeGreaterThanOrEqual(10);
+  for (let i = 0; i < 100; i += 1) {
+    const count = 1 + Math.floor(rng() * 18);
+    const chosen = dates.slice(0, count);
+    const last = chosen.at(-1);
+    if (last === undefined) throw new Error("missing final call");
+    const asOf = addDaysIso(last, Math.floor(rng() * 400));
+    if (asOf === null) throw new Error("conflict date");
+    const terms = baseTerms();
+    terms.dates.final_valuation = conflictTerm("2031-02-26", "2031-03-03");
+    terms.dates.observation_schedule = chosen.map(primary);
+    const closes = chosen.flatMap((date) => uniform(date, "3/5"));
+    const first = evaluateNote(terms, nyse, closes, asOf);
+    expect(evaluateNote(terms, nyse, closes, asOf)).toEqual(first);
+    if (first.kind !== "evaluated") throw new Error(JSON.stringify(first));
+    expectWellFormed(first, terms);
+    expect(first.rows).toHaveLength(count);
+    expect(first.reasons).toEqual([{ code: "final-valuation-conflict" }]);
+    evaluations += 1;
+  }
   for (let i = 0; i < 900; i += 1) {
     const terms = bases[Math.floor(rng() * bases.length)] ?? baseTerms();
     const start = addDaysIso("2026-03-02", Math.floor(rng() * 1800));

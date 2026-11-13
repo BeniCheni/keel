@@ -68,7 +68,7 @@ export function compareIso(left: string, right: string): number | null {
   return 0;
 }
 
-function serialFromCivil(year: number, month: number, day: number): number {
+export function serialFromCivil(year: number, month: number, day: number): number {
   const marchShift = Math.floor((14 - month) / 12);
   const shiftedYear = year + 4800 - marchShift;
   const shiftedMonth = month + 12 * marchShift - 3;

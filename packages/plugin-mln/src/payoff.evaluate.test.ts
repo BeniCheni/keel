@@ -1,8 +1,8 @@
-import { observationSchedule, type ExchangeCalendar } from "@keel/core";
+import { loadTerms, observationSchedule, type ExchangeCalendar } from "@keel/core";
 import { expect, test } from "vitest";
 import { addDaysIso } from "./dates.ts";
 import { evaluateNote, finalPayout, noteMetrics, payoutSchedule } from "./index.ts";
-import { baseTerms, calendar, entryDates, listedTerms } from "./test-support/access.test.ts";
+import { baseTerms, calendar, entryDates, listedTerms, readGolden } from "./test-support/access.test.ts";
 import { closeValue, uniform } from "./test-support/closes.ts";
 import { assumed, clone, conflictTerm, dropFinal, estimate, primary, sourced, unknownTerm } from "./test-support/edit.ts";
 import type { Close, Evaluation, PayoffReason, Terms, Unavailable, Unsupported } from "./types.ts";
@@ -796,4 +796,59 @@ test("an initial level the loader would refuse stops the call instead of leaving
     const without = closes.filter((close) => close.ticker !== "CHRL");
     expect(evaluated(evaluateNote(terms, nyse, without, "2026-09-01")).reasons, value).toEqual([{ code: "close-missing", ticker: "CHRL" }]);
   }
+});
+
+test.each([
+  { schedule: "listed", before: "2030-12-01", atOrAfter: ["2030-12-02", "2031-03-03", "2036-01-02"] },
+  { schedule: "estimated", before: "2026-08-31", atOrAfter: ["2026-09-01", "2026-09-15", "2027-01-04"] },
+])("an exhausted $schedule schedule cannot stay live when the final valuation is in conflict", ({ schedule, before, atOrAfter }) => {
+  const conflict = (left: string, right: string) =>
+    "  final_valuation:\n    status: conflict\n    candidates:\n" +
+    [left, right].map((date) => `      - value: "${date}"\n        status: primary\n        source: supplement\n`).join("");
+  const replaceFinal = (yaml: string, left: string, right: string) =>
+    yaml.replace(/  final_valuation:\n(?:    [^\n]*\n){3}/, conflict(left, right));
+  const dates = schedule === "listed" ? entryDates().slice(0, 18) : ["2026-09-01"];
+  const yaml = schedule === "listed"
+    ? replaceFinal(readGolden("g02-called-second").yaml, "2031-02-26", "2031-03-03")
+      .replace(/  - value: "2031-02-26"\n    status: primary\n    source: "supplement"\n/, "")
+    : replaceFinal(readGolden("g01-called-first").yaml, "2026-09-10", "2026-09-14")
+      .replace("2031-03-03", "2026-09-15");
+  const parsed = loadTerms(yaml, "synthetic.yaml");
+  if (!parsed.ok) throw new Error(JSON.stringify(parsed.errors));
+  const closes = dates.flatMap((date) => uniform(date, "3/5"));
+  const upcoming = evaluated(evaluateNote(parsed.terms, nyse, closes, before));
+  expect(upcoming.schedule).toBe(schedule);
+  expect(upcoming.status).toBe("live");
+  expect(upcoming.reasons).toEqual([]);
+  expect(upcoming.next).toEqual({
+    kind: "call", scheduleIndex: dates.length - 1, date: atOrAfter[0], evidenced: true,
+  });
+  for (const asOf of atOrAfter) {
+    const result = evaluated(evaluateNote(parsed.terms, nyse, closes, asOf));
+    expect(result.rows.map((row) => row.date)).toEqual(dates);
+    expect(result.status, asOf).toBe("unknown");
+    expect(result.next).toBeNull();
+    expect(result.payoutCents).toBeNull();
+    expect(result.reasons).toEqual([{ code: "final-valuation-conflict" }]);
+  }
+});
+
+test("mapping an exact match at the last representable date needs no later date", () => {
+  const yaml = readGolden("g01-called-first").yaml
+    .replace("2026-03-02", "9999-06-28")
+    .replace("2026-03-04", "9999-06-30")
+    .replace("2026-09-01", "9999-12-31")
+    .replace("2031-02-26", "9999-12-31")
+    .replace("2031-03-03", "9999-12-31")
+    .replace("underlyings:\n", '  observation_schedule:\n  - value: "9999-12-31"\n    status: primary\n    source: supplement\nunderlyings:\n');
+  const parsed = loadTerms(yaml, "synthetic.yaml");
+  if (!parsed.ok) throw new Error(JSON.stringify(parsed.errors));
+  const pay = payoutSchedule(parsed.terms, nyse);
+  expect(pay.kind).toBe("payouts");
+  if (pay.kind !== "payouts") return;
+  expect(pay.calls).toEqual([]);
+  expect(pay.final).toEqual({
+    date: "9999-12-31", evidenced: true, premiumMonths: 6,
+    aboveCallCents: 104250, atOrAboveBarrierCents: 100000,
+  });
 });

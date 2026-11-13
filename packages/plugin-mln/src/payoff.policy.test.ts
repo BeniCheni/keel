@@ -8,7 +8,7 @@ import { expect, test } from "vitest";
 // @ts-expect-error TS7016
 import { cusipCheckDigit } from "../../../tools/tripwire/scan.mjs";
 // @ts-expect-error TS7016
-import { assertScanClean, drawAllowed, regen, scanTree, seededValueRejected } from "../../../tools/generators/golden/generate.mjs";
+import { assertScanClean, drawAllowed, drawSeededClose, regen, scanTree, seededValueRejected } from "../../../tools/generators/golden/generate.mjs";
 import { repoRoot } from "./test-support/access.test.ts";
 
 function plantedCusip(): string {
@@ -91,3 +91,15 @@ test("regen scans what it wrote, and a hit stops it", () => {
     rmSync(flagged, { recursive: true, force: true });
   }
 }, 60_000);
+
+test("the seeded close uses the ratio from a new draw after rejection", () => {
+  const tooLarge = { p: 1n, q: 1n };
+  const accepted = { p: 1n, q: 2n };
+  let draws = 0;
+  const result = drawSeededClose("g-redraw", "100000000", { mode: "none" }, () => {
+    draws += 1;
+    return draws === 1 ? tooLarge : accepted;
+  });
+  expect(result).toEqual({ value: "50000000", ratio: accepted });
+  expect(draws).toBe(2);
+});

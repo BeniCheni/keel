@@ -326,7 +326,10 @@ function runEvaluation(prepared: Prepared, terms: Terms, closes: readonly Close[
     }
     return evaluated(prepared, asOf, "matured", rows, null, last.payoutCents, []);
   }
-  return evaluated(prepared, asOf, "live", rows, null, null, []);
+  if (!prepared.finalState.known) {
+    return evaluated(prepared, asOf, "unknown", rows, null, null, [{ code: prepared.finalState.reason }]);
+  }
+  throw new Error("final event did not settle");
 }
 
 export function evaluateNote(

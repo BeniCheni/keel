@@ -279,26 +279,44 @@ function rngFor(label) {
   return mulberry32(hashSeed(`${seed}:${label}`));
 }
 
-function pushClose(closes, close, caseId, fixed) {
-  const value = fixed ? close.value : drawAllowed(caseId, () => close.value);
-  closes.push({ ...close, value, seq: closes.length });
+function pushClose(closes, close, caseId) {
+  if (seededValueRejected(close.value) !== null) {
+    throw new Error(`${caseId}: fixed close rejected`);
+  }
+  closes.push({ ...close, seq: closes.length });
 }
 
-function addMemberClose(closes, caseId, date, ticker, ratio, rounding, source, fixed) {
+function addMemberClose(closes, caseId, date, ticker, ratio, rounding) {
   const initial = MEMBERS[memberIndex(ticker)].initial;
-  const value = fixed ? ratio : closeText(initial, ratio, rounding);
-  pushClose(closes, { ticker, date, value, source }, caseId, fixed === true || typeof ratio === "string");
+  const value = closeText(initial, ratio, rounding);
+  pushClose(closes, { ticker, date, value, source: "synthetic-close" }, caseId);
+}
+
+export function drawSeededClose(caseId, initial, rounding, nextRatio) {
+  let ratio;
+  const value = drawAllowed(caseId, () => {
+    ratio = nextRatio();
+    return closeText(initial, ratio, rounding);
+  });
+  return { value, ratio };
 }
 
 function seededRatio(rng, minStep, maxStep) {
   return { p: BigInt(pickInt(rng, minStep, maxStep)), q: 10000n };
 }
 
+function addSeededMemberClose(closes, caseId, date, ticker, rounding, nextRatio) {
+  const initial = MEMBERS[memberIndex(ticker)].initial;
+  const { value, ratio } = drawSeededClose(caseId, initial, rounding, nextRatio);
+  closes.push({ ticker, date, value, source: "synthetic-close", seq: closes.length });
+  return ratio;
+}
+
 function placeRow(closes, caseId, date, row, rounding) {
   const rng = rngFor(`${caseId}:${date}:row`);
   if (row.all !== undefined) {
     const ratio = ratioOf(row.all);
-    for (const member of MEMBERS) addMemberClose(closes, caseId, date, member.ticker, ratio, rounding, "synthetic-close", false);
+    for (const member of MEMBERS) addMemberClose(closes, caseId, date, member.ticker, ratio, rounding);
     return;
   }
   let worstTicker = row.worstTicker;
@@ -308,10 +326,12 @@ function placeRow(closes, caseId, date, row, rounding) {
     const initial = MEMBERS[memberIndex(worstTicker)].initial;
     const raw = divFrac(parseDecimal(row.fixedClose), parseDecimal(initial));
     worstRatio = roundRatio(raw, rounding);
-    pushClose(closes, { ticker: worstTicker, date, value: row.fixedClose, source: "synthetic-close" }, caseId, true);
+    pushClose(closes, { ticker: worstTicker, date, value: row.fixedClose, source: "synthetic-close" }, caseId);
   } else if (row.seedBelow === true && worstTicker === undefined) {
     worstTicker = MEMBERS[pickInt(rng, 0, MEMBERS.length - 1)].ticker;
-    worstRatio = seededRatio(rng, 6000, 9499);
+    worstRatio = addSeededMemberClose(
+      closes, caseId, date, worstTicker, rounding, () => seededRatio(rng, 6000, 9499),
+    );
   }
   if (row.conflict !== undefined) {
     worstTicker = row.conflict.ticker;
@@ -320,7 +340,6 @@ function placeRow(closes, caseId, date, row, rounding) {
         closes,
         { ticker: row.conflict.ticker, date, value, source: row.conflict.sources[index] },
         caseId,
-        true,
       );
     });
   }
@@ -328,12 +347,12 @@ function placeRow(closes, caseId, date, row, rounding) {
   for (const member of MEMBERS) {
     if (member.ticker === worstTicker && row.missing === member.ticker) continue;
     if (member.ticker === worstTicker && (row.fixedClose !== undefined || row.conflict !== undefined || row.ratio !== undefined || row.seedBelow === true)) {
-      if (row.fixedClose !== undefined || row.conflict !== undefined) continue;
-      addMemberClose(closes, caseId, date, member.ticker, worstRatio, rounding, "synthetic-close", false);
+      if (row.fixedClose !== undefined || row.conflict !== undefined || row.seedBelow === true) continue;
+      addMemberClose(closes, caseId, date, member.ticker, worstRatio, rounding);
       continue;
     }
-    const other = seededRatio(rngFor(`${caseId}:${date}:${member.ticker}`), lower, 13000);
-    addMemberClose(closes, caseId, date, member.ticker, other, rounding, "synthetic-close", false);
+    const memberRng = rngFor(`${caseId}:${date}:${member.ticker}`);
+    addSeededMemberClose(closes, caseId, date, member.ticker, rounding, () => seededRatio(memberRng, lower, 13000));
   }
 }
 
@@ -368,14 +387,14 @@ function buildCase(spec, calendar, callDates, finalDate) {
       const date = openDay(row.date, direction, calendar);
       for (const member of MEMBERS) {
         if (closes.some((close) => close.date === date && close.ticker === member.ticker)) continue;
-        addMemberClose(closes, spec.id, date, member.ticker, ratio, rounding, "synthetic-close", false);
+        addMemberClose(closes, spec.id, date, member.ticker, ratio, rounding);
       }
     }
   }
   if (!closes.some((close) => close.date === spec.asOf)) {
     for (const member of MEMBERS) {
-      const ratio = seededRatio(rngFor(`${spec.id}:asof:${member.ticker}`), 6000, 13000);
-      addMemberClose(closes, spec.id, spec.asOf, member.ticker, ratio, rounding, "synthetic-close", false);
+      const memberRng = rngFor(`${spec.id}:asof:${member.ticker}`);
+      addSeededMemberClose(closes, spec.id, spec.asOf, member.ticker, rounding, () => seededRatio(memberRng, 6000, 13000));
     }
   }
   closes.sort((left, right) => {

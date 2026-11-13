@@ -499,3 +499,11 @@ test("each chronology and mapping example gives no payout from any function", ()
     }
   }
 });
+
+test("a live golden evaluation names its next event", () => {
+  for (const id of goldenIds()) {
+    const { input } = readGolden(id);
+    const result = evaluated(evaluateNote(input.terms, nyse, input.closes, input.asOf));
+    if (result.status === "live") expect(result.next, id).not.toBeNull();
+  }
+});
