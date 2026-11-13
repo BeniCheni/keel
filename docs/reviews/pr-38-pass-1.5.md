@@ -232,3 +232,72 @@ for (const first of ["2031-03-04", "2031-06-02", "2035-01-02"]) {
 ```
 
 On the base terms it prints maturity 2031-03-03, first call 2026-09-01, an estimated schedule of 19 entries, then the three `unavailable` lines.
+
+## Pass 2's stop and ruling C
+
+Pass 2 stopped on 2026-11-13 before posting a comment, on a Pass M disagreement, and Beni relayed it to the PM's session. By then Codex had pushed two commits: `3e48b83`, the reference `tools/reference/payoff.py`, and `f24e2f3`, the fix for finding 1. `f24e2f3` also rewrote `nearestSlot` and `wholeMonthOffset` in `events.ts` and the generator's draw site. CI run 43479598734 at `f24e2f3` is `success` on all four cells and the `verify` job (`gh run view 43479598734 --repo BeniCheni/keel --json conclusion,jobs`).
+
+The disputed case, reproduced by the PM on Node v24.22.2 with `case.mjs` and `ref.py` below. It uses g01's terms with monthly calls, trade 9999-05-28, settlement 9999-06-01, first call 9999-12-01, and final valuation and maturity 9999-12-31. The estimated schedule has one entry, 9999-12-01, so `k` is 1. The final valuation date is 30 days from slot 0 (9999-12-01) and one day from slot 1 (10000-01-01).
+
+| Run | `payoutSchedule` result |
+| --- | --- |
+| Engine at `d052141` | `unavailable`: `non-call-months-mismatch`, `final-valuation-off-cycle` |
+| Engine at `f24e2f3` | `payouts`: one call at 9999-12-01, 6 months, 104250; final 9999-12-31, 7 months, `aboveCallCents` 104958 |
+| Reference at `f24e2f3` | `unavailable`: `final-valuation-off-cycle` |
+
+Settlement to first call is exactly six months, so `d052141`'s `non-call-months-mismatch` was wrong. Its month-by-month search gives up once a cursor passes year 9999: `daysApart("10000-01-01", "9999-12-01")` is `null` there, so `wholeMonthOffset("9999-06-01", "9999-12-01")` and `nearestSlot("9999-12-01", 1, "9999-12-31")` both return `null`. The reference and `f24e2f3` agree there is no mismatch. The only point in dispute is whether 10000-01-01 counts as a slot. The reference leaves out every slot in year 10000 or later (`... + slot * step < 120_000` in `nearest_slot`).
+
+**C. Slots past 9999, "Yes, it counts (Recommended)".** Given in the PM's session; the PM recorded the time, 13:20 EST, right after the answer. The question: "PR #38 Pass M disagreement. Terms with monthly calls, first call 9999-12-01, and final valuation 9999-12-31: the final date's nearest cycle slot is 10000-01-01, one day away, which is slot 1 (on-cycle). The engine counts that slot and pays 104,958 cents (7 premium months); Codex's Python reference drops slots in year 10000 and says `final-valuation-off-cycle`. Does a cycle slot past 9999-12-31 count?" The option read: "Slots are cycle dates with no year limit, as Decision 6 says the cycle alone sets 'nearest'. The engine's 104,958 stands. Codex fixes the reference to compute those slots, adds the case as an engine test, and reruns Pass M." The alternative Beni declined dropped such slots and made the case `unavailable`.
+
+So the engine's answer at `f24e2f3` stands. Codex amends the reference's slot arithmetic only, and says in its comment that it made this amendment after reading the engine, by ruling C. It adds this case as an engine test that a slot cap at year 9999 fails, and reruns Pass M. The next docs PR adds one sentence to Decision 6: a cycle slot may fall after 9999-12-31.
+
+`case.mjs`, run as `node case.mjs <clone> [case.json]`:
+
+```js
+// The year-9999 case: monthly calls, first call 9999-12-01, final valuation and maturity 9999-12-31.
+// Prints the engine's payoutSchedule result and writes the reference's input to argv[3].
+import { readFileSync, writeFileSync } from "node:fs";
+const ROOT = process.argv[2];
+const { loadTerms, nyseRulesCalendar, observationSchedule } = await import(`${ROOT}/packages/core/src/index.ts`);
+const { payoutSchedule } = await import(`${ROOT}/packages/plugin-mln/src/index.ts`);
+const cal = nyseRulesCalendar();
+const yaml = readFileSync(`${ROOT}/fixtures/golden/g01-called-first/terms.yaml`, "utf8")
+  .replace('"2026-03-02"', '"9999-05-28"').replace('"2026-03-04"', '"9999-06-01"')
+  .replace('"2026-09-01"', '"9999-12-01"').replace('"2031-02-26"', '"9999-12-31"')
+  .replace('"2031-03-03"', '"9999-12-31"').replace('value: "quarterly"', 'value: "monthly"');
+const loaded = loadTerms(yaml, "y9999.yaml");
+if (!loaded.ok) { console.log("loads: false", JSON.stringify(loaded.errors)); process.exit(1); }
+const schedule = observationSchedule(loaded.terms, cal);
+console.log("loads: true; schedule", schedule.kind, JSON.stringify(schedule.entries?.map((e) => e.date) ?? schedule.reasons));
+const pay = payoutSchedule(loaded.terms, cal);
+console.log("engine:", JSON.stringify(pay.kind === "payouts" ? { final: pay.final, calls: pay.calls.map((c) => [c.date, c.premiumMonths, c.payoutCents]) } : pay));
+if (process.argv[3]) writeFileSync(process.argv[3], JSON.stringify({ calendar: "nyse-rules-1", terms: loaded.terms, schedule }));
+```
+
+`ref.py`, run as `python3 -I ref.py <clone> case.json`:
+
+```python
+# Runs the PR's Pass M reference payout_schedule on the case JSON. Usage: python3 -I ref.py <clone> <case.json>
+import importlib.util, json, sys
+spec = importlib.util.spec_from_file_location("payoff_ref", f"{sys.argv[1]}/tools/reference/payoff.py")
+ref = importlib.util.module_from_spec(spec); spec.loader.exec_module(ref)
+data = json.load(open(sys.argv[2], encoding="utf-8"))
+r = ref.payout_schedule(data)
+print("reference:", json.dumps({"final": r["final"], "calls": [[c["date"], c["premiumMonths"], c["payoutCents"]] for c in r["calls"]]} if r.get("kind") == "payouts" else r))
+```
+
+`old-null.mjs` prints `[null,null,null]` at `d052141` and `[null,6,1]` at `f24e2f3`:
+
+```js
+// The old engine's month search past year 9999. Run as node old-null.mjs <clone at d052141>.
+const d = await import(`${process.argv[2]}/packages/plugin-mln/src/dates.ts`);
+const e = await import(`${process.argv[2]}/packages/plugin-mln/src/events.ts`);
+console.log(JSON.stringify([d.daysApart("10000-01-01", "9999-12-01"), e.wholeMonthOffset("9999-06-01", "9999-12-01"), e.nearestSlot("9999-12-01", 1, "9999-12-31")]));
+```
+
+### Authorship since Pass 1
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `3e48b83` Add independent S03 payoff reference for Pass M | Codex | Claude, Pass 2.5, fresh session |
+| `f24e2f3` Bound S03 evaluation when evidenced observations run out | Codex | Claude, Pass 2.5, fresh session |
