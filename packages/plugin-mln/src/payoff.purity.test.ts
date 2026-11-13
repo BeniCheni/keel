@@ -15,7 +15,11 @@ declare global {
 }
 
 // @ts-expect-error TS2591
-import { readdirSync as readDirectory } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync as readDirectory, rmSync, writeFileSync } from "node:fs";
+// @ts-expect-error TS2591
+import { tmpdir } from "node:os";
+// @ts-expect-error TS2591
+import { join } from "node:path";
 
 const readdirSync = readDirectory as (path: string, options: { withFileTypes: true }) => ListedDirent[];
 
@@ -154,7 +158,7 @@ function purityHits(text: string, file = "./engine.ts", known?: Set<string>): st
   return hits;
 }
 
-const NEGATIVES: Array<{ snippet: string; rule: string; label?: string; file?: string }> = [
+const NEGATIVES: Array<{ snippet: string; rule: string; label?: string; file?: string; known?: string[] }> = [
   { snippet: "import { readFileSync } from 'node:fs'", rule: "specifier:node:fs" },
   { snippet: 'import { readFileSync } from "node:fs"', rule: "specifier:node:fs" },
   { snippet: "import fs from 'fs'", rule: "specifier:fs" },
@@ -212,6 +216,9 @@ const NEGATIVES: Array<{ snippet: string; rule: string; label?: string; file?: s
   { snippet: 'import x from "../../core/src/index.ts"', rule: "specifier:../../core/src/index.ts" },
   { snippet: 'import y from "./test-support/z.ts"', rule: "specifier-support" },
   { snippet: 'import z from "./z.test.ts"', rule: "specifier-test" },
+  { snippet: 'import x from "../outside.ts"', rule: "specifier:../outside.ts" },
+  { snippet: 'import x from "../../outside.ts"', rule: "specifier:../../outside.ts", file: "./test-support/closes.ts" },
+  { snippet: 'import x from "./absent.ts"', rule: "specifier-missing:./absent.ts", known: ["./engine.ts"] },
   { snippet: "const \\u0061 = 1", rule: "escape", label: "backslash u in an identifier" },
   { snippet: 'const s = "\\x41"', rule: "escape", label: "backslash x in a string" },
 ];
@@ -222,6 +229,7 @@ const POSITIVES = [
   "BigInt(10) ** 6n",
   "Math.floor(x / 4)",
   "Object.keys(x)",
+  "new Map()",
   "Number.isInteger(x)",
   'new Error("x")',
   "/^(\\d{4})$/.exec(s)",
@@ -240,7 +248,8 @@ test("ambient names come from the running global object", () => {
 
 for (const item of NEGATIVES) {
   test(`purity rejects ${item.label ?? item.snippet}`, () => {
-    expect(purityHits(item.snippet, item.file ?? "./engine.ts"), item.snippet).toContain(item.rule);
+    const known = item.known === undefined ? undefined : new Set(item.known);
+    expect(purityHits(item.snippet, item.file ?? "./engine.ts", known), item.snippet).toContain(item.rule);
   });
 }
 
@@ -259,28 +268,38 @@ function sourceRoot(): string {
   return file.slice(0, slash);
 }
 
-function listedProductSources(dir: string, prefix: string): string[] {
+/** Every entry under dir except `*.test.ts`, whatever its extension, so a file the glob cannot see is still listed. */
+function listedSources(dir: string, prefix: string): string[] {
   const found: string[] = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const rel = prefix === "" ? entry.name : `${prefix}/${entry.name}`;
-    if (entry.isDirectory()) found.push(...listedProductSources(`${dir}/${entry.name}`, rel));
-    else if (entry.isFile() && rel.endsWith(".ts") && !rel.endsWith(".test.ts")) found.push(`./${rel}`);
+    if (entry.isDirectory()) found.push(...listedSources(`${dir}/${entry.name}`, rel));
+    else if (!rel.endsWith(".test.ts")) found.push(`./${rel}`);
   }
   return found;
 }
 
-function extensionFailure(files: string[]): boolean {
-  return files.some((file) => !file.endsWith(".ts") || file.endsWith(".test.ts"));
+/** The two listing rules. Empty when the glob's keys equal the listing and every listed file ends in `.ts`. */
+function listingFailures(globbed: string[], listed: string[]): string[] {
+  const failures: string[] = [];
+  if ([...globbed].sort().join("\n") !== [...listed].sort().join("\n")) failures.push("comparison");
+  if (listed.some((file) => !file.endsWith(".ts"))) failures.push("extension");
+  return failures;
+}
+
+function globbedSources(): string[] {
+  return Object.keys(sources)
+    .filter((file) => !file.endsWith(".test.ts"))
+    .sort();
 }
 
 test("payoff sources pass the purity checker", () => {
   const files = Object.entries(sources).filter(([file]) => !file.endsWith(".test.ts"));
   expect(files.length).toBeGreaterThan(0);
-  const listed = listedProductSources(sourceRoot(), "").sort();
-  const globbed = files.map(([file]) => file).sort();
-  expect(globbed).toEqual(listed);
+  const listed = listedSources(sourceRoot(), "").sort();
+  const globbed = globbedSources();
+  expect(listingFailures(globbed, listed), `glob ${globbed.join(" ")} listing ${listed.join(" ")}`).toEqual([]);
   expect(listed).toContain("./test-support/nested/depth-marker.ts");
-  expect(listed.every((file) => file.endsWith(".ts"))).toBe(true);
   const known = new Set(globbed);
   const joined = files.map(([, text]) => text).join("\n");
   expect(joined).toContain("export function evaluateNote");
@@ -291,16 +310,36 @@ test("payoff sources pass the purity checker", () => {
 });
 
 test("a one-level glob misses the depth marker", () => {
-  const narrowed = Object.keys(sources)
-    .filter((file) => !file.endsWith(".test.ts") && file.split("/").length < 4)
-    .sort();
-  const listed = listedProductSources(sourceRoot(), "").sort();
-  expect(narrowed).not.toEqual(listed);
+  const narrowed = globbedSources().filter((file) => file.split("/").length < 4);
+  const listed = listedSources(sourceRoot(), "").sort();
+  expect(listingFailures(narrowed, listed)).toEqual(["comparison"]);
   expect(narrowed).not.toContain("./test-support/nested/depth-marker.ts");
 });
 
-test("synthetic listings fail the extension rule", () => {
-  for (const name of ["./x.mts", "./x.js", "./x.json"]) expect(extensionFailure([name]), name).toBe(true);
+test("synthetic listings fail the comparison and the extension rule", () => {
+  const listed = listedSources(sourceRoot(), "").sort();
+  const globbed = globbedSources();
+  expect(listingFailures(globbed, listed)).toEqual([]);
+  for (const name of ["./x.mts", "./x.js", "./x.json"]) {
+    expect(listingFailures(globbed, [...listed, name]), name).toEqual(["comparison", "extension"]);
+    expect(listingFailures([...globbed, name], [...listed, name]), name).toEqual(["extension"]);
+  }
+});
+
+test("a file on disk that is not .ts is listed and fails both rules", () => {
+  const dir = mkdtempSync(join(tmpdir(), "keel-purity-")) as string;
+  try {
+    mkdirSync(join(dir, "nested"));
+    for (const name of ["ok.ts", "x.js", "nested/y.mts", "nested/z.json", "skipped.test.ts"]) {
+      writeFileSync(join(dir, name), "export {};\n");
+    }
+    const listed = listedSources(dir, "").sort();
+    expect(listed).toEqual(["./nested/y.mts", "./nested/z.json", "./ok.ts", "./x.js"]);
+    expect(listingFailures(["./ok.ts"], listed)).toEqual(["comparison", "extension"]);
+    expect(listingFailures(["./ok.ts"], ["./ok.ts"])).toEqual([]);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 function consoleMethods(): string[] {
@@ -370,6 +409,15 @@ function withStubs(run: () => void): Map<string, number> {
   return installed.counts;
 }
 
+/** The stubs a run touched. */
+function touched(counts: Map<string, number>): string[] {
+  const keys: string[] = [];
+  for (const [key, count] of counts) {
+    if (count !== 0) keys.push(key);
+  }
+  return keys;
+}
+
 function calls(): Array<{ key: string; run: () => void }> {
   const host = globalThis as unknown as { fetch: (input: string) => unknown };
   return [
@@ -431,5 +479,13 @@ test("public payoff functions are stable and do not touch the stubs", () => {
     installed.restore();
   }
   expect(left).toBe(right);
-  for (const [key, count] of installed.counts) expect(count, key).toBe(0);
+  expect(touched(installed.counts)).toEqual([]);
+});
+
+test("the stub check names a stub that a run touches", () => {
+  const counts = withStubs(() => {
+    void Date.now();
+    void Math.random();
+  });
+  expect(touched(counts).sort()).toEqual(["Date.now", "Math.random"]);
 });
