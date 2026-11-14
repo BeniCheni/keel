@@ -178,6 +178,10 @@ def observation_events(terms, schedule):
     final_term = terms["dates"].get("final_valuation")
     final_date = final_term.get("value") if final_term else None
     listed = schedule["kind"] == "listed"
+    entries = schedule["entries"]
+    has_listed_final = listed and final_date is not None and any(
+        entry.get("date") == final_date for entry in entries
+    )
     step = STEPS[value(terms, "call.frequency")]
     base = value(terms, "call.non_call_months")
     events = []
@@ -185,12 +189,12 @@ def observation_events(terms, schedule):
     evidence_after = False
     later_evidenced = set()
     if listed:
-        for entry in reversed(schedule["entries"]):
+        for entry in reversed(entries):
             if evidence_after:
                 later_evidenced.add(entry["index"])
             if entry.get("date") and entry["term"]["status"] in EVIDENCED:
                 evidence_after = True
-    for entry in schedule["entries"]:
+    for entry in entries:
         index = entry["index"]
         day = entry.get("date")
         origin = "listed" if listed else entry["origin"]
@@ -203,6 +207,8 @@ def observation_events(terms, schedule):
                 continue
             if not listed and day > final_date:
                 left_out += 1
+                continue
+            if listed and not has_listed_final and day is not None and day > final_date:
                 continue
         elif final_term and final_term["status"] == "conflict":
             if day is None or any(day >= item["value"] for item in final_term["candidates"]):
