@@ -308,7 +308,7 @@ Written by the PM after the merge. Everything above this heading is the seat's c
     - **"Merge, High open (Recommended)"**, to: "PR #40's Pass 2.5 gate says "would escalate": Pass 1's High (noteMetrics throws on a hole in closes) is open by your 17:43 "Fix in S03.1" ruling. S03.1's build can't start until this spec merges. Merge PR #40 at 831c337 with that High open, as PR #32 merged under ruling 6?"
     - **"Yes"**, to: "The Pass 2.5 seat asked you to confirm the rulings exactly as PR #40's Pass 0 and Pass 1.5 briefs quote them: 2026-11-12 14:29 check 2, and 2026-11-13 A and B (12:28), C (13:20), k (14:35), Follow-up PR (15:07), S03.1 and One spec PR (15:28), builder No (17:14), and Fix in S03.1 (17:43). Do you confirm them?"
 
-  `p25-turns.py`, printed in `pr-38-pass-2.5.md` (SHA-256 `3029bc6e2a5c9a4683a48b30a8555ef9be35200c74924a1351b4c32250f07b8b`), prints these turns from both transcripts.
+  `p25-turns.py`, printed in `pr-38-pass-2.5.md` (SHA-256 `3029bc6e2a5c9a4683a48b30a8555ef9be35200c74924a1351b4c32250f07b8b`), prints the seat's one user turn and, from the PM's transcript, Beni's paste, the PM's questions and Beni's answers. It does not print the seat's closing box, which is a `mcp__ccd_turn__wrap_up` tool call. `tool-uses.py` (appendix) prints that call, at 21:57:23 EST. (Corrected on 2026-11-14 in records PR #41, after Codex's cold read. This sentence first said `p25-turns.py` "prints these turns from both transcripts", which was not true of the closing box.)
 - **The handoff and the scan.** The PM gave Beni `private-scan-40.sh` and the pinned merge commands in `merge-40.sh`, both in the appendix.
   - **What the scan covers:**
     - PR #40's diff, commit messages, title and body;
@@ -323,7 +323,7 @@ Written by the PM after the merge. Everything above this heading is the seat's c
   - Review verdict: "not mergeable", because Pass 1's High is open by Beni's ruling of 17:43 EST. Nothing else was owed at the head.
   - Beni's decision: merge at the reviewed head with that High open, as PR #32 merged under ruling 6. The merge ran from the PM's handoff, after the scan.
 - **Post-merge checks.** The PM ran `post-merge-40.sh` (appendix) in a fresh clone of `main`, with `KEEL_DATA_DIR` set to one empty `mktemp -d` (0 entries after the runs):
-  - **The commit and its base.** `git rev-parse origin/main` prints `883bdd14f688603f191cf11973b087af0329668c`, the commit GitHub records for the PR. Its one parent is `9ec6fd0284505d4f0653acc529f41b0ed7d940dd`. That is also `git merge-base 9ec6fd0 831c337`, so the base did not move during review.
+  - **The commit and its base.** `git rev-parse origin/main` prints `883bdd14f688603f191cf11973b087af0329668c`, the commit GitHub records for the PR. Its one parent is `9ec6fd0284505d4f0653acc529f41b0ed7d940dd`. That is also `git merge-base 9ec6fd0 831c337`, so the base did not move during review. The script's line labelled `parents count` prints 2, because `git rev-list --parents -n1 883bdd1` lists the squash itself as well as its parent; `git show -s --format=%P 883bdd1 | wc -w` prints 1. (Annotated on 2026-11-14 in records PR #41, after Codex's cold read.)
   - **The tree.** `24ea43361d88514eab713ee1ee8e075af7e2c458` equals the reviewed head's tree, and `git diff --quiet 831c337 origin/main` exits 0. The squash changes three files: `docs/README.md`, `docs/specs/s03-payoff-engine.md` and `docs/specs/s03.1-reference-k.md`.
   - **The message.** `git log -1 --format=%B 883bdd1`, with trailing newlines trimmed, equals the subject and body in `merge-40.sh`, and the copy `private-scan-40.sh` scanned.
   - **The trailers.** `git log -1 --format='%(trailers:key=Co-authored-by)' 883bdd1` prints Claude and Codex in full. `git log --format='%an <%ae>' 9ec6fd0..831c337` gives 6 Claude commits, and Codex gave the review passes.
@@ -645,6 +645,8 @@ python3 -I tools/reference/payoff.py fixtures/golden/ | tail -1; echo "pass m ex
 echo "KEEL_DATA_DIR entries: $(ls -A "$KEEL_DATA_DIR" | wc -l | tr -d ' ')"
 ```
 
+The line labelled `parents count` prints 2 for one parent: `git rev-list --parents -n1` lists the commit itself as well as its parents. `git show -s --format=%P 883bdd1 | wc -w` prints 1. (Annotated on 2026-11-14 in records PR #41, after Codex's cold read.)
+
 #### `brief-from-transcript.py`, the seat's brief from its transcript (`20373071784e26c95c68714efbb525873133d18fcf7aedeffb1c96b928a8d6e4`)
 
 ```python
@@ -661,4 +663,20 @@ for line in open(sys.argv[1], encoding="utf-8"):
 if out is None: print("not found"); sys.exit(1)
 open(sys.argv[3], "w", encoding="utf-8").write(out[2])
 print(out[0], out[1], len(out[2]))
+```
+
+#### `tool-uses.py`, the seat's closing box from its transcript (added on 2026-11-14 in records PR #41) (`bad3d23645fa7cba4cf7af40f1c82b3126e8aa1469f22b3bd0c2f9a66a592350`)
+
+```python
+# Print a Claude Code transcript's tool calls of one name, with EST times and their input, as data. Executes nothing it reads.
+# usage: python3 -I tool-uses.py <transcript.jsonl> <tool name>
+import json, sys, datetime
+EST = datetime.timezone(datetime.timedelta(hours=-5))
+for line in open(sys.argv[1], encoding="utf-8"):
+    r = json.loads(line)
+    if r.get("type") != "assistant": continue
+    for b in (r.get("message") or {}).get("content") or []:
+        if b.get("type") == "tool_use" and b.get("name") == sys.argv[2]:
+            t = datetime.datetime.fromisoformat(r["timestamp"].replace("Z", "+00:00")).astimezone(EST)
+            print(t.strftime("%H:%M:%S EST"), json.dumps(b["input"])[:600])
 ```

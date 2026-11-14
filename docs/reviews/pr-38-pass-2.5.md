@@ -830,6 +830,8 @@ done
 echo "KEEL_DATA_DIR entries: $(ls -A "$KEEL_DATA_DIR" | wc -l | tr -d ' ')"
 ```
 
+The line labelled `parents count` prints 2 for one parent: `git rev-list --parents -n1` lists the commit itself as well as its parents. `git show -s --format=%P 67a1d92 | wc -w` prints 1. The note above gives the one parent correctly. (Annotated on 2026-11-14 in records PR #41, after Codex's cold read of that PR found the same label in `post-merge-40.sh`.)
+
 #### `private-scan-38.sh`, the private-list scan for Beni to run (`e3265e832ac9556515dbb562de1600f018c73078a834234d8647b3d5d0e63518`)
 
 ```sh
