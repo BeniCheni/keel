@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { noteMetrics } from "./index.ts";
 import { baseTerms } from "./test-support/access.test.ts";
-import { closeValue, uniform } from "./test-support/closes.ts";
+import { closeFor, closeValue, uniform } from "./test-support/closes.ts";
 import type { Close } from "./types.ts";
 
 const DATE = "2026-09-01";
@@ -89,4 +89,24 @@ test("noteMetrics skips a hole in closes", () => {
     kind: "unavailable",
     reasons: [{ code: "close-invalid", index: 1 }],
   });
+});
+
+test("noteMetrics takes its date from a close at any index, with or without a hole before it", () => {
+  const earlier = uniform("2026-08-31", "9/10");
+  const lone = closeFor("ALFA", DATE, "9/10");
+  // The lone close sets the date, so the other members have no close on it, and nothing falls back.
+  const onDate = {
+    kind: "unavailable",
+    reasons: ["BRVO", "CHRL", "DLTA"].map((ticker) => ({ code: "close-missing", ticker })),
+  };
+  expect(noteMetrics(baseTerms(), earlier, DATE).kind).toBe("metrics");
+  for (let at = 0; at <= earlier.length; at += 1) {
+    const dense = [...earlier.slice(0, at), lone, ...earlier.slice(at)];
+    expect(dense[at], String(at)).toBe(lone);
+    expect(noteMetrics(baseTerms(), dense, DATE), String(at)).toEqual(onDate);
+    const holed = holeAt(dense, at);
+    expect(Object.hasOwn(holed, at), String(at)).toBe(false);
+    expect(holed[at + 1], String(at)).toBe(lone);
+    expect(noteMetrics(baseTerms(), holed, DATE), String(at)).toEqual(onDate);
+  }
 });
