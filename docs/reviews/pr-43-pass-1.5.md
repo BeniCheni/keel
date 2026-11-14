@@ -155,3 +155,52 @@ for label, path, old, new, suites in M:
     print(f"{label}: " + " | ".join(parts))
     if not clean(): print(label, "tree not clean after"); sys.exit(2)
 ```
+
+## After Pass 2
+
+Codex's Pass 2 ([issuecomment-6885250144](https://github.com/BeniCheni/keel/pull/43#issuecomment-6885250144), posted at 17:33:38 EST) read `06aa0a4` in a GPT-6.1 Sol Extra High sub-agent and pushed `00ee1e07a0e6bd355f32bafc88bb4a133ea03205`, the reference amendment. Its verdict is mergeable after fixes, with no new finding. It accepted all four dispositions above, contested none, and found that PR #40's High meets its closing condition.
+
+**The amendment.** `00ee1e0` changes `tools/reference/payoff.py` alone: 8 lines in, 2 out, all in `observation_events`. With a listed schedule, a known final valuation date and no item dated on it, an item whose known date is after that date is skipped. So it is not an event and adds nothing to `k`, as S03's Events rule says. When an item is dated on the final valuation date, the reference still stops at that item, as before. Codex's comment names the S03 rule it follows.
+
+**Builder claim 3, the rebase.** Codex stopped before any edit and asked Beni to confirm, in one word, that Cursor's branch had no commits of its own and no remote ref before the rebase, and that `git stash pop` reported no conflict. Pass 1 had said that this history cannot be re-run, but this brief gave no disposition for it, so Pass 2 had to stop. That was the PM's gap. Beni answered "Yes" in Codex's chat, and told the PM's session at 17:20:13 EST that he had sent it. Before he answered, the PM read Git's records in Cursor's build checkout, `~/code/keel-s03.1`, with read-only commands:
+
+- **No commits of its own.** `git reflog --date=iso refs/heads/s03.1/reference-k` has three entries: "Created from origin/main" at `883bdd1` (00:03:44 EST), "Reset to origin/main" at `0fda80f` (15:13:27 EST), and the commit `bd9ae45` (15:15:16 EST). `HEAD`'s reflog has no commit before 15:15:16 EST.
+- **No remote ref.** The reflog of `refs/remotes/origin/main` shows "fetch origin: fast-forward" to `0fda80f` at 15:13:25 EST, a fetch of every branch. The reflog of `refs/remotes/origin/s03.1/reference-k` has one entry, "update by push" at 15:21:37 EST. So the remote had no such branch when Cursor fetched.
+- **No conflict on `git stash pop`.**
+  - `git fsck --unreachable --no-reflogs` finds the stash commit `ca2deb71c146c2171b2263c4fac8952fbb294891`, "On s03.1/reference-k: s03.1-wip". Its parents are `883bdd1`, the index `cd22666db116b1be236df40d099dbfaf6215713b`, and the untracked files `8d90e62bb76fa55a7d09a640db7c8ed22a39616b`.
+  - Nothing points to it, and `git stash list` prints nothing, so it was dropped. A pop that conflicts keeps the stash.
+  - `git diff --name-only 883bdd1 0fda80f` lists 6 paths, all under `docs/`. None is among the 14 paths of `git diff --name-only 0fda80f bd9ae45`, so no conflict was possible.
+  - The stash held 6 changed tracked files and 7 untracked files. For 13 of `bd9ae45`'s 14 paths, `git rev-parse <commit>:<path>` gives the same blob in the stash as at `bd9ae45`. The 14th is `packages/plugin-mln/src/payoff.honesty.test.ts`: `06f285ad4a6dd6077433f85f9d79d03ed813bb3e` (the base) in the stash and its index, and `6190a5eb06d34b22e075a5df5ffc1015887abbc5` at `bd9ae45`. Cursor left it alone before its stop, and rewrote it under Decision 7 after the pop.
+
+`git gc` prunes unreachable objects, by default after two weeks, so this list is the lasting record. GitHub's events API shows no event for the branch at all, so it is not cited.
+
+**The PM's runs at `00ee1e0`,** in a fresh clone, with a fresh `mktemp -d` as `KEEL_DATA_DIR`, on Python 3.9.6:
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Install and verify | `pnpm install --frozen-lockfile`, `pnpm verify`, on v24.22.2 and v26.13.0 | Exit 0 for each. Core 178 in 16 files, plugin 212 in 12, tooling 126 in 11; status clean and `KEEL_DATA_DIR` empty afterwards |
+| CI | `gh run view 43648292601 --repo BeniCheni/keel --json headSha,status,conclusion,attempt,jobs` | Head `00ee1e0`, success, attempt 1, 5 of 5 jobs success |
+| Authors | `git log --format='%H %an' origin/main..HEAD` | `00ee1e0` Codex, `06aa0a4` and `21d3e37` Claude, `bd9ae45` Cursor |
+| Codex's commit | `git diff-tree --no-commit-id --name-status -r HEAD`, `git diff --shortstat 06aa0a4 HEAD`, `git diff --quiet 06aa0a4 HEAD -- fixtures packages` | `M tools/reference/payoff.py` alone; 1 file, 8 insertions, 2 deletions; the last exits 0 |
+| The whole PR | `git diff --shortstat origin/main...HEAD` | 15 files, 1315 insertions, 11 deletions |
+| AC1 | `node after-final.mjs "$PWD" case.json`, then `python3 -I after-final.py "$PWD" case.json`, with the scripts printed in `docs/reviews/pr-38-pass-2.5.md` (SHA-256 `152e00332782a2ac120a9a547894cd8b85336d3967e393caa5d3b18bac853a8c` and `cca90db902ab6cc184c7512da03722484eff13fe6c9b2b68b009aaff11f3e03c`) | `equal: True True` on v24.22.2 and v26.13.0. The reference's reasons are `listed-after-final-valuation` at index 18 alone |
+| AC2 | `python3 -I tools/reference/payoff.py fixtures/golden/` | Exit 0, `cases 13, disagreements 0`. `06aa0a4`'s reference on the same goldens exits 1, g12 alone at `$.evaluation.reasons[1]` |
+| S03's two controls | In a copy of `fixtures/golden`, g01's `payoutCents` plus 1, or its last assumption removed, then the reference on the copy | Each exits 1 with `cases 13, disagreements 1`: g01 at `$.evaluation.payoutCents`, and at `$.evaluation.assumptions[4]` |
+| AC3 | `git fetch origin refs/pull/38/head`, `git show <sha>:tools/reference/payoff.py` into a file, then that file on `fixtures/golden/` | `9ec6fd0` exits 1, g12 alone; `3e48b83` exits 1, g12 and g13 (`$.evaluation.kind`) |
+| AC9 | The spec's two commands, from the clone's root | One file listed; `100644 blob 6190a5eb06d34b22e075a5df5ffc1015887abbc5` |
+| Tripwire | `node tools/tripwire/cli.mjs .` | Exit 0, no output |
+| The README's `test:ci-evidence` step | `pnpm -s test:ci-evidence -- --success-run 43641619604 --failure-run 41113925991`, the failure run that `docs/reviews/pr-3-pass-2.5.md` records | Exit 0, `ci-evidence ok` |
+
+The last row narrows the third known gap above. The step runs, but the README does not say where to find a failure run. The idea for the next ordinary docs PR is that the README names one, such as the S00 red probe run.
+
+### Authorship since Pass 2
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `00ee1e0` fix(reference): exclude listed items after final valuation from k | Codex | Claude, Pass 2.5 |
+
+Every other commit has had its cold read: `bd9ae45` at Pass 1, and `21d3e37` and `06aa0a4` at Pass 2.
+
+### Then Pass 2.5
+
+A fresh Claude session on Fable 5.2 High, since the PR touches sensitive paths. It gives `00ee1e0` its cold read (`git diff 06aa0a4 00ee1e0`), checking it against S03's Events rules and the engine's `events.ts`. It re-runs every number at the head, writes the executive brief, and evaluates the gate in shadow mode. Codex's private-list check covered every text on the PR up to its own comment, including this brief at `d0d0ded`. The texts after it, this section among them, are scanned in the merge handoff.
