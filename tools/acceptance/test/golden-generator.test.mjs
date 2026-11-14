@@ -31,3 +31,17 @@ test("a worst member seeded below without its close is an error", () => {
   ).not.toThrow();
   expect(() => placeRow([], "g-missing", DATE, { ...row, missing: "BRVO" }, ROUNDING)).not.toThrow();
 }, NESTED_RUN_TIMEOUT_MS);
+
+test("the silent-skip guard reads every part of its shape", () => {
+  const row = { worstTicker: "BRVO", seedBelow: true };
+  // `missing` naming another member still leaves the worst member without a close.
+  expect(() => placeRow([], "g-other", DATE, { ...row, missing: "ALFA" }, ROUNDING)).toThrow(
+    "g-other: worst member has no close",
+  );
+  // A row with `all` writes every member's close, so nothing is skipped.
+  const all = [];
+  placeRow(all, "g-all", DATE, { ...row, all: "11/10" }, ROUNDING);
+  expect(all.map((close) => close.ticker)).toEqual(["ALFA", "BRVO", "CHRL", "DLTA"]);
+  // With no `worstTicker` the seed picks the worst member and writes its close.
+  expect(() => placeRow([], "g-seeded", DATE, { seedBelow: true, missing: "ALFA" }, ROUNDING)).not.toThrow();
+}, NESTED_RUN_TIMEOUT_MS);
