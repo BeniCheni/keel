@@ -18,7 +18,7 @@ import {
 import { cusipCheckDigit, scanRepo } from "../../tripwire/scan.mjs";
 
 export const name = "golden";
-export const version = 1;
+export const version = 2;
 export const seed = "keel-s03-golden-1";
 export const trees = ["fixtures/golden"];
 
@@ -312,7 +312,17 @@ function addSeededMemberClose(closes, caseId, date, ticker, rounding, nextRatio)
   return ratio;
 }
 
-function placeRow(closes, caseId, date, row, rounding) {
+export function placeRow(closes, caseId, date, row, rounding) {
+  if (
+    row.all === undefined &&
+    row.worstTicker !== undefined &&
+    row.seedBelow === true &&
+    row.fixedClose === undefined &&
+    row.conflict === undefined &&
+    row.missing !== row.worstTicker
+  ) {
+    throw new Error(`${caseId}: worst member has no close`);
+  }
   const rng = rngFor(`${caseId}:${date}:row`);
   if (row.all !== undefined) {
     const ratio = ratioOf(row.all);
@@ -497,6 +507,32 @@ function casesFor(root) {
       asOf: "2026-12-15",
       rows: [{ dateIndex: 0, seedBelow: true, decoy: "below" }],
       extras: [{ date: "2026-12-01", all: "11/10" }],
+    },
+    {
+      id: "g12-listed-after-final",
+      terms: (() => {
+        const terms = listedTerms();
+        const list = terms.dates.observation_schedule;
+        list[list.length - 1] = primary("2031-03-03");
+        return terms;
+      })(),
+      asOf: "2026-08-31",
+      rows: [],
+    },
+    {
+      id: "g13-year-10000-slot",
+      terms: (() => {
+        const terms = structuredClone(base);
+        terms.dates.trade = primary("9999-05-28");
+        terms.dates.settlement = primary("9999-06-01");
+        terms.dates.first_call_observation = primary("9999-12-01");
+        terms.dates.maturity = primary("9999-12-31");
+        terms.dates.final_valuation = primary("9999-12-31");
+        terms.call.frequency = primary("monthly");
+        return terms;
+      })(),
+      asOf: "9999-11-30",
+      rows: [],
     },
   ];
   return specs.map((spec) => {

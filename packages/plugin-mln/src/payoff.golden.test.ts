@@ -27,7 +27,44 @@ const IDS = [
   "g09-unknown-conflict",
   "g10-truncate-provisional",
   "g11-estimated-stop",
+  "g12-listed-after-final",
+  "g13-year-10000-slot",
 ];
+
+const G12_UNAVAILABLE = {
+  kind: "unavailable",
+  reasons: [{ code: "listed-after-final-valuation", index: 18 }],
+};
+
+const G13_PAYOUTS = {
+  kind: "payouts",
+  calendar: "nyse-rules-1",
+  schedule: "estimated",
+  calls: [
+    {
+      scheduleIndex: 0,
+      date: "9999-12-01",
+      evidenced: true,
+      premiumMonths: 6,
+      payoutCents: 104250,
+    },
+  ],
+  final: {
+    date: "9999-12-31",
+    evidenced: true,
+    premiumMonths: 7,
+    aboveCallCents: 104958,
+    atOrAboveBarrierCents: 100000,
+  },
+  unverified: ["dates.observation_schedule"],
+  provisional: true,
+  assumptions: [
+    { code: "per-1000-principal" },
+    { code: "cents-half-up" },
+    { code: "premium-months-by-index" },
+    { code: "final-call-then-barrier" },
+  ],
+};
 
 function belowCall(ratio: string): boolean {
   const [p, q] = ratio.split("/").map((part) => BigInt(part));
@@ -100,11 +137,19 @@ function assertTable(id: string, result: Evaluation): void {
     expect(result.rows).toHaveLength(1);
     expect(result.reasons).toEqual([{ code: "estimated-date", scheduleIndex: 1, date: "2026-12-01" }]);
     expect(result.payoutCents).toBeNull();
+  } else if (id === "g13-year-10000-slot") {
+    expect(result.status).toBe("live");
+    expect(result.rows).toEqual([]);
+    expect(result.next).toEqual({ kind: "call", scheduleIndex: 0, date: "9999-12-01", evidenced: true });
+    expect(result.payoutCents).toBeNull();
+    expect(result.reasons).toEqual([]);
+    expect(result.unverified).toEqual(["dates.observation_schedule"]);
   }
 }
 
 test("golden fixtures match the frozen cases", () => {
   const root = `${new URL("../../../fixtures/golden/", import.meta.url).pathname}`;
+  expect(IDS).toHaveLength(13);
   expect(goldenIds()).toEqual(IDS);
   const nyse = calendar();
   for (const id of IDS) {
@@ -127,8 +172,14 @@ test("golden fixtures match the frozen cases", () => {
     const metrics = noteMetrics(input.terms, input.closes, input.asOf);
     const text = `${JSON.stringify({ synthetic: true, case: id, evaluation, payouts, metrics }, null, 2)}\n`;
     expect(text, id).toBe(expectedText);
-    expect(evaluation.kind, id).toBe("evaluated");
-    if (evaluation.kind === "evaluated") assertTable(id, evaluation);
+    if (id === "g12-listed-after-final") {
+      expect(evaluation, id).toEqual(G12_UNAVAILABLE);
+      expect(payouts, id).toEqual(G12_UNAVAILABLE);
+    } else {
+      expect(evaluation.kind, id).toBe("evaluated");
+      if (evaluation.kind === "evaluated") assertTable(id, evaluation);
+      if (id === "g13-year-10000-slot") expect(payouts, id).toEqual(G13_PAYOUTS);
+    }
     const parsed = JSON.parse(expectedText) as { synthetic: boolean };
     expect(parsed.synthetic, id).toBe(true);
   }
