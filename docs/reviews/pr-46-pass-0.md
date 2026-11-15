@@ -19,7 +19,7 @@ Later seats: Pass 1.5 is the PM. Pass 2 is Codex, covering any Claude-authored c
 - Bootstrap path: no. Install and `verify` apply. Mutations are N/A: no code, test or fixture changes, so there is no tested claim to mutate. Pass M is N/A: no engine or golden fixture. Demo mode is N/A while the README has no demo step (`grep -c -i demo README.md` prints `0`), the known gap of idea 50.
 - Diff: 3 files, 5 insertions, 4 deletions (`git diff --shortstat origin/main...HEAD`).
 - Base: `origin/main` at `79839c3`, the PR #45 squash (`git merge-base origin/main HEAD`).
-- CI: no check had reported when this brief was written. Read it from GitHub at your head.
+- CI: the PM did not read CI before writing this brief. Read it from GitHub at your head. (Corrected on 2026-11-15 in records PR #47, after Codex's cold read. This line first said no check had reported when the brief was written, which the PM had not checked: at the brief's commit, 18:07:03Z, three of run 43744794467's four matrix cells had completed, and the fourth cell and the aggregate `verify` check completed at 18:07:08Z and 18:07:24Z.)
 
 ## Rulings every seat carries
 
