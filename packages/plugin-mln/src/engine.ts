@@ -407,7 +407,9 @@ export function noteMetrics(terms: Terms, closes: readonly Close[], asOf: string
   if (solved === null) throw new Error("metrics did not solve");
   let date: string | null = null;
   const names = new Set(terms.underlyings.members.map((member) => member.ticker));
-  for (const close of closes) {
+  for (let index = 0; index < closes.length; index += 1) {
+    const close = closes[index];
+    if (close === undefined) continue;
     if (!names.has(close.ticker) || close.date > asOf) continue;
     if (date === null || close.date > date) date = close.date;
   }

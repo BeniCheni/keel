@@ -78,7 +78,7 @@ test("regen scans what it wrote, and a hit stops it", () => {
   const flagged = generatorRoot("not an allowlist line\n");
   try {
     regen(clean);
-    expect((readdirSync(join(clean, "fixtures/golden")) as string[]).sort()).toHaveLength(11);
+    expect((readdirSync(join(clean, "fixtures/golden")) as string[]).sort()).toHaveLength(13);
     let message = "";
     try {
       regen(flagged);

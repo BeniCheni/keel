@@ -1,0 +1,71 @@
+{
+  "synthetic": true,
+  "case": "g12-listed-after-final",
+  "evaluation": {
+    "kind": "unavailable",
+    "reasons": [
+      {
+        "code": "listed-after-final-valuation",
+        "index": 18
+      }
+    ]
+  },
+  "payouts": {
+    "kind": "unavailable",
+    "reasons": [
+      {
+        "code": "listed-after-final-valuation",
+        "index": 18
+      }
+    ]
+  },
+  "metrics": {
+    "kind": "metrics",
+    "asOf": "2026-08-31",
+    "date": "2026-08-31",
+    "members": [
+      {
+        "ticker": "ALFA",
+        "close": "68.139925",
+        "sources": [
+          "synthetic-close"
+        ],
+        "ratio": "6797/10000"
+      },
+      {
+        "ticker": "BRVO",
+        "close": "81.0635",
+        "sources": [
+          "synthetic-close"
+        ],
+        "ratio": "1007/1000"
+      },
+      {
+        "ticker": "CHRL",
+        "close": "89.256",
+        "sources": [
+          "synthetic-close"
+        ],
+        "ratio": "3719/5000"
+      },
+      {
+        "ticker": "DLTA",
+        "close": "75.68145",
+        "sources": [
+          "synthetic-close"
+        ],
+        "ratio": "1989/2500"
+      }
+    ],
+    "worst": {
+      "ticker": "ALFA",
+      "ratio": "6797/10000"
+    },
+    "toBarrier": "797/6797",
+    "toCall": "2703/6797",
+    "belowBarrier": false,
+    "atOrAboveCall": false,
+    "unverified": [],
+    "provisional": false
+  }
+}
