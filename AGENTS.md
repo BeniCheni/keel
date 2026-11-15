@@ -13,7 +13,7 @@ The specs in `docs/specs/` are the build authority. The product research behind 
 | Seat | Who | Model pin | Fallback | Does | Never |
 | --- | --- | --- | --- | --- | --- |
 | Owner | Beni (human) | n/a | n/a | Rules on scope, numbering and forks; merges and tags every release; merges every sensitive-path PR | n/a |
-| Planner (PM) | Claude, in Claude Code or Cowork | Opus 5.5 High | Sonnet 5.5 High | Slice specs, build prompts, Pass 0 and 1.5 briefs, the Pass 2.5 seat's prompt, records | Writes code; reviews a PR it wrote any line of |
+| Planner (PM) | Claude, in Claude Code or Cowork | Opus 5.5 High | Sonnet 5.5 High | Slice specs, build prompts, Executive Handoff Briefs for design, Pass 0 and 1.5 briefs, the Pass 2.5 seat's prompt, records | Writes code; reviews a PR it wrote any line of |
 | Designer | Claude Design | n/a | n/a | Design briefs and prototypes against `packages/ui/tokens.css` | Commits prototypes (`design/` stays local) |
 | Builder | Cursor | Grok 4.7 High; Extra High for design-heavy or sensitive-path slices, and for cold reads | none | One slice per draft PR, every commit green, a claims list in the PR body. On Beni's word, the one cold read of a records or fast-track PR it wrote none of, unless that PR records or reports on a PR with any Cursor-authored commit | Reviews its own work; merges a release |
 | Pass 1 reviewer | Claude Code, fresh session, fresh clone | Fable 5.2 Extra on sensitive-path PRs; Opus 5.5 High otherwise | Opus 5.5 High | Cold review, fixes what it reproduces, one PR comment | Reviews a PR any Claude session wrote (Codex takes Pass 1 then) |
