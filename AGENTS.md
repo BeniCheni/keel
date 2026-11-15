@@ -13,12 +13,12 @@ The specs in `docs/specs/` are the build authority. The product research behind 
 | Seat | Who | Model pin | Fallback | Does | Never |
 | --- | --- | --- | --- | --- | --- |
 | Owner | Beni (human) | n/a | n/a | Rules on scope, numbering and forks; merges and tags every release; merges every sensitive-path PR | n/a |
-| Planner (PM) | Claude, in Claude Code or Cowork | Opus 5.5 High | Sonnet 5.5 High | Slice specs, build prompts, Pass 0, 1.5 and 2.5 briefs, executive briefs, records | Writes code; reviews a PR it wrote any line of |
+| Planner (PM) | Claude, in Claude Code or Cowork | Opus 5.5 High | Sonnet 5.5 High | Slice specs, build prompts, Pass 0 and 1.5 briefs, the Pass 2.5 seat's prompt, records | Writes code; reviews a PR it wrote any line of |
 | Designer | Claude Design | n/a | n/a | Design briefs and prototypes against `packages/ui/tokens.css` | Commits prototypes (`design/` stays local) |
 | Builder | Cursor | Grok 4.7 High; Extra High for design-heavy or sensitive-path slices, and for cold reads | none | One slice per draft PR, every commit green, a claims list in the PR body. On Beni's word, the one cold read of a records or fast-track PR it wrote none of, unless that PR records or reports on a PR with any Cursor-authored commit | Reviews its own work; merges a release |
 | Pass 1 reviewer | Claude Code, fresh session, fresh clone | Fable 5.2 Extra on sensitive-path PRs; Opus 5.5 High otherwise | Opus 5.5 High | Cold review, fixes what it reproduces, one PR comment | Reviews a PR any Claude session wrote (Codex takes Pass 1 then) |
 | Pass 2 adjudicator | Codex | GPT-6.1 Sol High; Extra High on sensitive-path PRs | none | Adjudicates Pass 1, adds its own read, runs Pass M, one PR comment. Also Pass 1 on Claude-authored PRs, which includes the plan challenge on every spec | Gives the cold read of a commit it wrote |
-| Pass 2.5 synthesis | Claude, fresh session | Fable 5.2 High on sensitive-path PRs; Opus 5.5 High otherwise | Opus 5.5 High | Re-runs every number at the head, gives the cold read of any Codex-authored commit, writes the executive brief, evaluates the merge gate | Runs in a session that wrote the build or any fix |
+| Pass 2.5 synthesis | Claude, fresh session, not the PM | Fable 5.2 High on sensitive-path PRs; Opus 5.5 High otherwise | Opus 5.5 High | Re-runs every number at the head, gives the cold read of any Codex-authored commit, writes the executive brief, evaluates the merge gate | Runs in a session that wrote the build or any fix |
 | Merge logistics | Cursor, on Beni's word | Grok 4.7 Medium | none | Runs the merge and tag commands Beni approved | Merges or tags without Beni's word |
 
 Independence rules:
@@ -81,7 +81,7 @@ A PR touching any of these is a sensitive-path PR: Fable pins apply, fast-track 
 | 1 | Claude Code (Codex if a Claude session wrote the PR) | Fix commits for what it reproduces; one PR comment; stops |
 | 1.5 | PM | `docs/reviews/pr-<N>-pass-1.5.md`: per finding accept, contest, or accept and dispute; structural Highs go back to Cursor as rework |
 | 2 | Codex | Independent read, reproduce or disprove each finding, Pass M on engine PRs, fix commits, one PR comment. On a Claude-authored PR, the cold read of the Claude-authored commits after Pass 1 |
-| 2.5 | PM, fresh session | Re-run of every number at the head, cold read of any Codex-authored commit, executive brief, merge gate verdict |
+| 2.5 | Claude, fresh session, not the PM | Re-run of every number at the head, cold read of any Codex-authored commit, executive brief, merge gate verdict |
 | 3 | Beni | Rulings on contested items; merges; tags releases |
 
 **Records PRs.** A PR that only adds or corrects files under `docs/reviews/**`, plus their rows in `docs/README.md`, is a records PR, except that `docs/reviews/gate-activation.md` is Beni's record and never lands this way. A records PR gets one cold read by a vendor that authored none of its commits, posted as one short PR comment. That read writes no review records, and no Pass 0, 1.5 or 2.5 brief is written for the PR, so records never generate records. The cold read, the `verify` check green and Beni's merge complete it. Records may batch across slices. A records PR that touches any other file is an ordinary PR.
