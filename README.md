@@ -4,7 +4,7 @@ A local-first monitor for investments whose value comes from their terms, not fr
 
 keel shows your instruments, what each term says and where that term came from, the next date that matters, and how far the underlyings sit from the call level and the barrier. When there is no evidence of a value, it says so instead of inventing one.
 
-**Status:** pre-alpha. This repository currently holds its rules, review process, slice specs, and the verify gate. `@keel/core` loads an mln-terms/0.1 or mln-terms/0.2 file and reports which payoff terms are verified.
+**Status:** pre-alpha. This repository currently holds its rules, review process, slice specs, the verify gate and two packages; there is no app yet. `@keel/core` loads an mln-terms/0.1 or mln-terms/0.2 file and reports which payoff terms are verified (S01 and S02.1); it also holds the observation schedule and exchange calendar that S02 specifies. `@keel/plugin-mln` holds the payoff engine that S03 and S03.1 specify. What each returns, and when, is in those specs under `docs/specs/`.
 
 **Not advice.** keel is information only. It is not investment, tax or legal advice, and your offering documents govern. See `DISCLAIMER.md`.
 
@@ -47,11 +47,13 @@ pnpm verify:copy
 pnpm verify:boundaries
 ```
 
-Package tests, including a file-name filter:
+Package tests, for each package, including a file-name filter:
 
 ```bash
 pnpm --filter @keel/core test
 pnpm --filter @keel/core test <pattern>
+pnpm --filter @keel/plugin-mln test
+pnpm --filter @keel/plugin-mln test <pattern>
 ```
 
 A filter that matches no test file fails the run. Tooling self-tests, with an optional filter matched against the test file's path (`pnpm test:tooling -- tripwire` runs `tools/acceptance/test/tripwire.test.mjs` alone):
