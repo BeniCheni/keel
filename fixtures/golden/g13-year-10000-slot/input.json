@@ -1,0 +1,200 @@
+{
+  "synthetic": true,
+  "case": "g13-year-10000-slot",
+  "asOf": "9999-11-30",
+  "calendar": "nyse-rules-1",
+  "terms": {
+    "schema": "mln-terms/0.2",
+    "id": "note-min",
+    "category": "mln",
+    "structure": "autocall-snowball-worst-of",
+    "issuer": {
+      "status": "primary",
+      "value": "Example Bank SA",
+      "source": "supplement"
+    },
+    "dates": {
+      "trade": {
+        "status": "primary",
+        "value": "9999-05-28",
+        "source": "supplement"
+      },
+      "settlement": {
+        "status": "primary",
+        "value": "9999-06-01",
+        "source": "supplement"
+      },
+      "maturity": {
+        "status": "primary",
+        "value": "9999-12-31",
+        "source": "supplement"
+      },
+      "first_call_observation": {
+        "status": "primary",
+        "value": "9999-12-01",
+        "source": "supplement"
+      },
+      "final_valuation": {
+        "status": "primary",
+        "value": "9999-12-31",
+        "source": "supplement"
+      }
+    },
+    "underlyings": {
+      "basket": "worst_of",
+      "members": [
+        {
+          "ticker": "ALFA",
+          "initial": {
+            "status": "primary",
+            "value": "100.25",
+            "source": "supplement"
+          }
+        },
+        {
+          "ticker": "BRVO",
+          "initial": {
+            "status": "primary",
+            "value": "80.5",
+            "source": "supplement"
+          }
+        },
+        {
+          "ticker": "CHRL",
+          "initial": {
+            "status": "primary",
+            "value": "120",
+            "source": "supplement"
+          }
+        },
+        {
+          "ticker": "DLTA",
+          "initial": {
+            "status": "primary",
+            "value": "95.125",
+            "source": "supplement"
+          }
+        }
+      ],
+      "performance_rounding": {
+        "status": "primary",
+        "value": "half-up-4dp",
+        "source": "supplement"
+      }
+    },
+    "call": {
+      "level": {
+        "status": "primary",
+        "value": 9500,
+        "source": "supplement"
+      },
+      "non_call_months": {
+        "status": "primary",
+        "value": 6,
+        "source": "supplement"
+      },
+      "frequency": {
+        "status": "primary",
+        "value": "monthly",
+        "source": "supplement"
+      }
+    },
+    "premium": {
+      "rate_per_year": {
+        "status": "primary",
+        "value": 850,
+        "source": "supplement"
+      },
+      "accrual": {
+        "status": "primary",
+        "value": "simple",
+        "source": "supplement"
+      }
+    },
+    "barrier": {
+      "level": {
+        "status": "primary",
+        "value": 6000,
+        "source": "supplement"
+      },
+      "observation": {
+        "status": "primary",
+        "value": "final",
+        "source": "supplement"
+      },
+      "below_barrier": {
+        "status": "primary",
+        "value": "one-for-one-worst",
+        "source": "supplement"
+      }
+    },
+    "economics": {
+      "issue_price": {
+        "status": "primary",
+        "value": 10000,
+        "source": "supplement"
+      }
+    },
+    "sources": {
+      "supplement": {
+        "kind": "primary",
+        "file": "sources/supplement.pdf"
+      }
+    }
+  },
+  "schedule": {
+    "kind": "estimated",
+    "calendar": "nyse-rules-1",
+    "inputs": [
+      {
+        "path": "dates.first_call_observation",
+        "status": "primary"
+      },
+      {
+        "path": "dates.maturity",
+        "status": "primary"
+      },
+      {
+        "path": "call.frequency",
+        "status": "primary"
+      }
+    ],
+    "entries": [
+      {
+        "index": 0,
+        "date": "9999-12-01",
+        "origin": "stated",
+        "status": "primary",
+        "flags": [
+          "outside-calendar"
+        ]
+      }
+    ]
+  },
+  "closes": [
+    {
+      "ticker": "ALFA",
+      "date": "9999-11-30",
+      "value": "115.34765",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "BRVO",
+      "date": "9999-11-30",
+      "value": "96.0204",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "CHRL",
+      "date": "9999-11-30",
+      "value": "124.248",
+      "source": "synthetic-close"
+    },
+    {
+      "ticker": "DLTA",
+      "date": "9999-11-30",
+      "value": "79.572063",
+      "source": "synthetic-close"
+    }
+  ]
+}

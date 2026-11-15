@@ -501,9 +501,15 @@ test("each chronology and mapping example gives no payout from any function", ()
 });
 
 test("a live golden evaluation names its next event", () => {
+  const notEvaluated: string[] = [];
   for (const id of goldenIds()) {
     const { input } = readGolden(id);
-    const result = evaluated(evaluateNote(input.terms, nyse, input.closes, input.asOf));
+    const result = evaluateNote(input.terms, nyse, input.closes, input.asOf);
+    if (result.kind !== "evaluated") {
+      notEvaluated.push(id);
+      continue;
+    }
     if (result.status === "live") expect(result.next, id).not.toBeNull();
   }
+  expect(notEvaluated).toEqual(["g12-listed-after-final"]);
 });
