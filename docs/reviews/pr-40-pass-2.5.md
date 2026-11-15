@@ -342,6 +342,8 @@ Written by the PM after the merge. Everything above this heading is the seat's c
   - **This records PR** adds new text: this file, the index row, its commit messages and its PR body. Codex's cold read runs the private-list check over them.
 - **Where the open items go.**
   - **Pass 1's High** stays open on `main` until S03.1's build lands AC12's test. The index row says so.
+
+    It closed when PR #43 merged as `38a4617` on 2026-11-14: the fix `bd9ae45` carries AC12's test, which fails without it at `0fda80f`, as `pr-43-pass-2.5.md` records. (Annotated on 2026-11-14 in the records PR for PRs #42 and #43.)
   - **The S03.1 build** goes to Cursor on branch `s03.1/reference-k`, with the `AGENTS.md` default seats, by Beni's 17:14 EST ruling. It is a sensitive-path PR: Cursor touches `packages/plugin-mln/**` and `fixtures/golden/**`, and Codex's Pass 2 touches `tools/reference/**`. So Fable pins apply, fast-track is barred, and Beni merges.
   - **The next ordinary docs PR** carries the README quickstart and status line, and the ideas PR #38's records list.
   - **An `AGENTS.md` PR** takes PR #38's Pass 2.5 finding 6, the seat's name in the Seats and Workflow tables. `pr-38-pass-2.5.md` also suggested a row for Pass 2 on a Codex-authored PR. Since the 17:14 ruling, no slice needs one.
