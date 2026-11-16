@@ -27,11 +27,13 @@ The records merged since PR #45 are PR #46's three: `git diff --name-only 79839c
 
 ## Authorship record
 
-From `git log --format='%h %an' origin/main..HEAD`.
+From `git log --format='%h %an' origin/main..HEAD`. A commit that adds or changes this brief cannot name itself, so its row gives the command that finds it. (Split into one row per commit on 2026-11-16, after Codex's cold review; the table first grouped every commit in one row.)
 
 | Commit | Authoring vendor | Cold read by |
 | --- | --- | --- |
-| Every commit on the branch, this brief's included | Claude | Codex |
+| `98bd74d` | Claude | Codex |
+| `f15f86b`, which adds this brief and its index row (`git log --diff-filter=A -1 --format='%h %an' -- docs/reviews/pr-48-pass-0.md`) | Claude | Codex |
+| The commit that splits this table, after the cold review (`git log -1 --format='%h %an' -- docs/reviews/pr-48-pass-0.md`) | Claude | Codex |
 
 ## Fast-track
 
