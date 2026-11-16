@@ -21,7 +21,7 @@ No record routes items here: the only record merged since PR #47, the records PR
 | Item | In this PR |
 | --- | --- |
 | PR #48's row in `docs/README.md` still says "in review" | That row's merge line |
-| PR #48's third cold re-read raised a Medium on pipes in plain replay commands; the fourth re-read and each after it list it as an idea under Beni's ruling "Scans only" (corrected on 2026-11-16 after Codex's cold review, which found this row dating the idea to the third re-read) | Idea 76 |
+| PR #48's third cold re-read raised a Medium on pipes in plain replay commands; the fourth re-read and each after it list it as an idea under Beni's ruling "Scans only" (corrected in `6ea2931` after Codex's cold review, which found this row dating the idea to the third re-read: `git log -1 --format=%cI 6ea2931` prints `2026-11-16T14:23:45-05:00`, after the review's `2026-11-16T19:20:55Z` from `gh api repos/BeniCheni/keel/issues/comments/6926613747 --jq .created_at`) | Idea 76 |
 | PR #48's body scan blocks, which Beni's ruling "Cut to pointers" removed | Idea 77 |
 | The rulings "Cut to a log" and "Cut to pointers" | Idea 78 |
 | PR #48's cold review, finding 1: its brief grouped the commits in one row | Idea 79 |
@@ -34,7 +34,8 @@ From `git log --format='%h %an' origin/main..HEAD`. A commit that adds or change
 | --- | --- | --- |
 | `d778fe6` | Claude | Codex |
 | The commit that adds this brief and its index row (`git log --diff-filter=A -1 --format='%h %an' -- docs/reviews/pr-49-pass-0.md`) | Claude | Codex |
-| The commit that corrects this brief after the cold review (`git log -1 --format='%h %an' -- docs/reviews/pr-49-pass-0.md`) | Claude | Codex |
+| `6ea2931`, which corrects this brief after the cold review | Claude | Codex |
+| The commit that adds the correction's commands after the first re-read (`git log -1 --format='%h %an' -- docs/reviews/pr-49-pass-0.md`) | Claude | Codex |
 
 ## Fast-track
 
