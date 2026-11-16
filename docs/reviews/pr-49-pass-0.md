@@ -16,12 +16,12 @@ Codex, GPT-6.1 Sol High. The PR touches no sensitive path, so the High effort ap
 
 ## Where each item comes from
 
-No record routes items here: the only record merged since PR #47, the records PR for PR #46, is PR #48's own Pass 0 brief (`git diff --name-only 1724f74 origin/main -- docs/reviews` prints `docs/reviews/pr-48-pass-0.md`). The items come from PR #48's review comments and its squash message (`git log -1 --format=%b bbf9e6b`).
+No record routes items here: the only record merged since PR #47, the records PR for PR #46, is PR #48's own Pass 0 brief (`git diff --name-only 1724f74 origin/main -- docs/reviews` prints `docs/reviews/pr-48-pass-0.md`). The items come from PR #48's review comments (`gh api --paginate repos/BeniCheni/keel/issues/48/comments --jq '.[] | .body'`) and its squash message (`git log -1 --format=%b bbf9e6b`). The PR body's claims table gives the command for each figure taken from those comments.
 
 | Item | In this PR |
 | --- | --- |
 | PR #48's row in `docs/README.md` still says "in review" | That row's merge line |
-| The idea Codex named under Beni's ruling "Scans only", from PR #48's third cold re-read on | Idea 76 |
+| PR #48's third cold re-read raised a Medium on pipes in plain replay commands; the fourth re-read and each after it list it as an idea under Beni's ruling "Scans only" (corrected on 2026-11-16 after Codex's cold review, which found this row dating the idea to the third re-read) | Idea 76 |
 | PR #48's body scan blocks, which Beni's ruling "Cut to pointers" removed | Idea 77 |
 | The rulings "Cut to a log" and "Cut to pointers" | Idea 78 |
 | PR #48's cold review, finding 1: its brief grouped the commits in one row | Idea 79 |
@@ -34,6 +34,7 @@ From `git log --format='%h %an' origin/main..HEAD`. A commit that adds or change
 | --- | --- | --- |
 | `d778fe6` | Claude | Codex |
 | The commit that adds this brief and its index row (`git log --diff-filter=A -1 --format='%h %an' -- docs/reviews/pr-49-pass-0.md`) | Claude | Codex |
+| The commit that corrects this brief after the cold review (`git log -1 --format='%h %an' -- docs/reviews/pr-49-pass-0.md`) | Claude | Codex |
 
 ## Fast-track
 
