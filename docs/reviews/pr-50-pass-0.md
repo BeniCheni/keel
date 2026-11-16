@@ -70,5 +70,5 @@ These are claims, not facts. Re-derive each one; report any that do not reproduc
 | 6 | S90 measured the core at `82e4909`, before the schedule and calendar landed | `git log --format='%h %ad %s' --date=short 82e4909..origin/main -- packages/core/src/schedule` |
 | 7 | S90 pinned `esbuild` `0.28.2` | `git show origin/s90/ios-core-spike:spike/ios-core/package.json` |
 | 8 | Copy lint reads `packages/ui/src/copy`, `README.md` and `DISCLAIMER.md` only | `sed -n 15,22p tools/copy/lint.mjs` |
-| 9 | `verify.yml` has two jobs, `cells` and `verify`, and `verify` needs `cells` | `grep -n -E '^  [a-z]+:$' .github/workflows/verify.yml`; `grep -n 'needs:' .github/workflows/verify.yml` |
+| 9 | `verify.yml` has two jobs, `cells` and `verify`, and `verify` needs `cells` | `awk '/^jobs:/{j=1} j && /^  [a-z]+:$/' .github/workflows/verify.yml`; `grep -n 'needs:' .github/workflows/verify.yml` |
 | 10 | `pnpm verify` exits 0 on Node 24.22.2 and 26.13.0 at `97d8457` | `pnpm install --frozen-lockfile && pnpm verify` |
