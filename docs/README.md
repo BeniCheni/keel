@@ -38,6 +38,7 @@ Every slice moves through up to four rungs: proposal (the research behind the pr
 | Docs after S03.1 (PR #45) | n/a | none | none | `reviews/pr-45-pass-0.md` | merged 2026-11-15 at squash `79839c3`, reviewed head `7020bc2` (fast-track); cold review by Codex, then its re-reads, the third finding it mergeable at `7020bc2` |
 | Pass 2.5 seat named in `AGENTS.md` (PR #46) | n/a | none (review policy) | none | `reviews/pr-46-pass-0.md`, `reviews/pr-46-pass-1.5.md`, `reviews/pr-46-pass-2.5.md` (executive brief) | merged 2026-11-15 at squash `36f4a38`, reviewed head `cc8d95e`; by Beni's rulings of 2026-11-15 |
 | Docs after PR #46 (PR #48) | n/a | none | none | `reviews/pr-48-pass-0.md` | merged 2026-11-16 at squash `bbf9e6b`, reviewed head `dcab0e8` (fast-track); cold review by Codex, then its re-reads, the seventh finding it mergeable at `dcab0e8` |
+| Docs after PR #48 (PR #49) | n/a | none | none | `reviews/pr-49-pass-0.md` | in review (fast-track); cold review by Codex |
 
 Folders:
 
