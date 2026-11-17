@@ -1,6 +1,6 @@
 # S91: iOS foundation
 
-- Status: drafted 2026-11-16 by the PM (Claude), on Beni's four rulings of that day, recorded below. Amended the same day after Codex's Pass 1, the plan challenge, and again after its Pass 2; the Pass 1.5 briefs on the records branch give each finding's disposition.
+- Status: drafted 2026-11-16 by the PM (Claude), on Beni's rulings of that day, recorded below. Amended the same day after Codex's Pass 1, the plan challenge, after its Pass 2, and after Pass 2's re-read; the Pass 1.5 briefs on the records branch give each finding's disposition.
 - Release: non-release slice. It builds alongside Milestone 1 and is not a slice toward `v0.1.0`. The iOS companion's release stays after Milestone 1, as ADR-0009 records. Nothing here goes to TestFlight or the App Store.
 - Builder: Cursor, Grok 4.7 Extra High (sensitive-path slice), in one draft PR on branch `s91/ios-foundation`.
 - Sensitive paths the build touches: `.github/workflows/**` (a Swift job) and `AGENTS.md` (the app's new sensitive paths). This spec PR touches none.
@@ -13,13 +13,13 @@ The first iOS code on `main`. An app under `apps/ios/` imports one terms file th
 
 ## Beni's rulings
 
-All four were given on 2026-11-16 in the PM's session.
+All five were given on 2026-11-16 in the PM's session; the first four before Pass 1, the fifth after Pass 2.
 
 1. **"Yes, in parallel, as long as the slice stays narrow"**, to "Start an iOS foundation slice now, alongside Milestone 1?". This changes the sequencing of his ruling of 2026-11-01, which ADR-0009's Context records: one narrow iOS slice may build before Milestone 1 ships. Desktop stays the Milestone 1 shell and the system of record.
 2. **"S91"**, for the number. iOS slices continue the S90 series, apart from Milestone 1's numbers.
 3. **"One screen"**, for the scope: import a terms file through the Files app, validate it with the bundled core, and show one read-only screen with the terms summary, its "N of M verified" count and the observation schedule's dates. The question said that both options include the guards ADR-0009 requires before any app merges.
 4. **"Approve"**, for `esbuild` on `main` as a build-time development dependency of the bundle recipe. It is MIT-licensed, the tool S90 measured, and it ships nothing at runtime.
-5. **"Synthetic only"**, to Pass 2's question whether the stored file's SHA-256 is logged only for the synthetic device verification. Only the `Verification` build configuration logs it; the app built any other way logs no fingerprint of an imported file.
+5. **"Synthetic only"**, to Pass 2's question whether the stored file's SHA-256 is logged only for the synthetic device verification. Only the `Verification` build configuration logs a digest, and only for the synthetic fixtures: it carries the SHA-256 of the three fixtures the device run imports, and logs an imported file's digest only when it equals one of them. Any other file, in any configuration, logs only that it is not a verification fixture. The app built any other way logs no digest.
 
 Ruling 3 makes a bare terms file the phone's input for this slice. ADR-0009's data path is the desktop's export, which does not exist yet, so ADR-0009's status records the terms file as an interim path until the export slice defines the export.
 
@@ -101,17 +101,18 @@ Each is checked at the PR's head, with `KEEL_DATA_DIR` set to an empty `mktemp -
 1. `pnpm install --frozen-lockfile && pnpm verify` exits 0 on Node 24.22.2 and 26.13.0, with the new checks in it.
 2. The bundle is tracked and current: `git ls-files --error-unmatch apps/ios/Keel/Resources/core.js` exits 0; after `pnpm --filter @keel/ios-bundle build`, `git status --porcelain --untracked-files=all -- apps/ios/Keel/Resources/core.js` prints nothing; and the determinism check fails when the committed bundle is edited.
 3. The bundle-imports check exits 0 on the real bundle, then exits 1 on each of three planted entries in a scratch build: an import of `fs`, an import of `node:fs`, and an import from `packages/plugin-mln/`.
-4. `swift test --package-path apps/ios/KeelCoreHost` exits 0. Its parity test compares JavaScriptCore with the Node oracle, which imports `packages/core/src/index.ts` directly and serializes with the same `JSON.stringify` of `{file, result, summary, schedule}` in the same order. The corpus is every `.yaml` under `fixtures/synthetic/terms/` (33 files at `5069a34`), plus in-memory inputs for a listed schedule with an `unknown` and a `conflict` entry and for the holiday, weekend and outside-calendar cases in `packages/core/src/schedule/schedule.calendar.test.ts` and `schedule.flags.test.ts`. Both engines run under `en-US` and `sv-SE`, each checking that its locale resolved as asked, as S90's Q2 did, with S90's tie input, and one more JavaScriptCore run with S90's reversed comparator, which must differ from the oracle on the tie input. A planted one-byte difference in the oracle's output fails the test.
+4. `swift test --package-path apps/ios/KeelCoreHost` exits 0. Its parity test compares JavaScriptCore with the Node oracle, which imports `packages/core/src/index.ts` directly and serializes with the same `JSON.stringify` of `{file, result, summary, schedule}` in the same order. The corpus is every `.yaml` under `fixtures/synthetic/terms/` (33 files at `5069a34`), plus in-memory inputs for a listed schedule with an `unknown` and a `conflict` entry and for the holiday, weekend and outside-calendar cases in `packages/core/src/schedule/schedule.calendar.test.ts` and `schedule.flags.test.ts`. Both engines run under `en-US` and `sv-SE`, each checking that its locale resolved as asked, as S90's Q2 did, with S90's tie input, and one more JavaScriptCore run with S90's reversed comparator: the bundle as built must still match the oracle there, and a scratch bundle with `localeCompare` put back in `dedupe` through a build plugin, as S90 seeded it, must differ from the oracle on the tie input. A planted one-byte difference in the oracle's output fails the test.
 5. The render model's and the snapshot store's tests pass, and each fails when its rule is broken:
    - `ESTIMATE` on generated rows, and no date on a listed row whose date is `null`;
    - every `unavailable` reason, in order, with its path or date;
    - a message for each failure kind;
    - the file-provider text before the picker's action, and the disclaimer in the first-run rows and in About;
    - with a failure injected at each storage step, a new `SnapshotStore` over the same folder, standing in for a relaunch, still reads the previous file's bytes, name and import time.
+   - the digest gate logs a digest for each of the three fixtures and none for any other bytes, and is absent from every configuration but `Verification`.
 
    The four Highs of Pass 1 (F1 to F4) close when the build lands these tests and criteria 3 and 7, each failing without its rule; a spec PR cannot carry them.
 6. A banned word planted in `apps/ios/Keel/Copy.swift`, in a string constant in another Swift file under `apps/ios/`, or in `ruleFor`'s literals in a scratch copy makes `node tools/verify/one.mjs copy` exit 1, and a string literal planted in a `Text` in another Swift file under `apps/ios/Keel/` makes the inline-string check exit 1.
-7. The source check exits 1 for each banned form planted in a Swift file under `apps/ios/`, including `Data(contentsOf : url)` with spaces and `Darwin.socket`. The binary check exits 1 on a scratch build whose app calls `Data(contentsOf:)` and `socket`.
+7. The source check exits 1 for each banned form planted in a Swift file under `apps/ios/`, including `Data(contentsOf : url)` with spaces and `Darwin.socket`. The binary check exits 1 on each of two scratch binaries compiled separately, one calling only `Data(contentsOf:)` and one calling only `socket`.
 8. The signing check exits 0 at the head and exits 1 for each planted form under `apps/ios/`: `DEVELOPMENT_TEAM` and `PROVISIONING_PROFILE_SPECIFIER` set inline, quoted, conditional (`[sdk=iphoneos*]`), and in an included `.xcconfig`; a tracked `.mobileprovision` file; and a device identifier in either of Apple's two forms. `git check-ignore -q apps/ios/Local.xcconfig` exits 0.
 9. `git diff --name-only origin/main...HEAD -- packages schemas fixtures` exits 0 and prints nothing.
 10. `node tools/tripwire/cli.mjs .` exits 0 with no output.
@@ -122,6 +123,7 @@ Each is checked at the PR's head, with `KEEL_DATA_DIR` set to an empty `mktemp -
     - Importing `fixtures/synthetic/terms/valid/example-autocall.yaml` next replaces it and shows its summary and its schedule as the core returns it.
     - Importing `fixtures/synthetic/terms/invalid/missing-required-top.yaml` next shows its diagnostics and keeps the second file.
     - After each import, the log gives the active file's SHA-256 and both attribute values: the first fixture's hash, then the second's twice.
+    - A synthetic terms file that is not one of the three (`fixtures/synthetic/terms/valid/minimal.yaml` with one comment line added, kept outside the repo) imports and logs no digest.
     - Beni records the lines in the PR as text, with no device or team identifier.
 
 ## Dependencies
