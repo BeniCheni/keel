@@ -242,3 +242,108 @@ allowed fw=0 five=0 contentsOf=0 ContentsOfURL=0 url-selector=0 url-symbol=0 -> 
 `7ab320f` is on `docs/pr-50-records`, not in PR #50; its records PR gets its own cold read.
 
 **What Pass 2's fifth re-read does.** Give `6279d03` its cold read (`git diff 869b71c HEAD`), say with a command whether V1 (on this branch), V2 and V3 close, check that criterion 7's ten failing controls and its passing control behave as the rule says, and confirm with `git diff` that nothing else changed. Then the Pass 2.5 seat re-runs at the new head.
+
+## After Pass 2's fifth re-read
+
+Written by the PM on 2026-11-17 (America/New_York), after Codex's fifth re-read of Pass 2 ([issuecomment-6954772033](https://github.com/BeniCheni/keel/pull/50#issuecomment-6954772033)) at `6279d03`: not mergeable only because F1 to F4 and R1 stay open under `AGENTS.md`'s Severity clause, V1 to V3 fixed, and two new Mediums, W1 and W2. The PM accepts both. W1 is answered in `51cd526`, which changes criterion 7 and the status line of the spec only. W2 is answered here, with no file change. The PM reproduced W1 and found it wider (below), and read W2 in the archived brief (`git show 93a0141:docs/reviews/pr-50-pass-2.5.md | grep -n 're-ran every number'`).
+
+| # | Fifth re-read | PM disposition | Answer |
+| --- | --- | --- | --- |
+| W1 | Medium | Accept | In `51cd526`, each rule of the binary check has a control that fails by that rule alone: `socket`, `connect` and `getaddrinfo` for the named APIs; `PDFDocument()` with no URL for the framework rule; `URLComponents(url:resolvingAgainstBaseURL:)` for the `Foundation.URL`-argument rule; `FileManager.contentsOfDirectory(at:includingPropertiesForKeys:)` for the URL-selector rule; and `String(contentsOf:encoding:)`, `NSData(contentsOf:)` and `InputStream(url:)`, against a scratch allowlist that wrongly lists them, for the `contentsOf:`, `ContentsOfURL` and `initWithURL:` rules. `UIApplication.shared.open(_:)` joins the other failing controls |
+| W2 | Medium | Accept | The archived brief stays as the seat wrote it. Its proposed squash text says the Pass 2.5 seat re-ran every number, while the same brief labels Codex's compiled probes, F3's esbuild probe and R1's JavaScriptCore run as Codex's claims, not re-run. That squash text is superseded: the Pass 2.5 re-run writes the squash text the PM's handoff uses, and it says which numbers were re-run and which are a vendor's claim |
+
+**W1, reproduced and widened.** Codex found that dropping the framework rule or the URL-argument rule left every control's result unchanged. Run on the ten controls `6279d03` named, the script below shows that only `socket`, `connect` and `getaddrinfo` fail by one rule alone; each of the other seven fails by two or more. So dropping any rule except the named-API rule went unnoticed. The script compiles each control for `arm64-apple-ios27.0` on the iPhoneOS 27.2 SDK and never launches it. The committed allowlist in it is `Foundation`, `CoreFoundation`, `SwiftUI`, `UIKit`, `JavaScriptCore` and `UniformTypeIdentifiers`, plus the one selector `fileHandleForReadingFromURL:error:`. The "wrong" allowlist also lists `String.init(contentsOf:…)`, `initWithContentsOfURL:` and any `initWithURL:…` selector. For each control it names the one rule that fails it alone, if there is one. It exits 1 if any rule has no such control:
+
+```sh
+P="$(mktemp -d)" || exit; export CLANG_MODULE_CACHE_PATH="$P/cc"
+sdk="$(xcrun --sdk iphoneos --show-sdk-path)" || exit
+src() { printf '%s\n' "import $2" "$3" > "$P/$1.swift"; }
+U='URL(fileURLWithPath: "synthetic")'
+src socket Foundation '_ = socket(0, 0, 0)'
+src connect Foundation 'var a = sockaddr(); _ = connect(0, &a, socklen_t(MemoryLayout<sockaddr>.size))'
+src getaddrinfo Foundation 'var r: UnsafeMutablePointer<addrinfo>?; _ = getaddrinfo(nil, nil, nil, &r)'
+src pdfnourl PDFKit '_ = PDFDocument()'
+src components Foundation "_ = URLComponents(url: $U, resolvingAgainstBaseURL: false)"
+src listdir Foundation "_ = try? FileManager.default.contentsOfDirectory(at: $U, includingPropertiesForKeys: nil)"
+src string Foundation "_ = try? String(contentsOf: $U, encoding: .utf8)"
+src nsdata Foundation "_ = NSData(contentsOf: $U)"
+src stream Foundation "_ = InputStream(url: $U)"
+src urlsession Foundation '_ = URLSession.shared'
+src data Foundation "_ = try? Data(contentsOf: $U)"
+src pdfurl PDFKit "_ = PDFDocument(url: $U)"
+src attr UIKit "_ = try? NSAttributedString(url: $U, options: [:], documentAttributes: nil)"
+src openurl UIKit "UIApplication.shared.open($U)"
+printf '%s\n' 'import Foundation' 'var b: [UInt8] = [1]' 'b.append(contentsOf: [2])' "if let h = try? FileHandle(forReadingFrom: $U) { _ = try? h.readToEnd() }" 'print(b)' > "$P/allowed.swift"
+fw_ok='^(Foundation|CoreFoundation|SwiftUI|UIKit|JavaScriptCore|UniformTypeIdentifiers)$'
+rules() { f=$1; so='^fileHandleForReadingFromURL:error:$'; sy='^$'
+  if [ "$2" = wrong ]; then so='^(fileHandleForReadingFromURL:error:|initWithContentsOfURL:|initWithURL:.*)$'; sy='String\.init\(contentsOf:'; fi
+  echo "fw=$(awk 'NR>1{print $1}' "$P/$f.L" | grep '\.framework/' | sed 's|.*/||' | grep -c -v -E "$fw_ok")" \
+    "named=$(grep -c -E 'URLSession|Data\.init\(contentsOf:|_socket$|_connect$|_getaddrinfo$' "$P/$f.dm")" \
+    "contentsOf=$(grep -c -E 'contentsOf: (__shared )?Foundation\.URL' "$P/$f.dm")" \
+    "ContentsOfURL=$(grep -c 'ContentsOfURL' "$P/$f.sel")" \
+    "initWithURL=$(grep -o '[A-Za-z0-9_:]*URL[A-Za-z0-9_:]*' "$P/$f.sel" | sort -u | grep -c '^initWithURL:')" \
+    "url-selector=$(grep -o '[A-Za-z0-9_:]*URL[A-Za-z0-9_:]*' "$P/$f.sel" | sort -u | grep -v -E "$so" | grep -c .)" \
+    "url-symbol=$(grep -E '\([^)]*Foundation\.URL' "$P/$f.dm" | grep -c -v -E "$sy")"; }
+fails() { n=0; for kv in $1; do [ "${kv%%=*}" = "$2" ] && continue; n=$((n + ${kv#*=})); done; [ $n -gt 0 ] && echo 1 || echo 0; }
+for f in socket connect getaddrinfo pdfnourl components listdir string nsdata stream urlsession data pdfurl attr openurl allowed; do
+  swiftc -sdk "$sdk" -target arm64-apple-ios27.0 -module-cache-path "$P/mc" "$P/$f.swift" -o "$P/$f" 2>/dev/null || { echo "$f: compile failed"; exit 1; }
+  nm -u "$P/$f" | xcrun swift-demangle > "$P/$f.dm" || exit
+  xcrun otool -L "$P/$f" > "$P/$f.L" || exit
+  xcrun otool -v -s __TEXT __objc_methname "$P/$f" > "$P/$f.sel" || exit
+done
+caught=""
+run() { f=$1; list=$2; r=$(rules $f $list); e=$(fails "$r" none); alone=""
+  for kv in $r; do k=${kv%%=*}; [ "$(fails "$r" $k)" = 0 ] && [ "$e" = 1 ] && alone=$k; done
+  [ -n "$alone" ] && caught="$caught $alone"
+  echo "$f ($list allowlist): exit $e${alone:+, by $alone alone}"; }
+for f in socket connect getaddrinfo pdfnourl components listdir string nsdata stream urlsession data pdfurl attr openurl allowed; do run $f committed; done
+for f in string nsdata stream; do run $f wrong; done
+for k in fw named contentsOf ContentsOfURL initWithURL url-selector url-symbol; do
+  case " $caught " in *" $k "*) echo "rule $k: a control fails by it alone" ;; *) echo "rule $k: NO isolated control"; bad=1 ;; esac
+done
+[ -z "${bad:-}" ]
+```
+
+It printed, from `bash` with the sandbox off between 2026-11-17T17:01:36Z and 17:01:44Z, and exited 0:
+
+```text
+socket (committed allowlist): exit 1, by named alone
+connect (committed allowlist): exit 1, by named alone
+getaddrinfo (committed allowlist): exit 1, by named alone
+pdfnourl (committed allowlist): exit 1, by fw alone
+components (committed allowlist): exit 1, by url-symbol alone
+listdir (committed allowlist): exit 1, by url-selector alone
+string (committed allowlist): exit 1
+nsdata (committed allowlist): exit 1
+stream (committed allowlist): exit 1
+urlsession (committed allowlist): exit 1
+data (committed allowlist): exit 1
+pdfurl (committed allowlist): exit 1
+attr (committed allowlist): exit 1
+openurl (committed allowlist): exit 1, by url-selector alone
+allowed (committed allowlist): exit 0
+string (wrong allowlist): exit 1, by contentsOf alone
+nsdata (wrong allowlist): exit 1, by ContentsOfURL alone
+stream (wrong allowlist): exit 1, by initWithURL alone
+rule fw: a control fails by it alone
+rule named: a control fails by it alone
+rule contentsOf: a control fails by it alone
+rule ContentsOfURL: a control fails by it alone
+rule initWithURL: a control fails by it alone
+rule url-selector: a control fails by it alone
+rule url-symbol: a control fails by it alone
+```
+
+`openurl` fails by the URL-selector rule alone only while `UIKit` is on the allowlist; `listdir` needs only `Foundation`, so it is the control the criterion relies on. The build writes its own check and allowlist; this probe only shows that the criterion can be met.
+
+**Ruling from Beni, 2026-11-17, in the PM's session:** "Amend, then last round (Recommended)", to how the round after W1 ends. `51cd526` answers W1; Codex's sixth re-read is the last spec round, and anything it finds goes on the S91 build review's list, as PR #32's ruling 7 did; then the Pass 2.5 re-run, and Beni's merge.
+
+**Process notes for the records PR.** The required `verify` check failed at `6279d03` because its macOS Node 26 cell never got a hosted runner ([run 44114059557](https://github.com/BeniCheni/keel/actions/runs/44114059557)); the four other cells passed, and the push of `51cd526` runs CI again. Codex's fifth re-read read `AGENTS.md` in a separate preflight clone before its fresh clone, and said so.
+
+**Authorship record,** extended:
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `51cd526` | Claude | Codex, Pass 2's sixth re-read |
+
+**What Pass 2's sixth re-read does.** It is the last spec round, by Beni's ruling. Give `51cd526` its cold read (`git diff 6279d03 HEAD`), say with a command whether W1 closes and whether W2's answer holds, and confirm with `git diff` that nothing else changed. Anything new goes on the S91 build review's list, not into another amendment. Then the Pass 2.5 seat re-runs at the head.
