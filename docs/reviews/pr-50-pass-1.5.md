@@ -1,0 +1,58 @@
+# Pass 1.5 brief: PR #50
+
+Written by the PM on 2026-11-16 (America/New_York), after reading Codex's Pass 1, the plan challenge ([issuecomment-6930324512](https://github.com/BeniCheni/keel/pull/50#issuecomment-6930324512)), at `97d8457`. Pass 1 found the spec not mergeable, with 4 Highs, 11 Mediums and a Low. The PM accepts all 16 and answers them in one commit, `0e8c5d1`, which changes the spec, ADR-0009's amendment line and `docs/README.md`. No finding needs Beni's ruling: each one tightens the spec inside rulings 1 to 4, one screen plus ADR-0009's guards. Codex receives this brief for Pass 2.
+
+"Reproduced" means the PM ran a command in this session and saw the defect. "Read" means the PM read Pass 1's evidence and the cited lines and accepts them without re-running Pass 1's probes, which Pass 2 re-derives.
+
+## Per finding
+
+| Pass 1 # | Severity | PM disposition | Reason | Rework for Cursor? |
+| --- | --- | --- | --- | --- |
+| F1 | High | Accept | **Read.** "Nothing leaves the phone" was wider than the app controls, because the Files picker can hand over a file a cloud provider downloads. The first-run text now covers the app's own storage and requests only, and names the provider's role before the picker opens | no |
+| F2 | High | Accept | **Read.** A URL-taking Foundation read slipped past the six names. The app now reads only through the picker's security-scoped file URL with `FileHandle(forReadingFrom:)`, and the network check bans `contentsOf:` and `URL(string:` as well | no |
+| F3 | High | Accept | **Read.** Externals do not appear as metafile inputs. The check now fails on any import record marked external, and acceptance criterion 3 plants `fs`, `node:fs` and a `plugin-mln` import against a passing baseline | no |
+| F4 | High | Accept | **Reproduced.** `sed -n 23,52p packages/core/src/schedule/types.ts` shows `GeneratedEntry` with `label: "ESTIMATE"` and `ListedEntry` with `date: string \| null` and a `term`, and no `origin` or `flags`; S02's Goal tags each generated date ESTIMATE. The screen now renders each kind as its type defines it, and the render model's tests guard both rules | no |
+| F5 | Medium | Accept | **Read.** ADR-0009's amendment now records the terms file as an interim data path until the export slice, and the screen's first section says no observation, close or alert came with it | no |
+| F6 | Medium | Accept | **Read.** The screen gains a named About section holding the disclaimer, and the render model's tests check it and the first-run rows | no |
+| F7 | Medium | Accept | **Reproduced.** `sed -n 3,7p packages/core/src/terms/summary.ts` shows `verified`, `total` and `unverified` only. The stories line now claims 3.1's summary half and a foundation subset of 9.1's import | no |
+| F8 | Medium | Accept | **Read.** The spec now names five failure kinds, each with a `Copy.swift` message and the previous snapshot kept across relaunch, and requires the exact attribute values on the temporary and the active file | no |
+| F9 | Medium | Accept | **Read.** Criterion 2 now requires the bundle to be tracked (`git ls-files --error-unmatch`) and the path clean after a rebuild (`git status --porcelain --untracked-files=all`), and the determinism registration builds by a synchronous subprocess whose failure fails the check | no |
+| F10 | Medium | Accept | **Read.** Criterion 4 now names the Node oracle (the TypeScript entry, the same serialization and order), the 33-file corpus, in-memory listed and calendar cases, S90's locale checks and tie input, and a planted-mismatch control | no |
+| F11 | Medium | Accept | **Read.** The Swift job now selects an Xcode with an iOS 27.0 or later SDK or fails by name, installs the locked Node dependencies for the oracle, compares the built app's `core.js` with the committed file, and joins the aggregate `verify` job's needs | no |
+| F12 | Medium | Accept | **Read.** The sensitive list adds the Xcode project, `apps/ios/Keel/Snapshot/**` (the import, storage and bridge code) and `tools/ios/**` (the guards) | no |
+| F13 | Medium | Accept | **Read.** Criterion 8 is now a signing check with planted controls for inline, quoted, conditional and included-`.xcconfig` settings, and every criterion fails on a command error | no |
+| F14 | Medium | Accept | **Read.** Criterion 12 now pins the fixtures, the signed Release build, five fresh launches, S90's measurement boundaries, strict "under the limit", and the stored file's SHA-256 and attributes after each import | no |
+| F15 | Medium | Accept | **Read.** Core diagnostics and schedule reasons now map by code to `Copy.swift` strings, terms values are data outside copy lint, and an inline-string check fails on a literal in a SwiftUI view outside `Copy.swift` | no |
+| F16 | Low | Accept | **Reproduced.** `git show 97d8457:docs/README.md \| grep -c 'S91'` prints `0`. `docs/README.md` now indexes S91, and its ADR line names the amendment | no |
+
+## Authorship record
+
+The Pass 0 record, extended with the fix commit.
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `97d8457` | Claude | Codex, Pass 1 |
+| `0e8c5d1` | Claude | Codex, Pass 2 |
+
+## Rulings from Beni
+
+None since Pass 0. The seven of 2026-11-16 stand as `docs/reviews/pr-50-pass-0.md` records them.
+
+## What Pass 2 does
+
+1. Re-derive each of the 16 findings against `97d8457` and say whether `0e8c5d1` closes it, with a command.
+2. Read `0e8c5d1` in full as the cold read of the PM's fix, against AGENTS.md, ADR-0009, S90's spec and results, S02's spec and the core's types, and report anything it gets wrong or newly overstates.
+3. **The Swift job's toolchain.** Is an Xcode whose iOS SDK is 27.0 or later installed on GitHub's macOS runner images that `verify.yml` can select? If none is, the `swift` job cannot pass as specified, and that is a finding against the plan, not the build.
+4. Report any requirement the fix added that is not needed for the one screen or a guard ADR-0009 lists.
+
+## Sealed appendix for Pass 2
+
+Pass 1's findings and the PM's fixes are suspicions to re-derive, not conclusions. Codex reproduces or disproves each one independently and adds its own read. The PM's new claims in `0e8c5d1`:
+
+| # | Claim | Command |
+| --- | --- | --- |
+| 1 | `fixtures/synthetic/terms/` holds 33 `.yaml` files at `5069a34` | `git ls-tree -r --name-only 5069a34 fixtures/synthetic/terms` |
+| 2 | A core `Diagnostic` carries a `code`, `line` and `message` | `sed -n 99,105p packages/core/src/terms/types.ts` |
+| 3 | Schedule `unavailable` reasons carry a `code` | `sed -n 59,64p packages/core/src/schedule/types.ts` |
+| 4 | `schedule.flags.test.ts` covers weekend and outside-calendar flags, and `schedule.calendar.test.ts` covers holidays | `grep -c -i weekend packages/core/src/schedule/schedule.flags.test.ts`; `grep -c -i outside-calendar packages/core/src/schedule/schedule.flags.test.ts`; `grep -c -i holiday packages/core/src/schedule/schedule.calendar.test.ts` |
+| 5 | `missing-required-top.yaml` is a tracked invalid fixture | `git ls-files fixtures/synthetic/terms/invalid` |
