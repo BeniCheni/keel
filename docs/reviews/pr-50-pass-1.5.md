@@ -166,3 +166,79 @@ The records continue under ruling 7, "Repeat the pass": this answer posts as pas
 | `869b71c` | Claude | Codex, Pass 2's fourth re-read |
 
 **What Pass 2's fourth re-read does.** Give `869b71c` its cold read (`git diff 1cb0f7a HEAD`), say with a command whether each of U1 to U5 closes, check that criterion 7's seven failing controls and its passing control can be built, and confirm with `git diff` that nothing else changed. Then the Pass 2.5 seat re-runs at the new head.
+
+## After Pass 2's fourth re-read
+
+Written by the PM on 2026-11-17 (America/New_York), after Codex's fourth re-read of Pass 2 ([issuecomment-6950911623](https://github.com/BeniCheni/keel/pull/50#issuecomment-6950911623)) at `869b71c`: not mergeable only because F1 to F4 and R1 stay open under `AGENTS.md`'s Severity clause, U1 to U5 fixed, and three new Mediums, V1 to V3. The PM accepts all three. V1 is answered on this branch in `7ab320f`, which adds `docs/reviews/pr-50-pass-2.5.md`, the Pass 2.5 seat's executive brief as it gave it in its chat. V2 and V3 are answered in `6279d03`, which changes the spec only. The PM reproduced V1 (`git cat-file -e aa2f208:docs/reviews/pr-50-pass-2.5.md` exits 128, and exits 0 at `7ab320f`) and V2 (the probe below). V3 follows from the spec's own SDK check: an image change that keeps an iOS 27 SDK passes it.
+
+| # | Fourth re-read | PM disposition | Answer |
+| --- | --- | --- | --- |
+| V1 | Medium | Accept | `7ab320f` on `docs/pr-50-records` adds the Pass 2.5 executive brief, so the index row's pointer resolves on this branch. The Pass 2.5 re-run's brief follows in the same file |
+| V2 | Medium | Accept | In `6279d03`, both network checks work from one allowlist in `tools/ios/`: the modules the app may import, the frameworks it may link, and the selectors and symbols naming a URL that it may use, each with a reason. The five named APIs, a `contentsOf:` reader, a `ContentsOfURL` selector and any selector beginning `initWithURL:` never go on it. The source check also fails on an `import` not on the list, and the overclaim about the `contentsOf` token is gone. Criterion 7 adds `PDFDocument(url:)`, `InputStream(url:)` and `NSAttributedString(url:options:documentAttributes:)` as failing controls and `import PDFKit` as a planted source form |
+| V3 | Medium | Accept | In `6279d03`, the outage paragraph names only an image that breaks, is withdrawn, or changes so that the job cannot start or its SDK check fails |
+
+**V2, reproduced, and the new rule checked.** On the iPhoneOS 27.2 SDK, a scratch binary calling `PDFDocument(url:)` matched none of the source tokens or binary patterns at `869b71c`; its only traces are the linked PDFKit framework and the selector `initWithURL:`, which `InputStream(url:)` sends too. The script below applies the rule `6279d03` writes, with a starting allowlist of `Foundation`, `SwiftUI`, `JavaScriptCore` and `UniformTypeIdentifiers` and the one selector `fileHandleForReadingFromURL:error:`. It compiles each control for `arm64-apple-ios27.0` and never launches it. Each of the ten failing controls exits 1, and the app's own read exits 0:
+
+```sh
+P="$(mktemp -d)" || exit; export CLANG_MODULE_CACHE_PATH="$P/cc"
+sdk="$(xcrun --sdk iphoneos --show-sdk-path)" || exit
+src() { printf '%s\n' "import $2" "$3" > "$P/$1.swift"; }
+src urlsession Foundation '_ = URLSession.shared'
+src data Foundation '_ = try? Data(contentsOf: URL(fileURLWithPath: "synthetic"))'
+src socket Foundation '_ = socket(0, 0, 0)'
+src connect Foundation 'var a = sockaddr(); _ = connect(0, &a, socklen_t(MemoryLayout<sockaddr>.size))'
+src getaddrinfo Foundation 'var r: UnsafeMutablePointer<addrinfo>?; _ = getaddrinfo(nil, nil, nil, &r)'
+src string Foundation '_ = try? String(contentsOf: URL(fileURLWithPath: "synthetic"), encoding: .utf8)'
+src nsdata Foundation '_ = NSData(contentsOf: URL(fileURLWithPath: "synthetic"))'
+src pdf PDFKit '_ = PDFDocument(url: URL(fileURLWithPath: "synthetic"))'
+src stream Foundation '_ = InputStream(url: URL(fileURLWithPath: "synthetic"))'
+src attr UIKit '_ = try? NSAttributedString(url: URL(fileURLWithPath: "synthetic"), options: [:], documentAttributes: nil)'
+printf '%s\n' 'import Foundation' 'var b: [UInt8] = [1]' 'b.append(contentsOf: [2])' 'if let h = try? FileHandle(forReadingFrom: URL(fileURLWithPath: "synthetic")) { _ = try? h.readToEnd() }' 'print(b)' > "$P/allowed.swift"
+fw_ok='^(Foundation|SwiftUI|JavaScriptCore|UniformTypeIdentifiers)$'; sel_ok='^fileHandleForReadingFromURL:error:$'
+for f in urlsession data socket connect getaddrinfo string nsdata pdf stream attr allowed; do
+  swiftc -sdk "$sdk" -target arm64-apple-ios27.0 -module-cache-path "$P/mc" "$P/$f.swift" -o "$P/$f" 2>/dev/null || { echo "$f: compile failed"; exit 1; }
+  nm -u "$P/$f" | xcrun swift-demangle > "$P/$f.dm" || exit
+  xcrun otool -L "$P/$f" > "$P/$f.L" || exit
+  xcrun otool -v -s __TEXT __objc_methname "$P/$f" > "$P/$f.sel" || exit
+  fw=$(awk 'NR>1{print $1}' "$P/$f.L" | grep '\.framework/' | sed 's|.*/||' | grep -c -v -E "$fw_ok")
+  five=$(grep -c -E 'URLSession|Data\.init\(contentsOf:|_socket$|_connect$|_getaddrinfo$' "$P/$f.dm")
+  cof=$(grep -c -E 'contentsOf: (__shared )?Foundation\.URL' "$P/$f.dm")
+  curl=$(grep -c 'ContentsOfURL' "$P/$f.sel")
+  usel=$(grep -o '[A-Za-z0-9_:]*URL[A-Za-z0-9_:]*' "$P/$f.sel" | sort -u | grep -c -v -E "$sel_ok")
+  usym=$(grep -c -E '\([^)]*Foundation\.URL' "$P/$f.dm")
+  n=$((fw + five + cof + curl + usel + usym))
+  echo "$f fw=$fw five=$five contentsOf=$cof ContentsOfURL=$curl url-selector=$usel url-symbol=$usym -> $([ $n -gt 0 ] && echo exit 1 || echo exit 0)"
+done
+```
+
+It printed, from `bash` with the sandbox off between 2026-11-17T14:46:15Z and 14:46:21Z:
+
+```text
+urlsession fw=1 five=1 contentsOf=0 ContentsOfURL=0 url-selector=0 url-symbol=0 -> exit 1
+data fw=0 five=1 contentsOf=1 ContentsOfURL=0 url-selector=0 url-symbol=1 -> exit 1
+socket fw=0 five=1 contentsOf=0 ContentsOfURL=0 url-selector=0 url-symbol=0 -> exit 1
+connect fw=0 five=1 contentsOf=0 ContentsOfURL=0 url-selector=0 url-symbol=0 -> exit 1
+getaddrinfo fw=0 five=1 contentsOf=0 ContentsOfURL=0 url-selector=0 url-symbol=0 -> exit 1
+string fw=0 five=0 contentsOf=1 ContentsOfURL=0 url-selector=0 url-symbol=1 -> exit 1
+nsdata fw=1 five=0 contentsOf=0 ContentsOfURL=1 url-selector=1 url-symbol=0 -> exit 1
+pdf fw=2 five=0 contentsOf=0 ContentsOfURL=0 url-selector=1 url-symbol=0 -> exit 1
+stream fw=1 five=0 contentsOf=0 ContentsOfURL=0 url-selector=1 url-symbol=0 -> exit 1
+attr fw=1 five=0 contentsOf=0 ContentsOfURL=0 url-selector=1 url-symbol=0 -> exit 1
+allowed fw=0 five=0 contentsOf=0 ContentsOfURL=0 url-selector=0 url-symbol=0 -> exit 0
+```
+
+`InputStream(url:)` and `NSAttributedString(url:options:documentAttributes:)` fail on the selector rule even where their frameworks would be allowed, so the framework list is not their only guard. The build writes its own check and its own allowlist; this probe only shows that the rule can be met.
+
+**Ruling from Beni, 2026-11-17, in the PM's session:** "Amend now (Recommended)", to "Amend again, or make this the last round?", asked after V2 and V3.
+
+**Process notes for the records PR.** Codex's fourth re-read read two public search snippets outside the sources its prompt allowed, and said so in its comment; it rests no finding on them. The PM's scratch folder was cleared overnight on 16 to 17 Nov 2026; nothing pushed was lost, and the PM rebuilt its `elenchus` config and tripwire counter from its transcript.
+
+**Authorship record,** extended:
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `6279d03` | Claude | Codex, Pass 2's fifth re-read |
+
+`7ab320f` is on `docs/pr-50-records`, not in PR #50; its records PR gets its own cold read.
+
+**What Pass 2's fifth re-read does.** Give `6279d03` its cold read (`git diff 869b71c HEAD`), say with a command whether V1 (on this branch), V2 and V3 close, check that criterion 7's ten failing controls and its passing control behave as the rule says, and confirm with `git diff` that nothing else changed. Then the Pass 2.5 seat re-runs at the new head.
