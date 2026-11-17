@@ -338,7 +338,7 @@ rule url-symbol: a control fails by it alone
 
 **Ruling from Beni, 2026-11-17, in the PM's session:** "Amend, then last round (Recommended)", to how the round after W1 ends. `51cd526` answers W1; Codex's sixth re-read is the last spec round, and anything it finds goes on the S91 build review's list, as PR #32's ruling 7 did; then the Pass 2.5 re-run, and Beni's merge.
 
-**Process notes for the records PR.** The required `verify` check failed at `6279d03` because its macOS Node 26 cell never got a hosted runner ([run 44114059557](https://github.com/BeniCheni/keel/actions/runs/44114059557)); the four other cells passed, and the push of `51cd526` runs CI again. Codex's fifth re-read read `AGENTS.md` in a separate preflight clone before its fresh clone, and said so.
+**Process notes for the records PR.** The required `verify` check failed at `6279d03` because its macOS Node 26 cell never got a hosted runner ([run 44114059557](https://github.com/BeniCheni/keel/actions/runs/44114059557)); the other three cells passed, and the push of `51cd526` runs CI again. (Corrected on 2026-11-17 after PR #51's cold read, F1: this line had said four.) Codex's fifth re-read read `AGENTS.md` in a separate preflight clone before its fresh clone, and said so.
 
 **Authorship record,** extended:
 
