@@ -1,6 +1,7 @@
 # ADR-0009: A native iOS companion, with its own storage, data path and notifications
 
 - Status: Accepted on 2026-11-06, when Beni ruled Path A on S90's results (`docs/specs/s90-ios-core-spike-results.md`). Drafted 2026-11-02 as Proposed.
+- Amended 2026-11-16: Beni ruled that one narrow iOS slice, S91 (`docs/specs/s91-ios-foundation.md`), may build alongside Milestone 1. Until the export slice defines the desktop's export, S91's phone imports one terms file through the Files app as an interim data path, and says that no observation, close or alert came with it. Desktop stays the system of record, the companion's release stays after Milestone 1, and the rest of this ADR stands.
 - Deciders: Beni (owner), on the PM's recommendation.
 
 ## Context
