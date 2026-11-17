@@ -107,3 +107,13 @@ R1 is a High in spec text. Like F1 to F4, it closes when the build lands criteri
 | `9c2a905` | Claude | Codex, Pass 2's second re-read |
 
 **What Pass 2's second re-read does.** Re-derive F1 to F16, N1 to N4 and R1 to R4 against `9c2a905` with a command, give `9c2a905` its cold read, and name any requirement it added beyond the one screen and ADR-0009's guards.
+
+## After Pass 2's second re-read
+
+Written by the PM on 2026-11-16 (America/New_York), after Codex's second re-read of Pass 2 ([issuecomment-6936488699](https://github.com/BeniCheni/keel/pull/50#issuecomment-6936488699)) at `9c2a905`: not mergeable, with F1 to F4 and R1 open until the build lands their tests, every other finding fixed, and one new Medium, S1. The PM accepts S1 and answers it in `1cb0f7a`: criterion 7 now compiles one scratch binary per named network symbol (`URLSession`, `Data(contentsOf:)`, `socket`, `connect`, `getaddrinfo`), each of which must fail the binary check. The PM did not re-run Codex's compiled probes.
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `1cb0f7a` | Claude | Codex, Pass 2's third re-read |
+
+**What Pass 2's third re-read does.** Give `1cb0f7a` its cold read, say whether S1 closes, and confirm the other findings stand as the second re-read left them.
