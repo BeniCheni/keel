@@ -86,3 +86,24 @@ Written by the PM on 2026-11-16 (America/New_York), after Codex's Pass 2 ([issue
 | `47bbbdd` | Claude | Codex, Pass 2's re-read |
 
 **What Pass 2's re-read does.** Re-derive each of F1 to F16 and N1 to N4 against `47bbbdd` with a command; give `47bbbdd` its cold read; check that `xcode-27` is a label a workflow in this repository can use; and name any requirement added beyond the one screen and ADR-0009's guards.
+
+## After Pass 2's re-read
+
+Written by the PM on 2026-11-16 (America/New_York), after Codex's re-read of Pass 2 ([issuecomment-6935881288](https://github.com/BeniCheni/keel/pull/50#issuecomment-6935881288)) at `47bbbdd`: not mergeable, with F1 to F4 open until the build lands their tests, N1 open, every other earlier finding fixed, and four new findings, R1 to R4. The PM accepts them and answers them in `9c2a905`. The PM reproduced R4 (`grep -n 'four rulings' docs/specs/s91-ios-foundation.md` at `47bbbdd` printed the status line); the rest rest on Pass 2's re-read.
+
+| # | Re-read | PM disposition | In `9c2a905` |
+| --- | --- | --- | --- |
+| R1 (High), N1 | open | Accept | Criterion 4 requires the bundle as built to match the oracle under the reversed comparator, and a scratch bundle with `localeCompare` put back in `dedupe` to differ on the tie input |
+| R2 | new | Accept | The binary network check has two separately compiled controls, each calling one API, and each must fail it |
+| R3 | new | Accept | Ruling 5's digest is gated by the three fixtures' own SHA-256: any other bytes log no digest. A unit test and a fourth synthetic file in the device run check it |
+| R4 | new | Accept | The spec counts five rulings, and the PR body is corrected in the same edit as this record |
+
+R1 is a High in spec text. Like F1 to F4, it closes when the build lands criterion 4's test, which fails without it.
+
+**Authorship record,** extended:
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `9c2a905` | Claude | Codex, Pass 2's second re-read |
+
+**What Pass 2's second re-read does.** Re-derive F1 to F16, N1 to N4 and R1 to R4 against `9c2a905` with a command, give `9c2a905` its cold read, and name any requirement it added beyond the one screen and ADR-0009's guards.
