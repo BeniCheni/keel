@@ -117,3 +117,52 @@ Written by the PM on 2026-11-16 (America/New_York), after Codex's second re-read
 | `1cb0f7a` | Claude | Codex, Pass 2's third re-read |
 
 **What Pass 2's third re-read does.** Give `1cb0f7a` its cold read, say whether S1 closes, and confirm the other findings stand as the second re-read left them.
+
+## After Pass 2.5
+
+Written by the PM on 2026-11-16 (America/New_York), after the Pass 2.5 synthesis ([issuecomment-6937655844](https://github.com/BeniCheni/keel/pull/50#issuecomment-6937655844)) at `1cb0f7a`: not mergeable, and the shadow gate would escalate, only because F1 to F4 and R1 stay open under `AGENTS.md`'s Severity clause. It found five new items, U1 to U5. The PM accepts all five and answers them in `869b71c`, which changes the spec and `docs/README.md` only. The PM reproduced U1 (`sed -n 3p docs/specs/s91-ios-foundation.md` at `1cb0f7a`), U2 (`sed -n 113p` of the same), U4 (below) and U5 (`git cat-file -e 1cb0f7a:docs/reviews/pr-50-pass-0.md` exits 128). U3 rests on the seat's runner sources.
+
+| # | Pass 2.5 | PM disposition | In `869b71c` |
+| --- | --- | --- | --- |
+| U1 | Medium | Accept | The status line names the amendments after Pass 2's first two re-reads and after Pass 2.5 |
+| U2 | Low | Accept | Criterion 5's closing note names all five open Highs, the criterion that closes each (F1 and F4 by criterion 5, F2 by 7, F3 by 3, R1 by 4), and Beni's ruling that the spec merges with them open |
+| U3 | Medium | Accept | The Swift job says GitHub marks the `xcode-27` image a public preview, and what an outage does: `swift` fails or never starts, and every pull request waits until Beni merges a `verify.yml` change to a working label, or rules otherwise. A label that is not a preview replaces it the same way. Ruling 6 keeps the job required |
+| U4 | Medium | Accept | The binary check also fails on any demangled symbol whose `contentsOf:` argument is a `Foundation.URL`, and on any Objective-C selector containing `ContentsOfURL`. Criterion 7 adds `String(contentsOf:encoding:)` and `NSData(contentsOf:)` as failing controls, a passing control that calls only `append(contentsOf:)` and `FileHandle(forReadingFrom:)`, and `append(contentsOf:)` as a planted source form. The source token is never narrowed |
+| U5 | Low | Accept | The index row names all three records and says they stay on `docs/pr-50-records` until its records PR merges. PR #40, the last spec PR with records on their own branch, merged the same way (`git cat-file -e 883bdd1:docs/reviews/pr-40-pass-0.md` exits 128) |
+
+**U4, reproduced and widened.** On the iPhoneOS 27.2 SDK, three scratch binaries were compiled for `arm64-apple-ios27.0` and never launched. `String(contentsOf:encoding:)` links `String.init(contentsOf: Foundation.URL, encoding:)`, which the five-API pattern matches 0 times. `NSData(contentsOf:)` links no `contentsOf` Swift symbol at all; its only trace is the selector string `initWithContentsOfURL:`. The rule `869b71c` writes fails both, and passes a binary that calls only `append(contentsOf:)` and `FileHandle(forReadingFrom:)`:
+
+```sh
+P="$(mktemp -d)" || exit; export CLANG_MODULE_CACHE_PATH="$P/cc"
+sdk="$(xcrun --sdk iphoneos --show-sdk-path)" || exit
+printf '%s\n' 'import Foundation' '_ = try? String(contentsOf: URL(fileURLWithPath: "synthetic"), encoding: .utf8)' > "$P/string.swift"
+printf '%s\n' 'import Foundation' '_ = NSData(contentsOf: URL(fileURLWithPath: "synthetic"))' > "$P/nsdata.swift"
+printf '%s\n' 'import Foundation' 'var bytes: [UInt8] = [1]' 'bytes.append(contentsOf: [2, 3])' 'if let h = try? FileHandle(forReadingFrom: URL(fileURLWithPath: "synthetic")) { _ = try? h.readToEnd() }' 'print(bytes)' > "$P/allowed.swift"
+for f in string nsdata allowed; do
+  swiftc -sdk "$sdk" -target arm64-apple-ios27.0 -module-cache-path "$P/mc" "$P/$f.swift" -o "$P/$f" || exit
+  nm -u "$P/$f" | xcrun swift-demangle > "$P/$f.dm" || exit
+  s=$(grep -c -E 'URLSession|Data\.init\(contentsOf:|_socket$|_connect$|_getaddrinfo$' "$P/$f.dm"); u=$(grep -c -E 'contentsOf: (__shared )?Foundation\.URL' "$P/$f.dm"); o=$(strings -a "$P/$f" | grep -c 'ContentsOfURL')
+  echo "$f five=$s url-contentsOf=$u selector=$o"
+done
+```
+
+It printed `string five=0 url-contentsOf=1 selector=0`, `nsdata five=0 url-contentsOf=0 selector=1` and `allowed five=0 url-contentsOf=0 selector=0`. The build writes its own check; this probe only shows that the rule can be met.
+
+**Rulings from Beni, 2026-11-16, in the PM's session,** his Pass 3 answers to the seat's four questions:
+
+1. "Yes (Recommended)", to "May PR #50 merge with F1–F4 and R1 open, with the build obligated to land criteria 3, 4, 5 and 7's tests?". Criterion 5's closing note records it.
+2. "Yes, amend now (Recommended)", to whether the PM amends the spec for U1 to U5 before the merge: this section and `869b71c`.
+3. "Yes, keep required (Recommended)", to whether the `swift` job on the `xcode-27` preview stays required on every pull request: the spec's ruling 6.
+4. "Confirm (Recommended)", rulings 1 and 2: S91 is a non-release slice that builds alongside Milestone 1.
+
+The records continue under ruling 7, "Repeat the pass": this answer posts as pass `"1.5"`, Codex's re-read as pass `"2"`, and the Pass 2.5 re-run as pass `"2.5"`, each carrying every finding id.
+
+**Process notes for the records PR.** The Pass 2.5 seat's record gives its observed mode as the app's `auto` permission mode, against the requested `read-only`: the app has no read-only mode, and the seat made no commit. It ran `gh`, `git fetch` and `pnpm` with the sandbox off, because the sandbox's TLS interception broke `gh`. It reported its model and effort from its own transcript, so `elenchus check` raises no route flag for pass 2.5.
+
+**Authorship record,** extended:
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `869b71c` | Claude | Codex, Pass 2's fourth re-read |
+
+**What Pass 2's fourth re-read does.** Give `869b71c` its cold read (`git diff 1cb0f7a HEAD`), say with a command whether each of U1 to U5 closes, check that criterion 7's seven failing controls and its passing control can be built, and confirm with `git diff` that nothing else changed. Then the Pass 2.5 seat re-runs at the new head.
