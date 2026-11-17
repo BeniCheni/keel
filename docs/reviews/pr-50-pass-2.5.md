@@ -96,7 +96,7 @@ None. No figure in this PR comes from a model or an assumption.
 | No sensitive path, dependency or schema change | Yes: the sensitive-path diff prints nothing; no package.json or lockfile change; esbuild is approved for the build PR, not added here |
 | Every commit cold-read by a non-author vendor (authorship record) | Yes: 5 Claude commits, each read by Codex |
 | Gate verdict | would escalate |
-| Beni's decision (filled after) | |
+| Beni's decision (filled after) | Ruled on 2026-11-16 that PR #50 may merge with F1 to F4 and R1 open, after the PM amends the spec for U1 to U5 (ruling 8). Merged on 2026-11-17 at squash `b703841`, reviewed head `51cd526`, after Codex's fourth to sixth re-reads and the Pass 2.5 re-run |
 
 Requirements beyond ruling 3's one screen and ADR-0009's guards, none found to widen the screen:
 - The signing check (criterion 8) traces to hard rule 1.
@@ -391,7 +391,7 @@ None. No figure in this PR comes from a model or an assumption.
 | No sensitive path, dependency or schema change | Yes. The sensitive-path diff prints nothing, and package.json and the lockfile are unchanged. esbuild is approved for the build PR, not added here |
 | Every commit cold-read by a non-author vendor (authorship record) | Yes. 8 Claude commits, each read by Codex at its own head |
 | Gate verdict | would escalate |
-| Beni's decision (filled after) | Ruled on 2026-11-16 that PR #50 may merge with F1 to F4 and R1 open (ruling 8); his call, not the gate's |
+| Beni's decision (filled after) | Ruled on 2026-11-16 that PR #50 may merge with F1 to F4 and R1 open (ruling 8); his call, not the gate's. Merged on 2026-11-17 at squash `b703841`, reviewed head `51cd526` |
 
 Every acceptance criterion, 1 to 12, can fail as written:
 - 1, 2, 3, 6, 7, 8, 9 and 10 each turn on an exit code or on empty output.
@@ -515,3 +515,42 @@ row all-four-with-planted-control "$(mkrepo combined "$body" "$p15" "$comment" "
 ```
 
 The privacy rows in this brief and in the comment were filled in before the scan, so the bytes scanned are the bytes posted. The scan's output equalled those rows.
+
+## Records note
+
+Added by the PM for the records PR. The two executive briefs above are the seats' texts, read as data from their session transcripts. The first is the markdown block of session `5919fca3-f88b-4c7c-a913-b21de874fe34`'s reply of 2026-11-17T03:51:25Z, 249 lines, SHA-256 `ae2d34e9a850ae5914daeb69d87c9d1bea80854d2e83c36f58cb8e32ab91b135`. The re-run's is the markdown block of session `d2072d8a-482f-4762-8627-a73806c75502`'s reply of 2026-11-17T17:58:26Z, 267 lines, SHA-256 `9e9b147fe3a2ec2eea04b302426b767a2a0a8b4a587f92f747b9ae18fde8490e`. Each is extracted by `brief-from-reply.py` below and hashed with `shasum -a 256`. The PM changed one line in each: the gate log's last row, Beni's decision, filled in after the merge.
+
+**The merge.** Beni merged PR #50 on 2026-11-17 at 14:05 EST from the PM's handoff, which ran his private-list scan over the comments, records, body and squash text that came after Codex's last check, and ran `gh pr ready` and `gh pr merge 50 --squash --match-head-commit 51cd5264d957ad1800d740ce6111357d0afd7223` only if every count was zero. The counts are Beni's claim. The PM's checks on a fresh clone of `main`:
+
+- `gh pr view 50 --json mergeCommit` and `git rev-parse origin/main` both give `b7038417447a5dc66e517c7dbc2997d2eee382c5`, and `git rev-list --parents -n1` gives one parent, `5069a3478a9a6d57486e7909b44845f9807d66a1`.
+- `git diff --quiet 51cd526 b703841` exits 0: the merged tree is the reviewed head's. The squash body is byte for byte the text the scan read, and carries `Co-authored-by: Claude <noreply@anthropic.com>` and `Co-authored-by: Codex <noreply@openai.com>`.
+- `pnpm install --frozen-lockfile` and `pnpm verify` exit 0 on Node 24.22.2 and 26.13.0 (core 178, plugin 212 and tooling 126 tests); `python3 -I tools/reference/payoff.py fixtures/golden/` gives 13 cases agreeing and 0 disagreements; `node tools/tripwire/cli.mjs .` exits 0 with no output.
+- `git ls-remote --heads origin docs/s91-spec` prints nothing, and no tag points at `b703841`.
+- Push CI on `main`, run 44154829436: in attempts 1 and 2 the macOS Node 26 cell was cancelled without a runner, with GitHub's annotations "The job was not acquired by Runner of type hosted even after multiple attempts" and three notices of capacity limits on macOS arm64 runners; the other three cells passed, so `verify` failed. The same cell had been cancelled the same way at `6279d03` and, before its re-run passed, at `51cd526`.
+
+`brief-from-reply.py`, run as `python3 -I brief-from-reply.py <transcript.jsonl> '<brief title>' <out>`:
+
+```python
+# python3 -I brief-from-reply.py <transcript.jsonl> <title> <out>
+# Writes the four-backtick markdown block of the last assistant reply whose text holds <title>, and prints its timestamp.
+import json, re, sys
+transcript, title, out = sys.argv[1:4]
+found = None
+for line in open(transcript, encoding="utf-8"):
+    try:
+        entry = json.loads(line)
+    except ValueError:
+        continue
+    message = entry.get("message") or {}
+    if message.get("role") != "assistant":
+        continue
+    for block in message.get("content") or []:
+        if isinstance(block, dict) and block.get("type") == "text" and title in block["text"]:
+            match = re.search(r"````markdown\n(.*?)\n````", block["text"], re.S)
+            if match:
+                found = (entry.get("timestamp"), match.group(1))
+if found is None:
+    sys.exit("no reply holds that title in a markdown block")
+open(out, "w", encoding="utf-8").write(found[1] + "\n")
+print(found[0])
+```
