@@ -347,3 +347,13 @@ rule url-symbol: a control fails by it alone
 | `51cd526` | Claude | Codex, Pass 2's sixth re-read |
 
 **What Pass 2's sixth re-read does.** It is the last spec round, by Beni's ruling. Give `51cd526` its cold read (`git diff 6279d03 HEAD`), say with a command whether W1 closes and whether W2's answer holds, and confirm with `git diff` that nothing else changed. Anything new goes on the S91 build review's list, not into another amendment. Then the Pass 2.5 seat re-runs at the head.
+
+## After the Pass 2.5 re-run
+
+Written by the PM on 2026-11-17 (America/New_York), after the Pass 2.5 re-run ([issuecomment-6956376583](https://github.com/BeniCheni/keel/pull/50#issuecomment-6956376583)) at `51cd526`, whose executive brief now follows the first one in `docs/reviews/pr-50-pass-2.5.md`. The formal verdict is not mergeable and the shadow gate would escalate, only because F1 to F4 and R1 stay open. `verify` is green at the head on attempt 2 of run 44134766478, after a re-run of the macOS Node 26 cell that macOS arm64 capacity had cancelled. The re-run found one new Medium, Y1.
+
+**Y1, for the S91 build review's list.** Under ruling 10 there is no further amendment. The PM confirmed it: `sed -n '79,81p;116p' docs/specs/s91-ios-foundation.md` shows `initWithURL:` named only among the entries that never go on the allowlist and as an example of the allowlist-gated URL-selector rule, while criterion 7 tests a control that fails "by the `initWithURL:` rule alone". The build's binary check needs a rule that fails any selector beginning `initWithURL:` whatever the allowlist says, as the `contentsOf:` and `ContentsOfURL` rules do. The S91 build review's list from this PR is Y1.
+
+**Beni's answers, 2026-11-17, in the PM's session,** to the re-run seat's two questions: "Confirm (Recommended)", that rulings 8, 9 and 10 stand as this file records them at `0c4884d`; and "Yes (Recommended)", that ruling 8, merging PR #50 with F1 to F4 and R1 open, holds at `51cd526`.
+
+**Process notes for the records PR.** The PM's re-run prompt said the seat was the session that gave the first Pass 2.5. Beni ran it in a new session, `d2072d8a-482f-4762-8627-a73806c75502`, which checked that premise against the first record's session id and asked Beni. He confirmed that the new session holds the re-run as a fresh Pass 2.5 seat, and allowed it one read of the first seat's transcript, to confirm that the archived brief is word for word. The PM re-ran the cancelled macOS Node 26 cell on Beni's word. The PM's records from the fifth on give its observed effort as `xhigh`, against the Planner's High pin, which `elenchus check` reports as a route failure.
