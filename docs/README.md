@@ -39,6 +39,7 @@ Every slice moves through up to four rungs: proposal (the research behind the pr
 | Pass 2.5 seat named in `AGENTS.md` (PR #46) | n/a | none (review policy) | none | `reviews/pr-46-pass-0.md`, `reviews/pr-46-pass-1.5.md`, `reviews/pr-46-pass-2.5.md` (executive brief) | merged 2026-11-15 at squash `36f4a38`, reviewed head `cc8d95e`; by Beni's rulings of 2026-11-15 |
 | Docs after PR #46 (PR #48) | n/a | none | none | `reviews/pr-48-pass-0.md` | merged 2026-11-16 at squash `bbf9e6b`, reviewed head `dcab0e8` (fast-track); cold review by Codex, then its re-reads, the seventh finding it mergeable at `dcab0e8` |
 | Docs after PR #48 (PR #49) | n/a | none | none | `reviews/pr-49-pass-0.md` | in review (fast-track); cold review by Codex |
+| S91 iOS foundation (spec PR #50) | not a slice toward `v0.1.0`; builds alongside Milestone 1 | `specs/s91-ios-foundation.md` | none (no UI design) | `reviews/pr-50-pass-0.md`, `reviews/pr-50-pass-1.5.md` | spec in review |
 
 Folders:
 
@@ -46,7 +47,7 @@ Folders:
 - `specs/`: one file per slice, `sNN-<slug>.md`, or `sNN.M-<slug>.md` for a follow-up slice Beni numbers that way. A spike keeps its results in a separate `sNN-<slug>-results.md`, so that its pre-registered spec stays as written.
 - `design/`: design briefs and Executive Handoff Briefs. Prototypes themselves stay in the local-only top-level `/design/` folder, which `.gitignore` excludes; `docs/design/` is tracked.
 - `reviews/`: `pr-<N>-pass-0.md`, `pr-<N>-pass-1.5.md`, executive briefs worth keeping, and `gate-activation.md` once Beni ends shadow mode.
-- `adr/`: architecture decision records, `NNNN-<slug>.md`. ADR-0009 (Accepted 2026-11-06, Path A) records the post-M1 iOS companion and supersedes nothing. ADR-0001 to 0008 record the Milestone 1 architecture: Tauri shell, core without I/O, terms as YAML with provenance, SQLite outside the repo, no value without evidence, bring-your-own-key connectors, end-of-day check, Monte Carlo isolated.
+- `adr/`: architecture decision records, `NNNN-<slug>.md`. ADR-0009 (Accepted 2026-11-06, Path A) records the post-M1 iOS companion and supersedes nothing; its amendment of 2026-11-16 lets one narrow iOS slice, S91, build alongside Milestone 1. ADR-0001 to 0008 record the Milestone 1 architecture: Tauri shell, core without I/O, terms as YAML with provenance, SQLite outside the repo, no value without evidence, bring-your-own-key connectors, end-of-day check, Monte Carlo isolated.
 - `providers/`: one terms review per data connector.
 - `v0.1.0-ideas.md`: ranked candidates. Never a release scope.
 
