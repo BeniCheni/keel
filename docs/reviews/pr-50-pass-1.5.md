@@ -56,3 +56,33 @@ Pass 1's findings and the PM's fixes are suspicions to re-derive, not conclusion
 | 3 | Schedule `unavailable` reasons carry a `code` | `sed -n 59,64p packages/core/src/schedule/types.ts` |
 | 4 | `schedule.flags.test.ts` covers weekend and outside-calendar flags, and `schedule.calendar.test.ts` covers holidays | `grep -c -i weekend packages/core/src/schedule/schedule.flags.test.ts`; `grep -c -i outside-calendar packages/core/src/schedule/schedule.flags.test.ts`; `grep -c -i holiday packages/core/src/schedule/schedule.calendar.test.ts` |
 | 5 | `missing-required-top.yaml` is a tracked invalid fixture | `git ls-files fixtures/synthetic/terms/invalid` |
+
+## After Pass 2
+
+Written by the PM on 2026-11-16 (America/New_York), after Codex's Pass 2 ([issuecomment-6935224748](https://github.com/BeniCheni/keel/pull/50#issuecomment-6935224748)) at `0e8c5d1`: not mergeable, with F5, F6, F7, F9, F10 and F16 fixed, the other ten open, and four new Mediums, N1 to N4. The PM accepts every open item and answers them in `47bbbdd`. Pass 2's own commands are its evidence; the PM reproduced none of its probes.
+
+| # | Pass 2 | PM disposition | In `47bbbdd` |
+| --- | --- | --- | --- |
+| F1 | open | Accept | The render model's tests check the file-provider text before the picker's action |
+| F2 | open | Accept | A whitespace-blind source check that adds `Darwin` and `socket`, and a binary undefined-symbol check in the Swift job |
+| F3, F4 | open | Accept as spec text; the tests land in the build | Criteria 3 and 5 name the failing-first tests. As on PR #28 and PR #32, a spec PR cannot carry a test, so these Highs stay open under `AGENTS.md`'s Severity clause until the build lands them, and merging with them open is Beni's ruling at Pass 3 |
+| F8 | open | Accept | A `SnapshotStore` in `KeelCoreHost` with injectable file operations, and a relaunch test for a failure at each step |
+| F11 | open | Accept | `runs-on: xcode-27`, and criterion 11 reads the check runs by the head SHA |
+| F12 | open | Accept | All of `apps/ios/**` is sensitive |
+| F13 | open | Accept | The signing check also fails on a tracked `.mobileprovision` file and on a device identifier |
+| F14 | open | Accept | One record per launch with a counter, process ID and both timings, and a successful replacement in the device run |
+| F15 | open | Accept | Copy lint reads every Swift string literal under `apps/ios/` |
+| N1 | new | Accept | S90's reversed-comparator run is kept in criterion 4 |
+| N2 | new | Accept | Copy lint reads `ruleFor`'s literals in `packages/core/src/schedule/schedule.ts`, and the screen shows the rule as the core gives it |
+| N3 | new | Accept | Every `unavailable` reason is shown in order with its path or date |
+| N4 | new | Accept | The device run imports `minimal.yaml` for an estimated schedule before `example-autocall.yaml` |
+
+**Rulings from Beni, 2026-11-16, in the PM's session.** "Synthetic only (Recommended)", to Pass 2's question whether the stored file's SHA-256 is logged only for the synthetic device verification: the spec's ruling 5. "Repeat the pass (Recommended)", to how the records go before Pass 2.5: this answer posts as pass `"1.5"` and Codex's re-read as pass `"2"`, each carrying every finding id; `elenchus` flags the repeats until it gains a re-read value.
+
+**Authorship record,** extended:
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `47bbbdd` | Claude | Codex, Pass 2's re-read |
+
+**What Pass 2's re-read does.** Re-derive each of F1 to F16 and N1 to N4 against `47bbbdd` with a command; give `47bbbdd` its cold read; check that `xcode-27` is a label a workflow in this repository can use; and name any requirement added beyond the one screen and ADR-0009's guards.
