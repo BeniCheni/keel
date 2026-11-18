@@ -259,3 +259,17 @@ Written by the PM after the record above was posted.
 - whether Codex stays the builder after this PR;
 - the fallback AGENTS.md gives the Builder seat;
 - the fallback for Cursor's cold-read seat, which is also pinned at Extra High. Merge logistics, pinned at Medium, is unaffected.
+
+## Second addendum, 2026-11-18: GPT-6.2 Sol stands in for Codex's pin
+
+**Why.** The rework's Codex session stopped before cloning or changing PR #52. Its report: it was running GPT-6.2 Sol at Extra High, while AGENTS.md pins Codex at GPT-6.1 Sol and gives that seat no fallback. PR #52's head (`65f4c26`), this branch (`aedee77`) and the PR's comments were unchanged afterwards (`gh pr view 52 --json headRefOid`, `gh api repos/BeniCheni/keel/git/ref/heads/docs/pr-52-records`, and the PR's comment list).
+
+**Ruling 5.** Given at 14:56:50 EST in the PM's session, "Allow 6.2 for PR #52". The PM asked at 14:56:24 EST: "PR #52's Codex rework session stopped because it is running GPT-6.2 Sol at Extra High, and AGENTS.md pins Codex at GPT-6.1 Sol with no fallback. How should the Codex seats on PR #52 proceed?" The option read: "Ruling 5: GPT-6.2 Sol at Extra High stands in for the pin in PR #52's Codex seats, the rework and Pass 2. The PM records it in a second addendum and updates the prompt; the pin itself goes to the rules PR."
+
+**What changes.**
+- **The rework's seat** is Codex on GPT-6.2 Sol at Extra High. It still has no fallback: if that model is unavailable, it stops and escalates.
+- **Pass 2's seat** for PR #52 is Codex on GPT-6.2 Sol at Extra High, in a session other than the rework's.
+- Each Codex seat record gives `"requested": "gpt-6.2-sol"`, with this ruling as its source. Its comment says that the model stands in for the pin by ruling 5.
+- Nothing else in this brief or the first addendum changes.
+
+**For the rules PR.** Codex's pin in AGENTS.md, GPT-6.1 Sol as of 2026-10-29, is Beni's to update. This ruling covers PR #52 only.
