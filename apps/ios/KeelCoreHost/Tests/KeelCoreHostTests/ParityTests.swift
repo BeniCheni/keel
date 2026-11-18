@@ -18,17 +18,27 @@ final class ParityTests: XCTestCase {
         XCTAssertTrue(jscEN.locale.hasPrefix("en"), jscEN.locale)
         XCTAssertTrue(jscSV.locale.hasPrefix("sv"), jscSV.locale)
         XCTAssertNotEqual(jscEN.locale, jscSV.locale)
-        XCTAssertEqual(jscEN.payload, nodeEN.payload)
-        XCTAssertEqual(jscSV.payload, nodeEN.payload)
-        XCTAssertEqual(nodeSV.payload, nodeEN.payload)
+        XCTAssertTrue(parityMatches(oracle: nodeEN.payload, engine: jscEN.payload), firstDifference(nodeEN.payload, jscEN.payload))
+        XCTAssertTrue(parityMatches(oracle: nodeEN.payload, engine: jscSV.payload), firstDifference(nodeEN.payload, jscSV.payload))
+        XCTAssertTrue(parityMatches(oracle: nodeEN.payload, engine: nodeSV.payload), firstDifference(nodeEN.payload, nodeSV.payload))
         let reversed = try hostLines(host: host, bundle: bundle, inputs: inputs, language: "en-US", region: "en_US", reversed: true)
         XCTAssertTrue(reversed.locale.hasPrefix("en"), reversed.locale)
-        XCTAssertEqual(reversed.payload, nodeEN.payload)
+        XCTAssertTrue(parityMatches(oracle: nodeEN.payload, engine: reversed.payload), firstDifference(nodeEN.payload, reversed.payload))
+        XCTAssertGreaterThan(nodeEN.payload.count, 40)
         var planted = nodeEN.payload
-        let index = planted.index(planted.startIndex, offsetBy: min(40, planted.count))
-        planted.replaceSubrange(index...index, with: planted[index] == "a" ? "b" : "a")
-        XCTAssertNotEqual(planted, nodeEN.payload)
-        XCTAssertFalse(parityMatches(oracle: planted, engine: nodeEN.payload))
+        let index = planted.index(planted.startIndex, offsetBy: 40)
+        planted[index] = planted[index] == 0x61 ? 0x62 : 0x61
+        XCTAssertEqual(planted.count, nodeEN.payload.count)
+        XCTAssertFalse(parityMatches(oracle: planted, engine: jscEN.payload))
+    }
+
+    func testParityComparesBytesNotCanonicallyEquivalentText() {
+        let composed = "\u{00E9}"
+        let decomposed = "e\u{0301}"
+        XCTAssertEqual(composed, decomposed)
+        XCTAssertNotEqual(Data(composed.utf8), Data(decomposed.utf8))
+        XCTAssertFalse(parityMatches(oracle: Data(composed.utf8), engine: Data(decomposed.utf8)))
+        XCTAssertTrue(parityMatches(oracle: Data(composed.utf8), engine: Data(composed.utf8)))
     }
 
     func testLocaleCompareScratchBundleDiffersOnTieInput() throws {
@@ -56,17 +66,31 @@ final class ParityTests: XCTestCase {
         XCTAssertTrue(built.contains("localeCompare"))
         let host = try hostLines(host: try hostBinary(), bundle: scratch, inputs: inputs, language: "en-US", region: "en_US", reversed: true)
         XCTAssertNotEqual(host.payload, node.payload)
-        XCTAssertTrue(host.payload.contains(TieInput.file))
+        XCTAssertTrue(String(decoding: host.payload, as: UTF8.self).contains(TieInput.file))
     }
 
-    private func parityMatches(oracle: String, engine: String) -> Bool {
+    /// Byte for byte. Swift compares String values by canonical equivalence, so text is never compared here.
+    private func parityMatches(oracle: Data, engine: Data) -> Bool {
         oracle == engine
+    }
+
+    private func firstDifference(_ oracle: Data, _ engine: Data) -> String {
+        let left = oracle.split(separator: 0x0A, omittingEmptySubsequences: false)
+        let right = engine.split(separator: 0x0A, omittingEmptySubsequences: false)
+        for index in 0..<max(left.count, right.count) {
+            let a = index < left.count ? Data(left[index]) : Data()
+            let b = index < right.count ? Data(right[index]) : Data()
+            if a != b {
+                return "line \(index + 1): oracle \(String(decoding: a.prefix(200), as: UTF8.self)) engine \(String(decoding: b.prefix(200), as: UTF8.self))"
+            }
+        }
+        return "no difference"
     }
 }
 
 private struct EngineLines {
     var locale: String
-    var payload: String
+    var payload: Data
 }
 
 private func parityInputs(root: URL) throws -> [[String: String]] {
@@ -103,7 +127,7 @@ private func parityInputs(root: URL) throws -> [[String: String]] {
     return inputs
 }
 
-private func listed(_ minimal: String) -> String {
+func listed(_ minimal: String) -> String {
     minimal.replacingOccurrences(
         of: "underlyings:\n",
         with: """
@@ -127,7 +151,7 @@ private func listed(_ minimal: String) -> String {
     )
 }
 
-private func dated(_ minimal: String, first: String, maturity: String) -> String {
+func dated(_ minimal: String, first: String, maturity: String) -> String {
     minimal
         .replacingOccurrences(of: "value: 2026-09-01\n    status: primary\n    source: supplement\nunderlyings:", with: "value: \(first)\n    status: primary\n    source: supplement\nunderlyings:")
         .replacingOccurrences(of: "value: 2031-03-03\n    status: primary\n    source: supplement\n  first_call_observation:", with: "value: \(maturity)\n    status: primary\n    source: supplement\n  first_call_observation:")
@@ -165,17 +189,21 @@ private func collected(_ process: Process) throws -> EngineLines {
     process.standardOutput = out
     process.standardError = err
     try process.run()
+    let stdout = out.fileHandleForReading.readDataToEndOfFile()
+    let stderr = err.fileHandleForReading.readDataToEndOfFile()
     process.waitUntilExit()
-    let stdout = String(decoding: out.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
-    XCTAssertEqual(process.terminationStatus, 0, String(decoding: err.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self))
-    var lines = stdout.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
-    guard let header = lines.first, header.hasPrefix("KEEL v1 locale=") else {
-        XCTFail(stdout)
+    XCTAssertEqual(process.terminationStatus, 0, String(decoding: stderr, as: UTF8.self))
+    guard let newline = stdout.firstIndex(of: 0x0A) else {
+        XCTFail(String(decoding: stdout, as: UTF8.self))
         return EngineLines(locale: "", payload: stdout)
     }
-    lines.removeFirst()
+    let header = String(decoding: stdout[stdout.startIndex..<newline], as: UTF8.self)
+    guard header.hasPrefix("KEEL v1 locale=") else {
+        XCTFail(String(decoding: stdout, as: UTF8.self))
+        return EngineLines(locale: "", payload: stdout)
+    }
     let locale = String(header.dropFirst("KEEL v1 locale=".count))
-    return EngineLines(locale: locale, payload: lines.joined(separator: "\n"))
+    return EngineLines(locale: locale, payload: Data(stdout[stdout.index(after: newline)...]))
 }
 
 private func hostBinary() throws -> URL {

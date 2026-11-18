@@ -114,6 +114,12 @@ final class RenderModelTests: XCTestCase {
         XCTAssertFalse(rows.contains { $0.text.contains("2027-06-01") })
     }
 
+    func testAnImportedFileShowsWhatArrivedWhenAndWhatDidNot() {
+        let model = ScreenModel(active: ActiveDocument(name: "note.yaml", importedAt: "2026-01-01T00:00:00Z"))
+        let arrived = ScreenRender.rows(model: model, copy: copy).filter { $0.role == "arrived" }.map(\.text)
+        XCTAssertEqual(arrived, [copy.arrived, "File note.yaml", "Imported 2026-01-01T00:00:00Z", copy.omitted])
+    }
+
     private func scheduleRows(_ schedule: ScheduleBody) -> [ScreenRow] {
         let model = ScreenModel(active: ActiveDocument(name: "note.yaml", importedAt: "2026-01-01T00:00:00Z", summary: SummaryModel(verified: 1, total: 2, unverified: ["dates.maturity"]), schedule: schedule))
         return ScreenRender.rows(model: model, copy: copy).filter { $0.role == "schedule" }

@@ -33,6 +33,7 @@ final class MemoryFiling: SnapshotFiling {
     var nodes: [String: Node] = [:]
     var failStep: StorageStep?
     var badSeal: StorageStep?
+    var sealOverride: (step: StorageStep, seal: FileSeal)?
 
     func write(_ data: Data, to url: URL, step: StorageStep?) throws {
         try gate(step)
@@ -53,6 +54,7 @@ final class MemoryFiling: SnapshotFiling {
 
     func readSeal(_ url: URL, step: StorageStep) throws -> FileSeal {
         try gate(step)
+        if let sealOverride, sealOverride.step == step { return sealOverride.seal }
         if badSeal == step {
             return FileSeal(protection: "none", excludedFromBackup: false)
         }

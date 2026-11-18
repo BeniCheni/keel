@@ -38,4 +38,29 @@ final class SnapshotStoreTests: XCTestCase {
             files.badSeal = nil
         }
     }
+
+    func testASealWithOnlyOneAttributeIsNotExactAndKeepsThePreviousFile() {
+        XCTAssertTrue(FileSeal(protection: "complete", excludedFromBackup: true).isExact)
+        let partial = [
+            FileSeal(protection: "complete", excludedFromBackup: false),
+            FileSeal(protection: "NSFileProtectionCompleteUntilFirstUserAuthentication", excludedFromBackup: true),
+        ]
+        for seal in partial {
+            XCTAssertFalse(seal.isExact, seal.protection)
+            for step in [StorageStep.readTemporary, .readActive, .readRecord] {
+                let folder = URL(fileURLWithPath: "/synthetic/keel", isDirectory: true)
+                let files = MemoryFiling()
+                let store = SnapshotStore(folder: folder, files: files)
+                let first = Data("first".utf8)
+                XCTAssertNotEqual(store.importFile(bytes: first, name: "one.yaml", importedAt: "2026-01-01T00:00:00Z"), .failed)
+                files.sealOverride = (step, seal)
+                let label = "\(step.rawValue) \(seal.protection)"
+                XCTAssertEqual(store.importFile(bytes: Data("second".utf8), name: "two.yaml", importedAt: "2026-02-02T00:00:00Z"), .failed, label)
+                let active = SnapshotStore(folder: folder, files: files).activeTerms()
+                XCTAssertEqual(active?.bytes, first, label)
+                XCTAssertEqual(active?.name, "one.yaml", label)
+                XCTAssertEqual(active?.importedAt, "2026-01-01T00:00:00Z", label)
+            }
+        }
+    }
 }

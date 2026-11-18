@@ -57,6 +57,25 @@ final class DigestAndSessionTests: XCTestCase {
         }
     }
 
+    func testOnlyTheVerificationConfigurationDefinesVERIFICATION() throws {
+        let root = Repo.root()
+        let project = String(decoding: try ByteRead.data(from: root.appendingPathComponent("apps/ios/Keel.xcodeproj/project.pbxproj")), as: UTF8.self)
+        let regex = try NSRegularExpression(pattern: "isa = XCBuildConfiguration;(.*?)\n\t\t\tname = ([A-Za-z]+);", options: [.dotMatchesLineSeparators])
+        var names: [String] = []
+        var defining: [String] = []
+        for match in regex.matches(in: project, range: NSRange(project.startIndex..., in: project)) {
+            guard let body = Range(match.range(at: 1), in: project), let name = Range(match.range(at: 2), in: project) else {
+                return XCTFail("build configuration")
+            }
+            names.append(String(project[name]))
+            if project[body].contains("VERIFICATION") { defining.append(String(project[name])) }
+        }
+        XCTAssertEqual(names.sorted(), ["Debug", "Debug", "Release", "Release", "Verification", "Verification"])
+        XCTAssertEqual(defining, ["Verification", "Verification"])
+        let config = String(decoding: try ByteRead.data(from: root.appendingPathComponent("apps/ios/Config.xcconfig")), as: UTF8.self)
+        XCTAssertFalse(config.contains("VERIFICATION"))
+    }
+
     func testContextHasNoFetchXMLHttpRequestOrWebSocket() throws {
         let bundle = try ByteRead.data(from: Repo.root().appendingPathComponent("apps/ios/Keel/Resources/core.js"))
         let source = try XCTUnwrap(String(data: bundle, encoding: .utf8))
