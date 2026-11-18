@@ -81,6 +81,13 @@ test.skipIf(!sdkPath && !sdkRequired)("each binary rule fails its own control", 
     const dropped = evaluateBinary(bins[name], scratch, RULES.filter((item) => item !== rule));
     expect(dropped.status, name).toBe(0);
   }
+  // With the allowlist as committed, each of those controls still fails, and its own rule is
+  // among the rules that fire. An entry that approved one of them would pass unnoticed otherwise.
+  for (const [name, [rule]] of Object.entries(isolated)) {
+    const result = evaluateBinary(bins[name], allow);
+    expect(result.status, name).toBe(1);
+    expect(result.counts[rule], name).toBeGreaterThan(0);
+  }
   for (const name of ["urlsession", "data", "pdfurl", "attr", "openurl"]) {
     expect(evaluateBinary(bins[name], allow).status).toBe(1);
   }
