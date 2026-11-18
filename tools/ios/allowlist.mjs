@@ -6,6 +6,8 @@ export function parseAllowlist(text) {
   const frameworks = [];
   const selectors = [];
   const symbols = [];
+  const undefinedSymbols = [];
+  const reasons = new Map();
   const lines = text.split("\n");
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -19,9 +21,13 @@ export function parseAllowlist(text) {
     else if (kind === "framework") frameworks.push(value);
     else if (kind === "selector") selectors.push(value);
     else if (kind === "symbol") symbols.push(value);
+    else if (kind === "undefined") undefinedSymbols.push(value);
     else throw new Error(`allowlist line ${i + 1}`);
+    const key = `${kind}\t${value}`;
+    if (reasons.has(key)) throw new Error(`duplicate allowlist entry on line ${i + 1}`);
+    reasons.set(key, parts[2]);
   }
-  return { modules, frameworks, selectors, symbols };
+  return { modules, frameworks, selectors, symbols, undefinedSymbols, reasons };
 }
 
 export function loadAllowlist(root, file = "tools/ios/allowlist.txt") {

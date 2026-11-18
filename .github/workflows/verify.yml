@@ -95,16 +95,22 @@ jobs:
         run: |
           set -euo pipefail
           work="$(mktemp -d)"
-          xcodebuild build \
-            -project apps/ios/Keel.xcodeproj \
-            -scheme Keel \
-            -configuration Release \
-            -destination 'generic/platform=iOS' \
-            -derivedDataPath "$work/derived" \
-            CODE_SIGNING_ALLOWED=NO
-          app="$work/derived/Build/Products/Release-iphoneos/Keel.app"
-          cmp -s "$app/core.js" apps/ios/Keel/Resources/core.js
-          node tools/ios/binary-check.mjs "$app/Keel"
+          trap 'rm -rf "$work"' EXIT
+          for configuration in Release Verification; do
+            xcodebuild build \
+              -project apps/ios/Keel.xcodeproj \
+              -scheme Keel \
+              -configuration "$configuration" \
+              -destination 'generic/platform=iOS' \
+              -derivedDataPath "$work/derived" \
+              CODE_SIGNING_ALLOWED=NO
+            app="$work/derived/Build/Products/$configuration-iphoneos/Keel.app"
+            cmp -s "$app/core.js" apps/ios/Keel/Resources/core.js
+            node tools/ios/binary-check.mjs "$app/Keel"
+          done
+          node tools/ios/allowlist-usage.mjs \
+            "$work/derived/Build/Products/Release-iphoneos/Keel.app/Keel" \
+            "$work/derived/Build/Products/Verification-iphoneos/Keel.app/Keel"
 
   verify:
     name: verify

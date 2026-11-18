@@ -20,8 +20,8 @@ test("with no iOS SDK the binary controls are skipped, and they fail where the s
   const optional = controls("");
   expect(optional.status).toBe(0);
   expect(optional.text).toMatch(/Test Files\s+1 skipped \(1\)/);
-  expect(optional.text).toMatch(/Tests\s+1 skipped \(1\)/);
-  expect(optional.text).not.toMatch(/Tests\s+1 passed/);
+  expect(optional.text).toMatch(/Tests\s+9 skipped \(9\)/);
+  expect(optional.text).not.toMatch(/Tests\s+\d+ passed/);
   const required = controls("required");
   expect(required.status).not.toBe(0);
   expect(required.text).toContain("ios-controls: no iOS SDK at 27.0 or later was found");
