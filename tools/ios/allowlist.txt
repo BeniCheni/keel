@@ -1,0 +1,31 @@
+# One allowlist for the source check and the binary check. A selector that begins initWithURL:, a ContentsOfURL selector, or a contentsOf: reader of a Foundation.URL still fails the binary check when it is listed here.
+module	Foundation	File storage, dates, and the security-scoped read.
+module	SwiftUI	The one read-only screen.
+module	JavaScriptCore	The bundled core runs in a JSContext.
+module	UniformTypeIdentifiers	The Files picker accepts a yaml or yml file.
+module	CryptoKit	SHA-256 for the verification digest gate.
+module	KeelCoreHost	The app calls the tested host package.
+module	XCTest	The host package tests.
+module	PackageDescription	The Swift package manifest.
+framework	Foundation	Linked by the store and the screen.
+framework	CoreFoundation	Linked by Foundation.
+framework	SwiftUI	Linked by the screen.
+framework	UIKit	Linked by SwiftUI on iPhone.
+framework	Combine	Linked by the screen's observable model.
+framework	JavaScriptCore	Linked by the JSContext host.
+framework	UniformTypeIdentifiers	Linked by the file-type filter.
+framework	CryptoKit	Linked by the digest gate.
+framework	CoreGraphics	Linked by SwiftUI.
+framework	QuartzCore	Linked by SwiftUI.
+framework	CoreText	Linked by SwiftUI text.
+selector	fileHandleForReadingFromURL:error:	The screen reads the picked file with FileHandle.
+selector	URLForResource:withExtension:	The app loads its bundled core and the timing fixture.
+selector	URLsForDirectory:inDomains:	The store locates Application Support.
+selector	createDirectoryAtURL:withIntermediateDirectories:attributes:error:	The store creates its folder.
+selector	moveItemAtURL:toURL:error:	The store places the first active file.
+selector	removeItemAtURL:error:	The store removes a temporary file after a failed import.
+symbol	FileHandle.init(forReadingFrom:)	The Swift entry for that read.
+symbol	Data.write(to:	The store writes the imported bytes.
+symbol	setResourceValues	The store sets backup exclusion on the file.
+symbol	replaceItemAt	The store replaces the active file.
+symbol	fileImporter	The screen opens the Files picker.

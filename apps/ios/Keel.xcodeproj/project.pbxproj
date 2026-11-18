@@ -1,0 +1,360 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 63;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A91000000000000000000011 /* KeelApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91000000000000000000021 /* KeelApp.swift */; };
+		A91000000000000000000012 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91000000000000000000022 /* RootView.swift */; };
+		A91000000000000000000013 /* Copy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91000000000000000000023 /* Copy.swift */; };
+		A91000000000000000000014 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91000000000000000000024 /* AppModel.swift */; };
+		A91000000000000000000015 /* Verification.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91000000000000000000025 /* Verification.swift */; };
+		A91000000000000000000016 /* core.js in Resources */ = {isa = PBXBuildFile; fileRef = A91000000000000000000026 /* core.js */; };
+		A91000000000000000000017 /* example-autocall.yaml in Resources */ = {isa = PBXBuildFile; fileRef = A91000000000000000000027 /* example-autocall.yaml */; };
+		A91000000000000000000018 /* KeelCoreHost in Frameworks */ = {isa = PBXBuildFile; productRef = A91000000000000000000032 /* KeelCoreHost */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A91000000000000000000009 /* Keel.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Keel.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A91000000000000000000021 /* KeelApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeelApp.swift; sourceTree = "<group>"; };
+		A91000000000000000000022 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		A91000000000000000000023 /* Copy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Copy.swift; sourceTree = "<group>"; };
+		A91000000000000000000024 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		A91000000000000000000025 /* Verification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Verification.swift; sourceTree = "<group>"; };
+		A91000000000000000000026 /* core.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = core.js; path = Keel/Resources/core.js; sourceTree = "<group>"; };
+		A91000000000000000000027 /* example-autocall.yaml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; name = "example-autocall.yaml"; path = ../../fixtures/synthetic/terms/valid/example-autocall.yaml; sourceTree = "<group>"; };
+		A91000000000000000000028 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A91000000000000000000060 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A91000000000000000000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A91000000000000000000018 /* KeelCoreHost in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A91000000000000000000006 /* Keel */ = {
+			isa = PBXGroup;
+			children = (
+				A91000000000000000000021 /* KeelApp.swift */,
+				A91000000000000000000022 /* RootView.swift */,
+				A91000000000000000000023 /* Copy.swift */,
+				A91000000000000000000061 /* Snapshot */,
+				A91000000000000000000028 /* Info.plist */,
+			);
+			path = Keel;
+			sourceTree = "<group>";
+		};
+		A91000000000000000000007 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A91000000000000000000009 /* Keel.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A91000000000000000000008 = {
+			isa = PBXGroup;
+			children = (
+				A91000000000000000000006 /* Keel */,
+				A91000000000000000000062 /* Resources */,
+				A91000000000000000000060 /* Config.xcconfig */,
+				A91000000000000000000007 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A91000000000000000000061 /* Snapshot */ = {
+			isa = PBXGroup;
+			children = (
+				A91000000000000000000024 /* AppModel.swift */,
+				A91000000000000000000025 /* Verification.swift */,
+			);
+			path = Snapshot;
+			sourceTree = "<group>";
+		};
+		A91000000000000000000062 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A91000000000000000000026 /* core.js */,
+				A91000000000000000000027 /* example-autocall.yaml */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A91000000000000000000002 /* Keel */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A91000000000000000000040 /* Build configuration list for PBXNativeTarget "Keel" */;
+			buildPhases = (
+				A91000000000000000000003 /* Sources */,
+				A91000000000000000000004 /* Frameworks */,
+				A91000000000000000000005 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Keel;
+			packageProductDependencies = (
+				A91000000000000000000032 /* KeelCoreHost */,
+			);
+			productName = Keel;
+			productReference = A91000000000000000000009 /* Keel.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A91000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 2700;
+			};
+			buildConfigurationList = A91000000000000000000041 /* Build configuration list for PBXProject "Keel" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A91000000000000000000008;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A91000000000000000000031 /* XCLocalSwiftPackageReference "KeelCoreHost" */,
+			);
+			productRefGroup = A91000000000000000000007 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A91000000000000000000002 /* Keel */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A91000000000000000000005 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A91000000000000000000016 /* core.js in Resources */,
+				A91000000000000000000017 /* example-autocall.yaml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A91000000000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A91000000000000000000011 /* KeelApp.swift in Sources */,
+				A91000000000000000000012 /* RootView.swift in Sources */,
+				A91000000000000000000013 /* Copy.swift in Sources */,
+				A91000000000000000000014 /* AppModel.swift in Sources */,
+				A91000000000000000000015 /* Verification.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A91000000000000000000050 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A91000000000000000000060 /* Config.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Keel/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.keel.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		A91000000000000000000051 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A91000000000000000000060 /* Config.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = NO;
+				ENABLE_TESTABILITY = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Keel/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.keel.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		A91000000000000000000052 /* Verification */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A91000000000000000000060 /* Config.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = NO;
+				ENABLE_TESTABILITY = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Keel/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.keel.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = VERIFICATION;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Verification;
+		};
+		A91000000000000000000053 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A91000000000000000000060 /* Config.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A91000000000000000000054 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A91000000000000000000060 /* Config.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		A91000000000000000000055 /* Verification */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A91000000000000000000060 /* Config.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = VERIFICATION;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Verification;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A91000000000000000000040 /* Build configuration list for PBXNativeTarget "Keel" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A91000000000000000000050 /* Debug */,
+				A91000000000000000000051 /* Release */,
+				A91000000000000000000052 /* Verification */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A91000000000000000000041 /* Build configuration list for PBXProject "Keel" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A91000000000000000000053 /* Debug */,
+				A91000000000000000000054 /* Release */,
+				A91000000000000000000055 /* Verification */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		A91000000000000000000031 /* XCLocalSwiftPackageReference "KeelCoreHost" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = KeelCoreHost;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A91000000000000000000032 /* KeelCoreHost */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A91000000000000000000031 /* XCLocalSwiftPackageReference "KeelCoreHost" */;
+			productName = KeelCoreHost;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = A91000000000000000000001 /* Project object */;
+}

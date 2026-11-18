@@ -58,4 +58,20 @@ export const steps = [
     name: "boundaries",
     run: () => run(process.execPath, ["tools/boundary/cli.mjs"]),
   },
+  {
+    name: "ios-source",
+    run: () => run(process.execPath, ["tools/ios/source-check.mjs"]),
+  },
+  {
+    name: "ios-bundle",
+    run: () => run(process.execPath, ["tools/ios/bundle-imports.mjs"]),
+  },
+  {
+    name: "ios-signing",
+    run: () => run(process.execPath, ["tools/ios/signing-check.mjs"]),
+  },
+  {
+    name: "ios-inline",
+    run: () => run(process.execPath, ["tools/ios/inline-check.mjs"]),
+  },
 ];
