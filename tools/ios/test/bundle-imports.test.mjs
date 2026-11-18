@@ -18,3 +18,9 @@ test("the bundle import check passes, then fails each planted entry", async () =
   }
   expect(run(process.execPath, ["tools/ios/bundle-imports.mjs", repoRoot]).status).toBe(0);
 }, NESTED_RUN_TIMEOUT_MS);
+
+test("the bundle import check takes a relative root, as the PR's claim runs it", () => {
+  const result = run(process.execPath, ["tools/ios/bundle-imports.mjs", "."]);
+  expect(result.stderr).toBe("");
+  expect(result.status).toBe(0);
+}, NESTED_RUN_TIMEOUT_MS);

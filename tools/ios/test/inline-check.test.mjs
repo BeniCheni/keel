@@ -21,6 +21,23 @@ test("a string literal in Text fails outside Copy.swift", () => {
   expect(variable.length).toBe(0);
 }, NESTED_RUN_TIMEOUT_MS);
 
+test("each named SwiftUI call fails with a string literal, and only Copy.swift is spared", () => {
+  const forms = {
+    Text: "Text(\"hello\")\n",
+    Label: "Label(\"hello\", systemImage: name)\n",
+    Button: "Button(\"hello\") { run() }\n",
+    Section: "Section(\"hello\") { body }\n",
+    navigationTitle: "view.navigationTitle(\"hello\")\n",
+    alert: "view.alert(\"hello\", isPresented: flag) { }\n",
+  };
+  for (const [name, body] of Object.entries(forms)) {
+    const hits = inlineHits(rootWith("apps/ios/Keel/RootView.swift", body));
+    expect(hits, name).toEqual([{ file: "apps/ios/Keel/RootView.swift", name }]);
+  }
+  const lookalike = inlineHits(rootWith("apps/ios/Keel/Snapshot/CopyNotes.swift", "Text(\"hello\")\n"));
+  expect(lookalike).toEqual([{ file: "apps/ios/Keel/Snapshot/CopyNotes.swift", name: "Text" }]);
+}, NESTED_RUN_TIMEOUT_MS);
+
 test("the repo inline-string check passes", () => {
   const result = run(process.execPath, ["tools/ios/inline-check.mjs", repoRoot]);
   expect(result.status).toBe(0);

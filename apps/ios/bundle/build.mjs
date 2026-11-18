@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -43,7 +43,8 @@ function externalizeUnresolved() {
   };
 }
 
-export async function buildBundle(root, options = {}) {
+export async function buildBundle(givenRoot, options = {}) {
+  const root = resolve(givenRoot);
   const esbuild = createRequire(join(here, "package.json"))("esbuild");
   const plugins = [];
   if (options.dedupeLocaleCompare) plugins.push(dedupeLocaleComparePlugin());

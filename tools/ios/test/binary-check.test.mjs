@@ -25,9 +25,13 @@ const programs = {
   allowed: ["Foundation", "var b: [UInt8] = [1]\nb.append(contentsOf: [2])\nif let h = try? FileHandle(forReadingFrom: URL(fileURLWithPath: \"synthetic\")) { _ = try? h.readToEnd() }\nprint(b)"],
 };
 
-test("each binary rule fails its own control", () => {
-  const sdkPath = iphoneosSdk();
-  if (!sdkPath) return;
+const sdkPath = iphoneosSdk();
+const sdkRequired = process.env.KEEL_IOS_CONTROLS === "required";
+
+// Without an iOS 27 SDK the controls cannot compile. That reads as skipped, never as passed,
+// and the swift job sets KEEL_IOS_CONTROLS=required so that a missing SDK fails there.
+test.skipIf(!sdkPath && !sdkRequired)("each binary rule fails its own control", () => {
+  if (!sdkPath) throw new Error("ios-controls: no iOS SDK at 27.0 or later was found, and KEEL_IOS_CONTROLS is required");
   const dir = mkdtempSync(join(tmpdir(), "keel-bin-"));
   const allow = loadAllowlist(repoRoot);
   const bins = {};
@@ -66,6 +70,9 @@ test("each binary rule fails its own control", () => {
   }
   for (const name of ["urlsession", "data", "pdfurl", "attr", "openurl"]) {
     expect(evaluateBinary(bins[name], allow).status).toBe(1);
+  }
+  for (const name of ["urlsession", "data"]) {
+    expect(evaluateBinary(bins[name], allow).counts.named, name).toBeGreaterThan(0);
   }
   expect(evaluateBinary(bins.allowed, allow).status).toBe(0);
 }, NESTED_RUN_TIMEOUT_MS);

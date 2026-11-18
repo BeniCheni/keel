@@ -87,6 +87,8 @@ jobs:
         run: swift test --package-path apps/ios/KeelCoreHost
 
       - name: Binary controls
+        env:
+          KEEL_IOS_CONTROLS: required
         run: pnpm exec vitest run --config tools/vitest.config.mjs tools/ios/test/binary-check.test.mjs
 
       - name: Unsigned app

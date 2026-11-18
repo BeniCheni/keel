@@ -1,4 +1,5 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "vitest";
 import { signingHits } from "../signing-check.mjs";
@@ -60,4 +61,14 @@ test("each planted signing form fails and the head passes", () => {
   }
   expect(run(process.execPath, ["tools/ios/signing-check.mjs", repoRoot]).status).toBe(0);
   expect(git(repoRoot, ["check-ignore", "-q", "apps/ios/Local.xcconfig"]).status).toBe(0);
+}, NESTED_RUN_TIMEOUT_MS);
+
+test("a failed git listing fails the signing check and never reads as clean", () => {
+  const notARepo = mkdtempSync(join(tmpdir(), "keel-nogit-"));
+  const result = signingHits(notARepo);
+  expect(result.ok).toBe(false);
+  expect(result.status).not.toBe(0);
+  const cli = run(process.execPath, ["tools/ios/signing-check.mjs", notARepo]);
+  expect(cli.status).not.toBe(0);
+  expect(cli.stderr).toBe("ios-signing\tgit\n");
 }, NESTED_RUN_TIMEOUT_MS);
