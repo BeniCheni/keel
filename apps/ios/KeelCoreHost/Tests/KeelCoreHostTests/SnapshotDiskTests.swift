@@ -70,6 +70,23 @@ final class SnapshotDiskTests: XCTestCase {
     private let first = Data("first".utf8)
     private let second = Data("second".utf8)
 
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        try withFolder { folder in
+            // Probe Foundation directly so a regression in FoundationFiling still fails.
+            let scratch = folder.appendingPathComponent("protection-probe")
+            try Data("probe".utf8).write(to: scratch)
+            try (scratch as NSURL).setResourceValue(URLFileProtection.complete, forKey: .fileProtectionKey)
+            let fresh = URL(fileURLWithPath: scratch.path)
+            let protection = try fresh.resourceValues(forKeys: [.fileProtectionKey]).fileProtection
+            guard protection == .complete else {
+                let host = ProcessInfo.processInfo.operatingSystemVersionString
+                let actual = protection?.rawValue ?? "missing"
+                throw XCTSkip("macOS \(host) read \(actual) after requesting .complete on a scratch file.")
+            }
+        }
+    }
+
     private func withFolder(_ body: (URL) throws -> Void) throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("keel-store-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
