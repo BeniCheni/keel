@@ -124,9 +124,11 @@ final class AppModel: ObservableObject {
     }
 
     private func show(_ kind: FailureKind) {
+        let stored = store.activeTerms()
+        if stored == nil { active = nil }
         failure = kind
         refresh()
-        if let stored = store.activeTerms() {
+        if let stored {
             VerificationLog.record(bytes: stored.bytes, seal: stored.seal)
         }
     }

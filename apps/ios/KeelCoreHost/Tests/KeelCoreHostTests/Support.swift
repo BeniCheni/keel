@@ -31,15 +31,14 @@ final class MemoryFiling: SnapshotFiling {
     }
 
     var nodes: [String: Node] = [:]
+    private var directories: Set<String> = []
     var failStep: StorageStep?
     var badSeal: StorageStep?
     var sealOverride: (step: StorageStep, seal: FileSeal)?
 
     func write(_ data: Data, to url: URL, step: StorageStep?) throws {
         try gate(step)
-        var node = nodes[url.path] ?? Node(data: data)
-        node.data = data
-        nodes[url.path] = node
+        nodes[url.path] = Node(data: data)
     }
 
     func protect(_ url: URL, step: StorageStep) throws {
@@ -52,10 +51,10 @@ final class MemoryFiling: SnapshotFiling {
         nodes[url.path]?.excluded = true
     }
 
-    func readSeal(_ url: URL, step: StorageStep) throws -> FileSeal {
+    func readSeal(_ url: URL, step: StorageStep?) throws -> FileSeal {
         try gate(step)
         if let sealOverride, sealOverride.step == step { return sealOverride.seal }
-        if badSeal == step {
+        if let step, badSeal == step {
             return FileSeal(protection: "none", excludedFromBackup: false)
         }
         let node = nodes[url.path]
@@ -70,8 +69,35 @@ final class MemoryFiling: SnapshotFiling {
         nodes[temporary.path] = nil
     }
 
+    func createDirectory(_ url: URL) throws {
+        directories.insert(url.path)
+    }
+
+    func copy(_ source: URL, to destination: URL) throws {
+        guard let node = nodes[source.path] else { throw MemoryError.injected }
+        nodes[destination.path] = node
+    }
+
+    func move(_ source: URL, to destination: URL) throws {
+        if directories.remove(source.path) != nil {
+            directories.insert(destination.path)
+            for key in nodes.keys.filter({ $0.hasPrefix(source.path + "/") }) {
+                let relative = key.dropFirst(source.path.count)
+                nodes[destination.path + relative] = nodes.removeValue(forKey: key)
+            }
+        } else {
+            try copy(source, to: destination)
+            nodes[source.path] = nil
+        }
+    }
+
     func remove(_ url: URL) throws {
         nodes[url.path] = nil
+        if directories.remove(url.path) != nil {
+            for key in nodes.keys.filter({ $0.hasPrefix(url.path + "/") }) {
+                nodes[key] = nil
+            }
+        }
     }
 
     func read(_ url: URL) throws -> Data {
@@ -80,7 +106,7 @@ final class MemoryFiling: SnapshotFiling {
     }
 
     func exists(_ url: URL) -> Bool {
-        nodes[url.path] != nil
+        nodes[url.path] != nil || directories.contains(url.path)
     }
 
     private func gate(_ step: StorageStep?) throws {

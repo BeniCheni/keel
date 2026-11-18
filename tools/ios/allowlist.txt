@@ -29,3 +29,4 @@ symbol	Data.write(to:	The store writes the imported bytes.
 symbol	setResourceValues	The store sets backup exclusion on the file.
 symbol	replaceItemAt	The store replaces the active file.
 symbol	fileImporter	The screen opens the Files picker.
+selector	copyItemAtURL:toURL:error:	The store makes sealed rollback copies within Application Support.

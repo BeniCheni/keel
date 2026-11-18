@@ -19,18 +19,32 @@ public final class FoundationFiling: SnapshotFiling {
         try target.setResourceValues(values)
     }
 
-    public func readSeal(_ url: URL, step: StorageStep) throws -> FileSeal {
-        let values = try url.resourceValues(forKeys: [.fileProtectionKey, .isExcludedFromBackupKey])
+    public func readSeal(_ url: URL, step: StorageStep?) throws -> FileSeal {
+        // Foundation caches resource values on a URL after it has been queried.
+        let fresh = URL(fileURLWithPath: url.path)
+        let values = try fresh.resourceValues(forKeys: [.fileProtectionKey, .isExcludedFromBackupKey])
         let protection = values.fileProtection == .complete ? "complete" : (values.fileProtection?.rawValue ?? "missing")
         return FileSeal(protection: protection, excludedFromBackup: values.isExcludedFromBackup ?? false)
     }
 
     public func replace(temporary: URL, active: URL, step: StorageStep) throws {
         if FileManager.default.fileExists(atPath: active.path) {
-            _ = try FileManager.default.replaceItemAt(active, withItemAt: temporary)
+            _ = try FileManager.default.replaceItemAt(active, withItemAt: temporary, options: .usingNewMetadataOnly)
         } else {
             try FileManager.default.moveItem(at: temporary, to: active)
         }
+    }
+
+    public func createDirectory(_ url: URL) throws {
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: false)
+    }
+
+    public func copy(_ source: URL, to destination: URL) throws {
+        try FileManager.default.copyItem(at: source, to: destination)
+    }
+
+    public func move(_ source: URL, to destination: URL) throws {
+        try FileManager.default.moveItem(at: source, to: destination)
     }
 
     public func remove(_ url: URL) throws {
