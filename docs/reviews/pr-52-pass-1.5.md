@@ -9,6 +9,8 @@ Pass 1's verdict is not mergeable, with two open Highs. The PM accepts all 18 of
 - **B11, B12 and B14** stay open. B12 is the PR body, which Cursor updates with the rework; B11 waits on Beni's device run; B14 is a patch for Pass 2.
 - **B16 and B17** are Lows for the ideas list.
 
+**Addendum, 2026-11-18, 14:32 EST.** By Beni's ruling 4, Codex builds the rework instead of Cursor. The addendum at the end of this brief gives the seat and what changes. Where it differs from the text above, the addendum wins.
+
 ## Order from here
 
 1. **Rework,** by Cursor on Grok 4.7 Extra High, because the slice touches sensitive paths. The PM gives the rework prompt in chat. It builds on branch `s91/ios-foundation` from `65f4c26`.
@@ -232,3 +234,28 @@ swiftc -module-cache-path "$C/mc" "$C/u.swift" -o "$C/u" && "$C/u"
 Printed `ext=yaml type=public.yaml dynamic=false plainText=false text=true`, and the same for `yml`. This is a macOS binary, so it says nothing about the app's own declared type `app.keel.yaml`.
 
 </details>
+
+## Addendum, 2026-11-18: Codex builds the rework
+
+Written by the PM after the record above was posted.
+
+**Why.** The Builder seat's pin for a sensitive-path slice is Grok 4.7 at Extra High, and AGENTS.md gives the seat no fallback, so the seat stops and escalates. The owner's xAI plan now offers Grok 4.7 at Medium effort only, with a 256K context window, so the pinned seat cannot run.
+
+**Ruling 4.** Given at 14:32:35 EST in the PM's session: "Let's pivot to use Codex as the builder." Beni gave that reason with it.
+
+**Seat for the rework.**
+- **Model:** Codex on GPT-6.1 Sol at Extra High, Codex's pin on sensitive-path PRs. The seat has no fallback: if that model is unavailable, it stops and escalates.
+- **Where:** a new Codex session and a fresh clone.
+- **What it builds:** the "Rework for Cursor" section above, and nothing beyond it. Only the section's line on commits changes, as the next item gives.
+- **Commits:** authored as `Codex <noreply@openai.com>`, as hard rule 10 gives.
+
+**What changes for independence.** AGENTS.md says "A reviewer builds nothing it will review" and "No vendor gives the only cold read of its own work". So:
+- **The fresh Pass 1** stays Claude Code on Fable 5.2 Extra. It gives the cold read of Codex's rework commits. Pass 2.5's fresh Claude session reads them again, as AGENTS.md gives any Codex-authored commit.
+- **Pass 2** stays Codex, in another session. Its cold read covers Claude's `5ed2b7c` and `65f4c26`, and any fix the fresh Pass 1 commits. It may reproduce or disprove B1 and B2 as Pass 1 found them at `819433e`. It leaves out of its read whether Codex's rework closes B1, B2, B15, B18 and PM1; the fresh Pass 1 and Pass 2.5 judge that. This is the shape AGENTS.md gives a Claude-authored PR, where Codex's Pass 2 covers only the Claude-authored commits after Pass 1.
+- **The authorship record's last row** now reads: Codex's rework commits, still to come, authored by Codex, cold-read by Claude Code at the fresh Pass 1 and again at Pass 2.5.
+- **The PR body** is Cursor's. Codex adds the rework's claims and B12's two steps in a section marked as the rework's, and leaves Cursor's claims as written.
+
+**For the rules PR.** These are Beni's to rule:
+- whether Codex stays the builder after this PR;
+- the fallback AGENTS.md gives the Builder seat;
+- the fallback for Cursor's cold-read seat, which is also pinned at Extra High. Merge logistics, pinned at Medium, is unaffected.
