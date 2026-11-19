@@ -364,6 +364,20 @@ final class SnapshotRecoveryTests: XCTestCase {
         XCTAssertEqual(names(files.state), ["active", "record.json"])
     }
 
+    func testAnOrphanThatCannotBeRemovedDoesNotPreventImport() throws {
+        for orphan in [active, record] {
+            let label = orphan.lastPathComponent
+            let files = LedgerFiling()
+            let store = store(on: files, withPrevious: true)
+            try files.remove(orphan == active ? record : active)
+            files.operationFault = (.remove(orphan), 1)
+
+            XCTAssertEqual(importSecond(store), .stored(exact), label)
+            XCTAssertEqual(files.operationFault?.remaining, 0, label)
+            XCTAssertEqual(relaunch(files.state, label), .new, label)
+        }
+    }
+
     func testASecondImportReplacesTheFirstAndLeavesNoOtherFile() {
         let files = LedgerFiling()
         let store = store(on: files, withPrevious: true)
