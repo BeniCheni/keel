@@ -88,6 +88,11 @@ public struct ScreenModel: Equatable {
         self.active = active
         self.failure = failure
     }
+
+    public mutating func showFailure(_ kind: FailureKind, storedTerms: StoredTerms?) {
+        if storedTerms == nil { active = nil }
+        failure = kind
+    }
 }
 
 public struct ScreenCopy: Equatable, Sendable {

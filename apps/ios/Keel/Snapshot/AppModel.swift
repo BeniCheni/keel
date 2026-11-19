@@ -9,8 +9,7 @@ final class AppModel: ObservableObject {
     private let copy = Copy.screen
     private let store: SnapshotStore
     private var session: CoreSession?
-    private var active: ActiveDocument?
-    private var failure: FailureKind?
+    private var screen = ScreenModel()
 
     init(store: SnapshotStore = SnapshotStore(folder: AppModel.folder(), files: FoundationFiling())) {
         self.store = store
@@ -53,23 +52,23 @@ final class AppModel: ObservableObject {
     private func reloadStored() {
         guard let stored = store.activeTerms(), let text = String(data: stored.bytes, encoding: .utf8) else { return }
         guard let session else {
-            active = ActiveDocument(name: stored.name, importedAt: stored.importedAt)
-            failure = .core
+            screen.active = ActiveDocument(name: stored.name, importedAt: stored.importedAt)
+            screen.failure = .core
             return
         }
         do {
             let loaded = try ScreenDecode.load(try session.screenJSON(text: text, file: stored.name))
             switch loaded {
             case .invalid(let diagnostics):
-                active = ActiveDocument(name: stored.name, importedAt: stored.importedAt)
-                failure = .invalid(diagnostics)
+                screen.active = ActiveDocument(name: stored.name, importedAt: stored.importedAt)
+                screen.failure = .invalid(diagnostics)
             case .valid(let summary, let schedule):
-                active = ActiveDocument(name: stored.name, importedAt: stored.importedAt, summary: summary, schedule: schedule)
-                failure = nil
+                screen.active = ActiveDocument(name: stored.name, importedAt: stored.importedAt, summary: summary, schedule: schedule)
+                screen.failure = nil
             }
         } catch {
-            active = ActiveDocument(name: stored.name, importedAt: stored.importedAt)
-            failure = .core
+            screen.active = ActiveDocument(name: stored.name, importedAt: stored.importedAt)
+            screen.failure = .core
         }
     }
 
@@ -115,8 +114,8 @@ final class AppModel: ObservableObject {
             case .failed:
                 show(.store)
             case .stored(let seal):
-                active = ActiveDocument(name: name, importedAt: importedAt, summary: summary, schedule: schedule)
-                failure = nil
+                screen.active = ActiveDocument(name: name, importedAt: importedAt, summary: summary, schedule: schedule)
+                screen.failure = nil
                 refresh()
                 VerificationLog.record(bytes: bytes, seal: seal)
             }
@@ -125,8 +124,7 @@ final class AppModel: ObservableObject {
 
     private func show(_ kind: FailureKind) {
         let stored = store.activeTerms()
-        if stored == nil { active = nil }
-        failure = kind
+        screen.showFailure(kind, storedTerms: stored)
         refresh()
         if let stored {
             VerificationLog.record(bytes: stored.bytes, seal: stored.seal)
@@ -134,7 +132,7 @@ final class AppModel: ObservableObject {
     }
 
     private func refresh() {
-        rows = ScreenRender.rows(model: ScreenModel(active: active, failure: failure), copy: copy)
+        rows = ScreenRender.rows(model: screen, copy: copy)
     }
 
     private static func folder() -> URL {

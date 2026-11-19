@@ -353,6 +353,42 @@ final class SnapshotRecoveryTests: XCTestCase {
         XCTAssertEqual(store.activeTerms(), previous)
     }
 
+    func testFailedImportClearsRemovedFileRowsAndKeepsRowsForASealedFile() {
+        let files = LedgerFiling()
+        let store = store(on: files, withPrevious: true)
+        let copy = sampleCopy()
+        let document = ActiveDocument(
+            name: "one.yaml",
+            importedAt: "t1",
+            summary: SummaryModel(verified: 1, total: 2, unverified: ["dates.maturity"]),
+            schedule: .listed(entries: [ScheduleEntry(date: "2027-01-01", status: "primary", origin: "listed")])
+        )
+        let documentRoles: Set<String> = ["arrived", "summary", "schedule"]
+        var screen = ScreenModel(active: document)
+        let previousRows = ScreenRender.rows(model: screen, copy: copy)
+        XCTAssertEqual(Set(previousRows.map(\.role)).intersection(documentRoles), documentRoles)
+
+        screen.showFailure(.read, storedTerms: store.activeTerms())
+        let keptRows = ScreenRender.rows(model: screen, copy: copy)
+        XCTAssertEqual(screen.active, document)
+        XCTAssertEqual(keptRows.filter { documentRoles.contains($0.role) }.map(\.text),
+                       previousRows.filter { documentRoles.contains($0.role) }.map(\.text))
+        XCTAssertFalse(keptRows.contains { $0.role == "empty" })
+
+        files.failStep = .writeTemporary
+        files.onFailure = { files.sealReadThrowsFor = self.active.path }
+        XCTAssertEqual(importSecond(store), .failed)
+        let stored = store.activeTerms()
+        XCTAssertNil(stored)
+
+        screen.showFailure(.store, storedTerms: stored)
+        let rows = ScreenRender.rows(model: screen, copy: copy)
+        XCTAssertNil(screen.active)
+        XCTAssertEqual(rows.filter { $0.role == "empty" }.map(\.text), [copy.noFile])
+        XCTAssertEqual(rows.filter { $0.role == "failure" }.map(\.text), [copy.failureStore])
+        XCTAssertFalse(rows.contains { documentRoles.contains($0.role) })
+    }
+
     func testACopyThatLosesItsAttributesFailsTheImportBeforeThePreviousFileIsTouched() {
         let files = LedgerFiling()
         let store = store(on: files, withPrevious: true)
