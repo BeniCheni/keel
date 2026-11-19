@@ -156,11 +156,14 @@ public final class SnapshotStore {
 
     private func keepSealedTerms() -> StoredTerms? {
         guard files.exists(active), files.exists(record),
-              let seal = readPairSeal(active, record),
-              let bytes = try? files.read(active), let recordBytes = try? files.read(record),
+              let seal = readPairSeal(active, record) else {
+            removeActivePair()
+            return nil
+        }
+        // An exactly sealed file can be unreadable while the device is locked.
+        guard let bytes = try? files.read(active), let recordBytes = try? files.read(record),
               let object = try? JSONSerialization.jsonObject(with: recordBytes) as? [String: Any],
               let name = object["name"] as? String, let importedAt = object["importedAt"] as? String else {
-            removeActivePair()
             return nil
         }
         return StoredTerms(bytes: bytes, name: name, importedAt: importedAt, seal: seal)

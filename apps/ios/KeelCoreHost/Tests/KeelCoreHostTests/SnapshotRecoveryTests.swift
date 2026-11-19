@@ -31,6 +31,7 @@ private final class LedgerFiling: SnapshotFiling {
     var beforeChange: ((State) -> Void)?
     var copyKeepsAttributes = true
     var sealReadThrowsFor: String?
+    var readThrowsOnceFor: String?
     private(set) var failed = false
     private(set) var writesAfterFailure = 0
     private(set) var sealReadsAfterFailure: Set<String> = []
@@ -132,6 +133,10 @@ private final class LedgerFiling: SnapshotFiling {
     }
 
     func read(_ url: URL) throws -> Data {
+        if readThrowsOnceFor == url.path {
+            readThrowsOnceFor = nil
+            throw Fault.injected
+        }
         guard let file = state.files[url.path] else { throw Fault.missing }
         return file.data
     }
@@ -312,6 +317,40 @@ final class SnapshotRecoveryTests: XCTestCase {
                 XCTAssertEqual(relaunch(files.state, label), .nothing, label)
             }
         }
+    }
+
+    func testATransientReadFailureLeavesBothSealedFilesForTheNextRead() {
+        for url in [active, record] {
+            let files = LedgerFiling()
+            let store = store(on: files, withPrevious: true)
+            let previous = store.activeTerms()
+            XCTAssertNotNil(previous)
+            let previousIDs = ids(files)
+            files.readThrowsOnceFor = url.path
+
+            XCTAssertNil(store.activeTerms(), url.lastPathComponent)
+            XCTAssertEqual(names(files.state), ["active", "record.json"], url.lastPathComponent)
+            XCTAssertEqual(ids(files), previousIDs, url.lastPathComponent)
+            assertSealed(files.state, url.lastPathComponent)
+            XCTAssertEqual(store.activeTerms(), previous, url.lastPathComponent)
+        }
+    }
+
+    func testAnUndecodableRecordLeavesBothSealedFiles() throws {
+        let files = LedgerFiling()
+        let store = store(on: files, withPrevious: true)
+        let previous = try XCTUnwrap(store.activeTerms())
+        let previousIDs = ids(files)
+        let recordBytes = try files.read(record)
+        files.state.files[record.path]?.data = Data("{".utf8)
+
+        XCTAssertNil(store.activeTerms())
+        XCTAssertEqual(names(files.state), ["active", "record.json"])
+        XCTAssertEqual(ids(files), previousIDs)
+        assertSealed(files.state, "undecodable record")
+
+        files.state.files[record.path]?.data = recordBytes
+        XCTAssertEqual(store.activeTerms(), previous)
     }
 
     func testACopyThatLosesItsAttributesFailsTheImportBeforeThePreviousFileIsTouched() {
