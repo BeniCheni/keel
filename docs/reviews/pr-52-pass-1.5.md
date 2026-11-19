@@ -11,6 +11,8 @@ Pass 1's verdict is not mergeable, with two open Highs. The PM accepts all 18 of
 
 **Addendum, 2026-11-18, 14:32 EST.** By Beni's ruling 4, Codex builds the rework instead of Cursor. The addendum at the end of this brief gives the seat and what changes. Where it differs from the text above, the addendum wins.
 
+**Second and third addenda.** The second, at 14:56 EST, gives ruling 5. The third, at 19:28 EST, records the fresh Pass 1, rulings 6 to 8 and the C findings, and replaces "What Pass 2 does".
+
 ## Order from here
 
 1. **Rework,** by Cursor on Grok 4.7 Extra High, because the slice touches sensitive paths. The PM gives the rework prompt in chat. It builds on branch `s91/ios-foundation` from `65f4c26`.
@@ -273,3 +275,131 @@ Written by the PM after the record above was posted.
 - Nothing else in this brief or the first addendum changes.
 
 **For the rules PR.** Codex's pin in AGENTS.md, GPT-6.1 Sol as of 2026-10-29, is Beni's to update. This ruling covers PR #52 only.
+
+## Third addendum, 2026-11-18: the fresh Pass 1, and rulings 6 to 8
+
+Written by the PM at 19:28 EST, after the fresh Pass 1's comment ([issuecomment-6995420076](https://github.com/BeniCheni/keel/pull/52#issuecomment-6995420076), posted at 19:07:58 EST). It reviewed head `d58945ded5c8767311e9aad0688c2b4ea9363db6`, and its post-fix head is `95730ba191a14296987f5b8825d5964236d60f83`. Where this addendum differs from the text above, it wins.
+
+**Ruling numbers.** This brief numbers Beni's rulings on PR #52 from 1. The S91 spec has its own series, in which ruling 6 keeps the `swift` job required, and that series is unchanged. Where the two could be confused, a record says "this brief's ruling N".
+
+**What the fresh Pass 1 found.** Claude Code on Fable 5.2 at extra-high effort, in a new session, gave Codex's three rework commits their cold read. Its verdict is mergeable after fixes, with no High open.
+- **Closed by the rework:** B1, B2, B12, B15, B18 and PM1. Each closing test fails at `65f4c26`.
+- **Closed by its two commits:** C1 to C3. The commits are `eb974705c888e9a8742dd669b7bc4a71fe3b23bd` and `95730ba191a14296987f5b8825d5964236d60f83`, and they add tests only (`git diff --shortstat d58945d 95730ba` prints 3 files changed, 557 insertions).
+- **Still open:** C4 to C9.
+- **CI:** the `verify` run at `95730ba`, [44425084300](https://github.com/BeniCheni/keel/actions/runs/44425084300), is green on all six checks. Its `swift` job printed `Executed 37 tests, with 5 tests skipped and 0 failures`.
+
+The first per-finding table above stands, except that B1, B2, B12, B15, B18 and PM1 are now closed, as the fresh Pass 1 found.
+
+**Ruling 6.** Given in the rework's Codex session, which the PM cannot see. The PM drafted its terms for Beni's reply:
+- one corrective push while `verify` was red;
+- the seal stays exactly `.complete` and true, and no test accepts another class;
+- before each real-file test, a probe sets `.complete` on a scratch file with Foundation's own call, not through `FoundationFiling`, and reads it back through a fresh `URL`;
+- if that read is not `.complete`, the test calls `XCTSkip` with the macOS version and the class read, so it is skipped, never passed; on a host that honors `.complete`, it runs in full;
+- the memory-double tests are unchanged;
+- the corrective commit is pushed alone, before the guard commit;
+- the PR body names each test that skips on the hosted runner.
+
+Beni confirmed these terms in the fresh Pass 1's session at 19:07:40 EST, with "Confirm". The seat asked at 19:07:01 EST: "PR #52 fresh Pass 1: did you give ruling 6 in the Codex session with these terms?", followed by the terms above.
+
+Under ruling 6, the red intermediate commit stands:
+- `2e4cd93`'s run, 44397677564, failed in `swift` only.
+- `d0ebd5b` was pushed alone, and its run, 44401293178, finished green at 21:32:14Z.
+- `d58945d`'s run was created at 21:32:43Z (`gh run list --branch s91/ios-foundation`).
+
+A squash merge carries only the tip's tree, and the gate reads `verify` at the tip.
+
+**Ruling 7, on C4.** Given at 19:18:57 EST in the PM's session: "Leave it (Recommended)". The PM asked at 19:14:19 EST: "C4 (PR #52, fresh Pass 1): on every read, launch included, the store deletes the kept file and its record when their bytes can't be read or the record doesn't decode, even when both seals read back exactly. Ruling 2 deletes only when a seal reads back inexact. On iOS, complete protection makes reads fail while the phone is locked. When the seal is exact but the read fails, what should the store do?" The option read: "Return no file, so the screen shows the no-file state, and delete nothing. Deletion stays limited to ruling 2's case (an inexact seal) and to a half-written pair. A locked read then loses nothing, and the next import still replaces the file. Codex patches it at Pass 2 with a test, and Pass 2.5 cold-reads the patch."
+
+**Ruling 8, on the fresh Pass 1's comment.** Given at the same time, to a second question asked with the first: "Leave as posted (Recommended)". The question read: "The fresh Pass 1 opened this Mac's power log and screen-lock setting, which the prompt didn't allow, to explain C7. Its public comment on PR #52 now gives your display-off times ([two times, left out here]) and says [what the lock is set to]. GitHub keeps a comment's edit history, so trimming it won't erase that. What should happen to the comment?" The option read: "The PM records the scope breach in the addendum's process notes. The rules PR adds the host's own logs and settings to what seats never open without asking."
+
+**Per finding, the fresh Pass 1's.** The PM accepts all nine and contests none.
+
+| Id | Severity | Disposition | Next |
+| --- | --- | --- | --- |
+| C1 | Medium | Accept, closed by `eb97470`. The store's rules were held almost only by the five real-file tests the hosted runner skips | Codex cold-reads `eb97470` at Pass 2 |
+| C2 | Medium | Accept, closed by `95730ba`. Fifteen mutants of the widened check and the usage check passed every tooling test | Codex cold-reads `95730ba` at Pass 2 |
+| C3 | Medium | Accept, closed by `95730ba`. A deleted assertion: the rework stopped running the isolated controls against the committed allowlist | Codex cold-reads `95730ba` at Pass 2 |
+| C4 | Medium | Accept. Under ruling 7, the store removes the active file and its record only when one of the pair is missing, or when a seal does not read back exact. A seal read that throws counts as inexact, as ruling 2 gives. When both seals are exact and a read or the record's decoding fails, `activeTerms()` returns nothing and removes nothing | Codex patches it at Pass 2 |
+| C5 | Medium | Accept. The decision after a failure, between the no-file state and the kept file, moves into `KeelCoreHost`, where a test fails if the screen keeps a removed file's name, time, summary or schedule | Codex patches it at Pass 2 |
+| C6 | Medium | Accept, reproduced by the PM (commands below). The fix compares real paths in the six files of this PR that carry the guard. `tools/test-tooling.mjs` carries it on `main`, outside this PR | Codex patches the six at Pass 2; `tools/test-tooling.mjs` goes to the known gaps |
+| C7 | Low | Accept. The rework section's sentence "On a Mac where Foundation honors `.complete`, all the real-file assertions run" gains "and is unlocked" | Codex edits its own section of the PR body at Pass 2 |
+| C8 | Medium | Accept. A surviving mutant: copying the previous files straight into `rollback`, without `staging`, passes every test. The fix is a filing double that can stop inside a copy, and a test that kills that mutant | Codex patches it at Pass 2 |
+| C9 | Low | Accept, no change. `.usingNewMetadataOnly` has no test, and the fresh Pass 1 observed no difference to test for on macOS 27.2.1 | Known gaps |
+
+**Authorship record, extended** (`git log --reverse --format='%h %an' origin/main..95730ba`).
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `819433e` Add the iOS foundation and the guards required before an app merges | Cursor | Claude Code, Pass 1 (done) |
+| `5ed2b7c` Pin each iOS guard rule with a control that fails by that rule alone | Claude | Codex, Pass 2 |
+| `65f4c26` Test the screen from the core's own JSON, the exact seal, and parity by bytes | Claude | Codex, Pass 2 |
+| `2e4cd93` Preserve sealed iOS imports through failures and relaunches | Codex | Claude Code, the fresh Pass 1 (done), and again at Pass 2.5 |
+| `d0ebd5b` Report unsupported macOS file protection as a test skip | Codex | Claude Code, the fresh Pass 1 (done), and again at Pass 2.5 |
+| `d58945d` Require exact approvals for iOS binary imports | Codex | Claude Code, the fresh Pass 1 (done), and again at Pass 2.5 |
+| `eb97470` Hold the store's recovery rules with tests that need no real file | Claude | Codex, Pass 2 |
+| `95730ba` Test the binary check's parsing and both commands on canned tool output | Claude | Codex, Pass 2 |
+| Pass 2's patches, still to come | Codex | Claude, Pass 2.5 |
+
+Two commits have no CI run of their own, because each was pushed together with the commit after it: `5ed2b7c` and `eb97470`. `gh run list --branch s91/ios-foundation` lists runs at `819433e`, `65f4c26`, `2e4cd93`, `d0ebd5b`, `d58945d` and `95730ba` only. Pass 2 runs `pnpm verify` and `swift test` at each of the two.
+
+**What Pass 2 does now.** This replaces the list in "What Pass 2 does" above. Pass 2 is Codex on GPT-6.2 Sol at Extra High, by ruling 5, in a session other than the rework's.
+1. **Cold reads:** `5ed2b7c` and `65f4c26` (`git diff 819433e 65f4c26`), and `eb97470` and `95730ba` (`git diff d58945d 95730ba`). For C1 to C3, check that each new test fails for the mutants it names and passes at the head. Whether Codex's rework needed those tests is not Codex's to judge.
+2. **Reproduce or disprove** each row of the first per-finding table as Pass 1 found it at `819433e`, and the PM's B1, B2 and B11 checks and PM1 as the PM found them at `65f4c26`. Contest any disposition you disagree with; the PM takes a contest to Beni. Leave out whether Codex's rework closes B1, B2, B15, B18, PM1 or C4 to C9, as the first addendum gives.
+3. **Patches.** Each comes with a test that fails without it, is committed as Codex, and is pushed only after `verify` and `swift` are green on the last push:
+   - B14, reproduced first;
+   - C4 under ruling 7, then C5, C6 in the six files of this PR, and C8, each shown failing first at `95730ba`;
+   - C7, as one sentence in the rework's section of the PR body, with the posted body diffed against the saved file;
+   - B11, only if Beni's device run reproduces it.
+
+   If a patch cannot be made as given, Pass 2 stops and asks Beni.
+4. **Its own read** of the whole PR at the head. A finding on a Codex commit is welcome, but it is not that commit's cold read.
+5. **The owner's private-list check,** as above. It now also covers the fresh Pass 1's comment and this addendum.
+6. **N/A checks,** as above.
+
+**What Pass 2.5 does.** A fresh Claude session on Fable 5.2 at High, not the PM:
+- the cold read of every Codex commit: the rework's three, read a second time, and Pass 2's patches;
+- a re-run of every number at the head, with the results of Beni's device run;
+- the merge gate, in shadow mode.
+
+**Beni's device run.** Step 1, the picker, can run at any head, and it settles B11 while Pass 2 can still patch it. The full run of criterion 12 waits for Pass 2's patches, because C4 and C5 change the code it exercises. It runs at the head Pass 2.5 reads.
+
+**Known gaps, added.** None of these blocks this PR.
+- **`tools/test-tooling.mjs`** carries C6's entry guard on `main` (`git show origin/main:tools/test-tooling.mjs | grep -c 'import.meta.url === pathToFileURL(process.argv\[1\]).href'` prints 1). Started through a symbolic link, it would exit 0 without testing. This is for the next tooling slice.
+- **C9:** `.usingNewMetadataOnly` has no test.
+- **Two notes from the fresh Pass 1's "Deliberately not done":**
+  - A failed recovery removes the pair although a retry would restore it. This is a design note, inside ruling 2.
+  - The framework rule reads only the `.framework/` rows of `otool -L`, so a linked dylib that is not a framework is gated only by its symbols. This is reasoned, not run, and Pass 2 may test it in its own read.
+- **For the rules PR:**
+  - a per-PR prefix for rulings, so that a brief's ruling 6 and a spec's ruling 6 cannot be confused;
+  - that a seat never opens the host's own logs or settings without asking, which the fresh Pass 1 did (process notes);
+  - whether a review seat pushes its fix commits one at a time, so that each gets its own CI run.
+
+**Process notes.**
+- The fresh Pass 1 ran in a session started from a folder outside keel. It says it ran no command against that folder.
+- To explain C7, it opened this Mac's power log, filtered to display events, and its screen-lock setting. Its prompt allows neither, and says to stop and ask before using a source the prompt does not name. The seat disclosed the step in its comment, and under ruling 8 the comment stays as posted.
+- It ran `gh`, `git fetch`, `git push`, `pnpm`, `vitest`, `swift` and `xcodebuild` with the sandbox off, and said so.
+- Its seat record validates against `seat-record-1.1.json` (the PM's ajv run printed `valid: true`). elenchus records Pass 1 at `95730ba`. Its only failures are the route on the PM's effort at passes 0 and 1.5: the PM's sessions observe xhigh against the Planner's High pin. This addendum's record repeats that failure.
+- Codex's report that `d58945d` replays a local commit, `e643ace`, byte for byte stays not verifiable.
+
+**The PM's commands.** Run on 2026-11-18 in the scratch clone at `95730ba191a14296987f5b8825d5964236d60f83` (`git rev-parse HEAD`).
+
+C6, from the clone's root. `S` is the scratch folder, under `/private/tmp`, which `/tmp` links to (`ls -ld /tmp` prints `/tmp -> private/tmp`):
+
+```sh
+node tools/ios/allowlist-usage.mjs one                          # exit 2, 61 bytes of output
+node "${S#/private}/keel52/tools/ios/allowlist-usage.mjs" one   # exit 0, 0 bytes
+node "$S/keel52/tools/ios/allowlist-usage.mjs" one              # exit 2, 61 bytes
+git grep -l 'import.meta.url === pathToFileURL(process.argv\[1\]).href'   # 7 files
+```
+
+The seven files are `tools/ios/allowlist-usage.mjs`, added in `d58945d`; five more under `tools/ios/`, added in `819433e`; and `tools/test-tooling.mjs`, which is on `main` and which the PR does not change. Checked with `git cat-file -e origin/main:<path>`, `git log --diff-filter=A origin/main..HEAD -- <path>` and `git diff --name-only origin/main...HEAD -- tools/test-tooling.mjs`.
+
+C4, read at `95730ba`:
+- `keepSealedTerms` (`SnapshotStore.swift:157-167`) removes the pair in one `guard`, which covers both files' presence, both seals, both reads and the record's decoding.
+- At `65f4c26`, `activeTerms()` returned `nil` and removed nothing when a read or the decoding failed (`git show 65f4c26:apps/ios/KeelCoreHost/Sources/KeelCoreHost/SnapshotStore.swift`, lines 56 to 63).
+
+Authorship and runs: `git log --reverse --format='%h %an <%ae> %s' origin/main..95730ba` and `gh run list --repo BeniCheni/keel --branch s91/ios-foundation --json databaseId,headSha,conclusion,createdAt,updatedAt`. The `swift` job's totals: `gh run view 44425084300 --job 135227722721 --log | grep 'Executed'`.
+
+Ruling 6's confirmation: the fresh Pass 1's transcript, read for its questions to Beni and his answers only, with `jq` over its `AskUserQuestion` calls and their results.
+
+Record checks: ajv's 2020 validator over the comment's JSON block against `seat-record-1.1.json`, then `elenchus status` and `elenchus check` for `BeniCheni/keel#52`.
