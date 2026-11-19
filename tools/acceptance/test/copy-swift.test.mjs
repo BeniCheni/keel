@@ -50,6 +50,18 @@ test("copy lint checks nested Swift literals inside interpolations", () => {
   }
 }, NESTED_RUN_TIMEOUT_MS);
 
+test.each([
+  ["an escaped quote", "let x = \"say \\\"should\\\" now\"", 1],
+  ["nested block comments", "/* /* */ \" */ let x = \"should\"", 1],
+  ["a multiline string delimiter", "let x = \"\"\"\nsay \"should\" now\n\"\"\"", 1],
+  ["nested interpolation parentheses", "func f(_ a: Int) -> Int { a }\nfunc g(_ s: String) -> Int { s.count }\nlet a = 1\nlet x = \"\\(f(a) + g(\"should\"))\"", 4],
+])("copy lint detects a banned word with %s", (_label, source, line) => {
+  const file = "apps/ios/Keel/Copy.swift";
+  const result = copy(rootWith({ [file]: source + "\n" }));
+  expect(result.status).toBe(1);
+  expect(result.stdout).toBe(["copy", file, line].join("\t") + "\n");
+}, NESTED_RUN_TIMEOUT_MS);
+
 test("the repo copy lint passes", () => {
   expect(copy(repoRoot).status).toBe(0);
 }, NESTED_RUN_TIMEOUT_MS);
