@@ -11,7 +11,7 @@ Pass 1's verdict is not mergeable, with two open Highs. The PM accepts all 18 of
 
 **Addendum, 2026-11-18, 14:32 EST.** By Beni's ruling 4, Codex builds the rework instead of Cursor. The addendum at the end of this brief gives the seat and what changes. Where it differs from the text above, the addendum wins.
 
-**Second and third addenda.** The second, at 14:56 EST, gives ruling 5. The third, at 19:28 EST, records the fresh Pass 1, rulings 6 to 8 and the C findings, and replaces "What Pass 2 does".
+**Second, third and fourth addenda.** The second, at 14:56 EST, gives ruling 5. The third, at 19:28 EST, records the fresh Pass 1, rulings 6 to 8 and the C findings, and replaces "What Pass 2 does". The fourth, on 2026-11-19, records Pass 2, rulings 9 to 12 and D3's fix, and replaces "What Pass 2.5 does".
 
 ## Order from here
 
@@ -403,3 +403,157 @@ Authorship and runs: `git log --reverse --format='%h %an <%ae> %s' origin/main..
 Ruling 6's confirmation: the fresh Pass 1's transcript, read for its questions to Beni and his answers only, with `jq` over its `AskUserQuestion` calls and their results.
 
 Record checks: ajv's 2020 validator over the comment's JSON block against `seat-record-1.1.json`, then `elenchus status` and `elenchus check` for `BeniCheni/keel#52`.
+
+## Fourth addendum, 2026-11-19: Pass 2, and rulings 9 to 12
+
+Written by the PM at 11:55 EST, after Pass 2's comment ([issuecomment-7014825709](https://github.com/BeniCheni/keel/pull/52#issuecomment-7014825709), posted at 11:13:32 EST). It reviewed head `95730ba191a14296987f5b8825d5964236d60f83`, and its post-fix head is `80dc17732a7387c23bb9c7e5cbbacb39fc8e97ab`. Where this addendum differs from the text above, it wins.
+
+**What Pass 2 found.** Codex on GPT-6.2 Sol at Extra High, by ruling 5, in a session other than the rework's. Its verdict is not mergeable, with D3 open.
+- **Adjudicated:** it accepts all 34 earlier findings and contests none. For B1, B2, B15, B18, PM1 and C4 to C9 it reproduced each finding at the historical heads and left closure to the fresh Pass 1 and Pass 2.5, as the first addendum gives.
+- **Cold reads:** Claude's `5ed2b7c`, `65f4c26`, `eb97470` and `95730ba`, with no finding on any of them.
+- **Patches:** five Codex commits, each pushed alone after the previous push's `verify` and `swift` were green, and C7's two-line edit of the PR body, diffed against the saved file.
+- **New findings:** D1, D2 and D4 (Medium) and D3 (High).
+- **CI at `80dc177`:** run [44562739808](https://github.com/BeniCheni/keel/actions/runs/44562739808) is green on all six checks. Its `swift` job printed `Executed 41 tests, with 5 tests skipped and 0 failures`.
+
+| Commit | Finding | Its run |
+| --- | --- | --- |
+| `918f678` Check Swift strings inside copy interpolations | B14 | 44559454756 |
+| `1e02aab` Keep exactly sealed imports through read failures | C4 | 44560294926 |
+| `fec1793` Make failed import screen state testable | C5 | 44560980251 |
+| `0e59b2b` Run the iOS guards through symbolic links | C6 | 44561761067 |
+| `80dc177` Test interruptions during rollback copies | C8 | 44562739808 |
+
+C6's commit changes the six files the third addendum names and adds a shared helper, `tools/ios/entry-point.mjs`, which they now import.
+
+**Rulings 9 and 10.** Both were given in Pass 2's Codex session, which the PM cannot see. Pass 2's comment records both under "Human-review resolutions". Beni answered "Yes" to each of Codex's questions, as the PM advised.
+- **Ruling 9.** Codex asked: "May the PM record Pass 2's out-of-scope findings in a separate docs PR?" The PM appends the ideas rows in a separate docs PR, and Pass 2 lists each one under "Deliberately not done".
+- **Ruling 10.** Codex asked: "May I record the replay claim as unverified and continue Pass 2?" Every claim this brief already records as not verifiable or device-only is recorded as not verified, and the pass continues. That covers the replay of `e643ace`, the device and simulator runs (B11, criterion 12, and how B2 and C4 behave on iOS), and ruling 6 as given in the rework session.
+
+**Ruling 11, on D3.** Given at 11:51:02 EST in the PM's session: "Keep via rollback (Recommended)". The PM asked at 11:40:37 EST: "PR #52's D3 (open High): when an earlier import is exactly sealed on disk but can't be read at the moment a new import starts (a transient read error or an undecodable record), what should the import do?" The option read: "Treat the sealed pair as the previous import and copy it into the rollback before anything is replaced. If even the copy can't read it (a locked phone), the import fails and the earlier pair stays put. This closes both D3 cases: the deletion and the mixed pair. A sealed record that won't decode can still be replaced by a good import."
+
+**Ruling 12, on D1, D2 and D4.** Given at the same time, to a second question asked with the first: "Carry them (Recommended)". The question read: "PR #52's three open Mediums: D1 (an inert force-linked dylib passes the binary check), D2 (a block comment between `import` and the module name passes the source check) and D4 (a raw Swift string hides a banned word from copy lint). Should they be patched on this PR or carried?" The option read: "Only D3 gets fixed on PR #52. D1, D2 and D4 go on the ideas list for the next tooling slice, each with its own control. D1 is already one of the brief's known gaps (dylibs)."
+
+**D3, and PM2.** `importFile` (`SnapshotStore.swift:73`) decides whether a previous import exists from `activeTerms() != nil`. Since `1e02aab`, `activeTerms()` returns nothing for an exactly sealed pair that fails to read or to decode, and removes nothing, as ruling 7 gives. The import then treats that pair as absent.
+- **D3, as Pass 2 found it.** The import skips `preservePrevious`, and on any failure it takes the first-import branch (lines 100 to 101), which removes both files. The PM's probe (commands below) widens Pass 2's single case to three faults: a read of the active file fails once, a read of the record fails once, or the record does not decode. For each fault and each of the 12 storage steps, the failed import leaves no file at all: 36 of 36 cases.
+- **PM2, found by the PM while reproducing D3.** A *successful* import after a failed opening read has no rollback. The probe relaunches at each of the import's 17 points, before every change and after the last. Under either transient fault, those relaunches show the previous import at 8 points, then the new file's bytes under the previous import's record (its name and import time) at 3, nothing at 2, and the new import at 4. Showing a mixed pair as one import is a confident falsehood about where the terms came from, so PM2 is High. It folds into D3, as PM1 folded into B2.
+- **Where they came from.** The PM ran the same probes with `SnapshotStore.swift` as it was at `918f678`, before C4's patch.
+  - No mixed pair appears. The opening read's failure removes the pair, which is C4 itself, and the 19 relaunch points show the previous import at 5, nothing at 10 and the new import at 4.
+  - The failed imports also leave no file, in 36 of 36 cases, because the pair is already gone.
+  - With no fault, both stores show the previous import at 18 of 22 points and then the new one at 4.
+
+  So `1e02aab` narrowed C4's deletion to a failed import, and it introduced PM2.
+
+**D3's fix.** Codex writes it in Pass 2's session as one commit, under ruling 11.
+- After the opening cleanup, a pair still on disk is the previous import, whether or not its bytes read and its record decodes. By then any pair left has both halves with exact seals, because ruling 7 removes the rest. The import preserves that pair through `staging` and `rollback` before anything is replaced. If preserving it fails, the import fails and the pair stays as it was.
+- After a failure, only a first import removes what it wrote. A first import is one that started with no pair on disk.
+- Each of these tests is shown failing at `80dc177` first:
+  1. For each of the three faults and each of the 12 storage steps, the failed import leaves both original files with their ids and seals. After a transient fault, the next `activeTerms()` returns the previous import.
+  2. For each transient fault, every relaunch point of a successful import shows the previous import or the new one, never a mixed pair and never nothing. No point after the first new one goes back.
+  3. After an undecodable sealed record, a good import is shown as the new import.
+  4. When copying the earlier pair into `staging` fails, the import fails and the pair stays.
+- The commit is pushed alone, after `80dc177`'s run. Then Pass 2 posts a second short comment with its seat record: input `80dc177`, output the fix's head, D3 and PM2 fixed, and D1, D2 and D4 open and carried under ruling 12.
+- If the fix cannot be made as given, Codex stops and asks Beni.
+
+**Per finding, Pass 2's.** The PM accepts all four and contests none. The PM ran D3's case; D1, D2 and D4 are accepted on Pass 2's reproduction, which the PM did not re-run.
+
+| Id | Severity | Disposition | Next |
+| --- | --- | --- | --- |
+| D1 | Medium | Accept. The binary check reads linked frameworks only, so an inert force-linked dylib with no undefined symbol passes. This is the third addendum's dylib note, now run | Carried by ruling 12: an ideas row |
+| D2 | Medium | Accept. The source check misses `import /* … */ PDFKit`, which Xcode typechecks | Carried by ruling 12: an ideas row |
+| D3 | High | Accept, reproduced and widened by the PM. PM2 folds in | Codex fixes it in Pass 2's session under ruling 11; Pass 2.5 cold-reads the fix |
+| D4 | Medium | Accept. Copy lint ends a raw Swift string at its first embedded quote | Carried by ruling 12: an ideas row |
+
+**Authorship record, extended** (`git log --reverse --format='%h %an' 95730ba..80dc177`).
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `918f678` | Codex | Claude, Pass 2.5 |
+| `1e02aab` | Codex | Claude, Pass 2.5, which also checks PM2 on it |
+| `fec1793` | Codex | Claude, Pass 2.5 |
+| `0e59b2b` | Codex | Claude, Pass 2.5 |
+| `80dc177` | Codex | Claude, Pass 2.5 |
+| D3's fix, still to come | Codex | Claude, Pass 2.5 |
+
+**What Pass 2.5 does now.** This replaces the list in the third addendum. Pass 2.5 is a fresh Claude session on Fable 5.2 at High, not the PM. It does three things:
+- the cold read of every Codex commit: the rework's three, read a second time; Pass 2's five, where the read of `1e02aab` includes PM2; and D3's fix;
+- a re-run of every number at the head, with the results of Beni's device run;
+- the merge gate, in shadow mode. D1, D2 and D4 stay open as Mediums carried by ruling 12, and B11 waits on the device run.
+
+**Beni's device run.** Step 1, the picker, can still run at any head. The full run of criterion 12 now waits for D3's fix, because the fix changes the store it exercises. It runs at the head Pass 2.5 reads.
+
+**Known gaps, added.** These are for the PM's ideas rows under ruling 9, together with B16, B17, C9 and `tools/test-tooling.mjs`.
+- D1, D2 and D4, as in the table above.
+- **For the rules PR:** a seat names the private-list check it ran, not where the list is kept. Pass 2's comment gives the list's location on this Mac, though nothing it holds.
+
+**Process notes.**
+- Codex's first scratch clone was cleared between turns, with the five patch commits unpushed (local head `ce302ad`). Codex rebuilt them in a new fresh clone. The hashes above are the published ones. The PM's scratch folder was cleared the same night, and the PM rebuilt its elenchus config from its notes.
+- The historical rerun of B2 and PM1 first failed with `NSCocoaErrorDomain` 513 while the Mac was locked, which is C7. Beni unlocked the Mac, and the rerun completed at both historical heads. Pass 2 says it opened neither power logs nor lock settings.
+- Pass 2 ran GitHub and git network calls, `pnpm`, Xcode and Swift with the sandbox off, and said so. The PM ran `gh` and `swift test` with the sandbox off, because SwiftPM cannot compile its manifest inside the PM's command sandbox.
+- Pass 2's seat record validates against `seat-record-1.1.json` (the PM's ajv run printed `valid: true`). elenchus records Pass 2 at `80dc177`, with next 2.5. Its only failures are the known route failures on the PM's effort at passes 0 and 1.5, which this addendum's record repeats.
+
+**The PM's commands.** These ran on 2026-11-19 in a fresh scratch clone (`gh repo clone BeniCheni/keel`, then `git fetch origin pull/52/head:pr52`) at `80dc17732a7387c23bb9c7e5cbbacb39fc8e97ab`, with `KEEL_DATA_DIR` set to an empty `mktemp -d` folder.
+
+The probe is two tests appended inside `SnapshotRecoveryTests`, and it is never committed:
+
+```swift
+func testPMProbeD3() throws {
+    for fault in ["read active", "read record", "undecodable record"] {
+        for step in StorageStep.allCases {
+            let files = LedgerFiling()
+            let store = store(on: files, withPrevious: true)
+            let previous = try XCTUnwrap(store.activeTerms())
+            let previousIDs = ids(files)
+            let recordBytes = try files.read(record)
+            switch fault {
+            case "read active": files.readThrowsOnceFor = active.path
+            case "read record": files.readThrowsOnceFor = record.path
+            default: files.state.files[record.path]?.data = Data("{".utf8)
+            }
+            files.failStep = step
+            let outcome = importSecond(store)
+            files.failStep = nil
+            files.readThrowsOnceFor = nil
+            let left = names(files.state)
+            let kept = left == ["active", "record.json"] && ids(files) == previousIDs
+            if fault == "undecodable record", kept { files.state.files[record.path]?.data = recordBytes }
+            let shown = store.activeTerms()
+            print("PMPROBE \(fault) | \(step.rawValue) | outcome=\(outcome == .failed ? "failed" : "stored") | files=\(left.joined(separator: ",")) | keptOriginal=\(kept) | showsPrevious=\(shown == previous)")
+        }
+    }
+}
+
+func testPMProbeD3Stops() throws {
+    for fault in ["none", "read active", "read record"] {
+        let files = LedgerFiling()
+        let store = store(on: files, withPrevious: true)
+        var states: [LedgerFiling.State] = []
+        files.beforeChange = { states.append($0) }
+        if fault == "read active" { files.readThrowsOnceFor = active.path }
+        if fault == "read record" { files.readThrowsOnceFor = record.path }
+        let outcome = importSecond(store)
+        files.beforeChange = nil
+        states.append(files.state)
+        var shown: [String] = []
+        for state in states {
+            let probe = LedgerFiling(state)
+            guard let terms = SnapshotStore(folder: folder, files: probe).activeTerms() else { shown.append("nothing"); continue }
+            let bytesNew = terms.bytes == second
+            let recordNew = terms.name == "two.yaml"
+            shown.append(bytesNew == recordNew ? (bytesNew ? "new" : "previous") : (bytesNew ? "MIXED(new bytes, old record)" : "MIXED(old bytes, new record)"))
+        }
+        print("PMPROBE2 \(fault) | outcome=\(outcome == .failed ? "failed" : "stored") | stops=\(states.count) | \(shown.joined(separator: " > "))")
+    }
+}
+```
+
+```sh
+swift test --package-path apps/ios/KeelCoreHost --filter 'testPMProbeD3$'     # 36 rows, keptOriginal=false in all 36
+swift test --package-path apps/ios/KeelCoreHost --filter testPMProbeD3Stops   # the sequences above
+f=apps/ios/KeelCoreHost/Sources/KeelCoreHost/SnapshotStore.swift
+git show 918f678:"$f" > "$f"                                                  # the store before C4's patch; then both commands again
+git checkout -- .
+```
+
+Authorship and runs: `git log --format='%h %an <%ae> %s' 95730ba..80dc177`, `git show --stat --format= <commit>` and `gh run list --repo BeniCheni/keel --commit <sha>`. The `swift` totals: `gh run view 44562739808 --repo BeniCheni/keel --job 135696143883 --log | grep 'Executed'`.
+
+The rulings' times come from the timestamps of the PM's `AskUserQuestion` call and its result, in this session's own transcript. The record checks are as in the third addendum.
