@@ -70,7 +70,9 @@ public final class SnapshotStore {
     }
 
     public func importFile(bytes: Data, name: String, importedAt: String) -> StoreOutcome {
-        let hadPrevious = activeTerms() != nil
+        _ = activeTerms()
+        // A sealed pair can survive the opening read even if its contents are unavailable.
+        let hadPrevious = files.exists(active) && files.exists(record)
         do {
             try files.write(bytes, to: incoming, step: .writeTemporary)
             try files.protect(incoming, step: .protectTemporary)

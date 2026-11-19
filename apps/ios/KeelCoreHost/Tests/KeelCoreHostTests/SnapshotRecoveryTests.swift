@@ -163,6 +163,12 @@ final class SnapshotRecoveryTests: XCTestCase {
         case nothing
     }
 
+    private enum OpeningFault: String, CaseIterable {
+        case activeRead
+        case recordRead
+        case undecodableRecord
+    }
+
     private let folder = URL(fileURLWithPath: "/synthetic/keel", isDirectory: true)
     private let exact = FileSeal(protection: "complete", excludedFromBackup: true)
     private let first = Data("first".utf8)
@@ -184,6 +190,18 @@ final class SnapshotRecoveryTests: XCTestCase {
 
     private func names(_ state: LedgerFiling.State) -> [String] {
         (Array(state.files.keys) + Array(state.folders)).map { String($0.dropFirst(folder.path.count + 1)) }.sorted()
+    }
+
+    private func inject(_ fault: OpeningFault, into files: LedgerFiling) {
+        switch fault {
+        case .activeRead: files.readThrowsOnceFor = active.path
+        case .recordRead: files.readThrowsOnceFor = record.path
+        case .undecodableRecord: files.state.files[record.path]?.data = Data("{".utf8)
+        }
+    }
+
+    private func pairBytes(_ files: LedgerFiling) -> [Data?] {
+        [active, record].map { files.state.files[$0.path]?.data }
     }
 
     private func ids(_ files: LedgerFiling) -> [Int?] {
@@ -214,9 +232,12 @@ final class SnapshotRecoveryTests: XCTestCase {
     }
 
     /// Imports the second file and keeps the state before each change, then the state at the end.
-    private func stops(withPrevious: Bool, failing step: StorageStep?) -> (states: [LedgerFiling.State], outcome: StoreOutcome) {
+    private func stops(
+        withPrevious: Bool, failing step: StorageStep?, openingFault: OpeningFault? = nil
+    ) -> (states: [LedgerFiling.State], outcome: StoreOutcome) {
         let files = LedgerFiling()
         let store = store(on: files, withPrevious: withPrevious)
+        if let openingFault { inject(openingFault, into: files) }
         var states: [LedgerFiling.State] = []
         files.beforeChange = { states.append($0) }
         files.failStep = step
@@ -359,6 +380,92 @@ final class SnapshotRecoveryTests: XCTestCase {
 
         files.state.files[record.path]?.data = recordBytes
         XCTAssertEqual(store.activeTerms(), previous)
+    }
+
+    func testFailedImportPreservesThePairAfterEachOpeningFault() throws {
+        for fault in OpeningFault.allCases {
+            for step in StorageStep.allCases {
+                let label = "\(fault.rawValue) \(step.rawValue)"
+                let files = LedgerFiling()
+                let store = store(on: files, withPrevious: true)
+                let previous = try XCTUnwrap(store.activeTerms())
+                let originalIDs = ids(files)
+                inject(fault, into: files)
+                let originalBytes = pairBytes(files)
+                files.failStep = step
+
+                XCTAssertEqual(importSecond(store), .failed, label)
+                XCTAssertTrue(files.failed, label)
+                XCTAssertEqual(files.writesAfterFailure, 0, label)
+                XCTAssertEqual(names(files.state), ["active", "record.json"], label)
+                XCTAssertEqual(pairBytes(files), originalBytes, label)
+                assertSealed(files.state, label)
+                switch step {
+                case .writeTemporary, .protectTemporary, .excludeTemporary, .readTemporary, .replaceActive:
+                    XCTAssertEqual(ids(files), originalIDs, label)
+                default:
+                    for (restored, original) in zip(ids(files), originalIDs) {
+                        XCTAssertNotNil(restored, label)
+                        XCTAssertNotEqual(restored, original, label)
+                    }
+                }
+                if fault == .undecodableRecord {
+                    XCTAssertNil(store.activeTerms(), label)
+                    XCTAssertEqual(pairBytes(files), originalBytes, label)
+                } else {
+                    XCTAssertEqual(store.activeTerms(), previous, label)
+                }
+            }
+        }
+    }
+
+    func testRelaunchAfterEitherOpeningReadFailureShowsOneWholeImport() {
+        for fault in [OpeningFault.activeRead, .recordRead] {
+            let run = stops(withPrevious: true, failing: nil, openingFault: fault)
+            XCTAssertEqual(run.outcome, .stored(exact), fault.rawValue)
+            let shown = run.states.enumerated().map { relaunch($1, "\(fault.rawValue) stop \($0)") }
+            XCTAssertFalse(shown.contains(nil), fault.rawValue)
+            XCTAssertFalse(shown.contains(.nothing), fault.rawValue)
+            XCTAssertEqual(shown.first, .previous, fault.rawValue)
+            XCTAssertEqual(shown.last, .new, fault.rawValue)
+            let firstNew = shown.firstIndex(of: .new) ?? shown.endIndex
+            XCTAssertTrue(shown[firstNew...].allSatisfy { $0 == .new }, fault.rawValue)
+        }
+    }
+
+    func testAValidImportReplacesAnUndecodableSealedRecordWithRollback() throws {
+        let run = stops(withPrevious: true, failing: nil, openingFault: .undecodableRecord)
+        XCTAssertEqual(run.outcome, .stored(exact))
+        let replaced = try XCTUnwrap(run.states.first { $0.files[active.path]?.data == second })
+        let rollback = folder.appendingPathComponent("rollback", isDirectory: true)
+        for (url, bytes) in [(active, first), (record, Data("{".utf8))] {
+            let saved = rollback.appendingPathComponent(url.lastPathComponent)
+            XCTAssertEqual(replaced.files[saved.path]?.data, bytes, url.lastPathComponent)
+            XCTAssertEqual(replaced.files[saved.path]?.protected, true, url.lastPathComponent)
+            XCTAssertEqual(replaced.files[saved.path]?.excluded, true, url.lastPathComponent)
+        }
+        XCTAssertEqual(relaunch(try XCTUnwrap(run.states.last), "after replacing undecodable record"), .new)
+    }
+
+    func testStagingCopyFailureAfterAnOpeningReadFailsLeavesTheOriginalPair() throws {
+        for url in [active, record] {
+            let label = url.lastPathComponent
+            let files = LedgerFiling()
+            let store = store(on: files, withPrevious: true)
+            let previous = try XCTUnwrap(store.activeTerms())
+            let originalIDs = ids(files)
+            let originalBytes = pairBytes(files)
+            files.readThrowsOnceFor = url.path
+            files.stopOnCopyOf = url.path
+
+            XCTAssertEqual(importSecond(store), .failed, label)
+            XCTAssertNotNil(files.interruptedCopy, label)
+            XCTAssertEqual(names(files.state), ["active", "record.json"], label)
+            XCTAssertEqual(ids(files), originalIDs, label)
+            XCTAssertEqual(pairBytes(files), originalBytes, label)
+            assertSealed(files.state, label)
+            XCTAssertEqual(store.activeTerms(), previous, label)
+        }
     }
 
     func testFailedImportClearsRemovedFileRowsAndKeepsRowsForASealedFile() {
