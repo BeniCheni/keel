@@ -20,44 +20,74 @@ function lineAt(text, index) {
   return line;
 }
 
+function swiftCommentEnd(text, start) {
+  if (text.startsWith("//", start)) {
+    const end = text.indexOf("\n", start + 2);
+    return end === -1 ? text.length : end + 1;
+  }
+  if (!text.startsWith("/*", start)) return start;
+
+  let depth = 1;
+  let i = start + 2;
+  while (i < text.length && depth > 0) {
+    if (text.startsWith("/*", i)) {
+      depth += 1;
+      i += 2;
+    } else if (text.startsWith("*/", i)) {
+      depth -= 1;
+      i += 2;
+    } else {
+      i += 1;
+    }
+  }
+  return i;
+}
+
 function swiftLiterals(text) {
   const found = [];
+
+  function interpolationEnd(start) {
+    let depth = 1;
+    let i = start;
+    while (i < text.length && depth > 0) {
+      const commentEnd = swiftCommentEnd(text, i);
+      if (commentEnd !== i) {
+        i = commentEnd;
+      } else if (text[i] === '"') {
+        i = literalEnd(i);
+      } else {
+        if (text[i] === "(") depth += 1;
+        if (text[i] === ")") depth -= 1;
+        i += 1;
+      }
+    }
+    return i;
+  }
+
+  function literalEnd(index) {
+    const quote = text.startsWith('"""', index) ? '"""' : '"';
+    let start = index + quote.length;
+    let i = start;
+    let body = "";
+    while (i < text.length && !text.startsWith(quote, i)) {
+      if (text.startsWith("\\(", i)) {
+        body += text.slice(start, i) + " ";
+        i = interpolationEnd(i + 2);
+        start = i;
+      } else {
+        i += text[i] === "\\" ? 2 : 1;
+      }
+    }
+    found.push({ text: body + text.slice(start, i), index });
+    return i + quote.length;
+  }
+
   let i = 0;
   while (i < text.length) {
-    if (text.startsWith("//", i)) {
-      const end = text.indexOf("\n", i);
-      i = end === -1 ? text.length : end + 1;
-      continue;
-    }
-    if (text.startsWith("/*", i)) {
-      const end = text.indexOf("*/", i + 2);
-      i = end === -1 ? text.length : end + 2;
-      continue;
-    }
-    if (text.startsWith("\"\"\"", i)) {
-      const end = text.indexOf("\"\"\"", i + 3);
-      found.push({ text: text.slice(i + 3, end === -1 ? text.length : end), index: i });
-      i = end === -1 ? text.length : end + 3;
-      continue;
-    }
-    if (text[i] === "\"") {
-      let j = i + 1;
-      let body = "";
-      while (j < text.length) {
-        if (text[j] === "\\") {
-          body += text.slice(j, j + 2);
-          j += 2;
-          continue;
-        }
-        if (text[j] === "\"") break;
-        body += text[j];
-        j += 1;
-      }
-      found.push({ text: body, index: i });
-      i = j + 1;
-      continue;
-    }
-    i += 1;
+    const commentEnd = swiftCommentEnd(text, i);
+    if (commentEnd !== i) i = commentEnd;
+    else if (text[i] === '"') i = literalEnd(i);
+    else i += 1;
   }
   return found;
 }

@@ -34,6 +34,22 @@ test("a banned word in a Swift literal or in ruleFor fails copy lint", () => {
   expect(comment.status).toBe(0);
 }, NESTED_RUN_TIMEOUT_MS);
 
+test("copy lint checks nested Swift literals inside interpolations", () => {
+  const file = "apps/ios/Keel/Copy.swift";
+  const plants = [
+    ['let x = "\\(flag ? "should" : "ready")"', 1],
+    ['let x = "\\(format(value: "\\(flag ? "buy" : "ready")"))"', 1],
+    ['let x = """\n\\(format("sell"))\n"""', 2],
+    ['let x = "\\(format(ready /* ) "hold" */))"', 0],
+    ['let x = "\\\\(ready) \\(flag ? "ready" : "also ready")"', 0],
+  ];
+  for (const [body, line] of plants) {
+    const result = copy(rootWith({ [file]: body + "\n" }));
+    expect(result.status, body).toBe(line > 0 ? 1 : 0);
+    expect(result.stdout, body).toBe(line > 0 ? ["copy", file, line].join("\t") + "\n" : "");
+  }
+}, NESTED_RUN_TIMEOUT_MS);
+
 test("the repo copy lint passes", () => {
   expect(copy(repoRoot).status).toBe(0);
 }, NESTED_RUN_TIMEOUT_MS);
