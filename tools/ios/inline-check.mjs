@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
-import { pathToFileURL } from "node:url";
+import { isInvokedDirectly } from "./entry-point.mjs";
 
 const NAMES = ["Text", "Label", "Button", "Section", "navigationTitle", "alert"];
 
@@ -103,7 +103,7 @@ export function inlineHits(root) {
   return hits;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isInvokedDirectly(import.meta.url)) {
   const root = process.argv[2] ?? process.cwd();
   const hits = inlineHits(root);
   for (const hit of hits) process.stdout.write(`ios-inline\t${hit.name}\t${hit.file}\n`);

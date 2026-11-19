@@ -1,4 +1,4 @@
-import { pathToFileURL } from "node:url";
+import { isInvokedDirectly } from "./entry-point.mjs";
 import { loadAllowlist } from "./allowlist.mjs";
 import { binarySurface } from "./binary-check.mjs";
 
@@ -23,7 +23,7 @@ export function unusedBinaryEntries(allowlist, surfaces) {
   });
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isInvokedDirectly(import.meta.url)) {
   const paths = process.argv.slice(2);
   try {
     if (paths.length !== 2) throw new Error("expected the Release and Verification binaries");

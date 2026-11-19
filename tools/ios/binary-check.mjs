@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { pathToFileURL } from "node:url";
+import { isInvokedDirectly } from "./entry-point.mjs";
 import { loadAllowlist, parseAllowlist } from "./allowlist.mjs";
 
 export const RULES = [
@@ -122,7 +122,7 @@ export function evaluateBinary(binary, allowlist, enabled = RULES) {
   return { status: hits > 0 ? 1 : 0, counts, unlisted: result.unlisted };
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isInvokedDirectly(import.meta.url)) {
   const binary = process.argv[2];
   if (!binary) {
     process.stderr.write("ios-binary\tmissing binary\n");

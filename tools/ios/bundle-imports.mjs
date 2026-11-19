@@ -1,4 +1,4 @@
-import { pathToFileURL } from "node:url";
+import { isInvokedDirectly } from "./entry-point.mjs";
 import { buildBundle } from "../../apps/ios/bundle/build.mjs";
 
 export function metafileHits(metafile) {
@@ -29,7 +29,7 @@ function printHits(hits) {
   for (const hit of hits) process.stdout.write(`ios-bundle\t${hit.rule}\t${hit.path}\n`);
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isInvokedDirectly(import.meta.url)) {
   const root = process.argv[2] ?? process.cwd();
   const result = await bundleImportHits(root);
   if (!result.ok) {

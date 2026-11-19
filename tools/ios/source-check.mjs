@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
-import { pathToFileURL } from "node:url";
+import { isInvokedDirectly } from "./entry-point.mjs";
 import { loadAllowlist } from "./allowlist.mjs";
 
 const BANNED = [
@@ -73,7 +73,7 @@ function printHits(hits) {
   for (const hit of hits) process.stdout.write(`ios-source\t${hit.rule}\t${hit.detail}\t${hit.file}\n`);
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isInvokedDirectly(import.meta.url)) {
   const root = process.argv[2] ?? process.cwd();
   let allowlist;
   try {

@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
+import { isInvokedDirectly } from "./entry-point.mjs";
 
 const SETTING = /\b(DEVELOPMENT_TEAM|PROVISIONING_PROFILE_SPECIFIER)(\[[^\]]*\])?\s*=\s*(\S+)/g;
 const DEVICE = [
@@ -42,7 +42,7 @@ export function signingHits(root) {
   return { ok: true, status: hits.length === 0 ? 0 : 1, hits };
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isInvokedDirectly(import.meta.url)) {
   const root = process.argv[2] ?? process.cwd();
   const result = signingHits(root);
   if (!result.ok) {
