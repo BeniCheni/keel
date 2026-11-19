@@ -25,7 +25,13 @@ private final class LedgerFiling: SnapshotFiling {
         case exists
     }
 
+    enum Operation: Equatable {
+        case move(URL)
+        case remove(URL)
+    }
+
     var state: State
+    var operationFault: (operation: Operation, remaining: Int)?
     var failStep: StorageStep?
     var onFailure: (() -> Void)?
     var beforeChange: ((State) -> Void)?
@@ -46,6 +52,12 @@ private final class LedgerFiling: SnapshotFiling {
         guard let step, step == failStep, !failed else { return }
         failed = true
         onFailure?()
+        throw Fault.injected
+    }
+
+    private func gate(_ operation: Operation) throws {
+        guard let fault = operationFault, fault.operation == operation, fault.remaining > 0 else { return }
+        operationFault?.remaining -= 1
         throw Fault.injected
     }
 
@@ -119,6 +131,7 @@ private final class LedgerFiling: SnapshotFiling {
     }
 
     func move(_ source: URL, to destination: URL) throws {
+        try gate(.move(source))
         beforeChange?(state)
         guard !exists(destination) else { throw Fault.exists }
         if state.folders.remove(source.path) != nil {
@@ -133,6 +146,7 @@ private final class LedgerFiling: SnapshotFiling {
     }
 
     func remove(_ url: URL) throws {
+        try gate(.remove(url))
         beforeChange?(state)
         state.files[url.path] = nil
         if state.folders.remove(url.path) != nil {
@@ -175,6 +189,7 @@ final class SnapshotRecoveryTests: XCTestCase {
     private let second = Data("second".utf8)
     private var active: URL { folder.appendingPathComponent("active") }
     private var record: URL { folder.appendingPathComponent("record.json") }
+    private var rollback: URL { folder.appendingPathComponent("rollback", isDirectory: true) }
 
     private func store(on files: LedgerFiling, withPrevious: Bool) -> SnapshotStore {
         let store = SnapshotStore(folder: folder, files: files)
@@ -244,6 +259,109 @@ final class SnapshotRecoveryTests: XCTestCase {
         let outcome = importSecond(store)
         states.append(files.state)
         return (states, outcome)
+    }
+
+    func testRetryCannotStoreWhileEitherRollbackRenameStillFails() throws {
+        let third = Data("third".utf8)
+        for url in [active, record] {
+            for failures in [2, 3] {
+                let label = "\(url.lastPathComponent), \(failures) failed renames"
+                let files = LedgerFiling()
+                let store = store(on: files, withPrevious: true)
+                let previous = try XCTUnwrap(store.activeTerms())
+                files.failStep = .protectActive
+                files.operationFault = (.move(rollback.appendingPathComponent(url.lastPathComponent)), failures)
+                XCTAssertEqual(importSecond(store), .failed, label)
+                XCTAssertTrue(files.exists(rollback), label)
+
+                if failures == 3, let shown = SnapshotStore(folder: folder, files: files).activeTerms() {
+                    XCTAssertEqual(shown, previous, label)
+                }
+                XCTAssertTrue(files.exists(rollback), label)
+                let retry = store.importFile(bytes: third, name: "three.yaml", importedAt: "t3")
+                XCTAssertEqual(retry, .failed, label)
+                XCTAssertEqual(files.writesAfterFailure, 0, label)
+                XCTAssertEqual(files.operationFault?.remaining, 0, label)
+                XCTAssertTrue(files.exists(rollback), label)
+
+                let reopened = SnapshotStore(folder: folder, files: files)
+                XCTAssertEqual(reopened.activeTerms(), previous, label)
+                XCTAssertFalse(files.exists(rollback), label)
+                XCTAssertEqual(reopened.importFile(bytes: third, name: "three.yaml", importedAt: "t3"), .stored(exact), label)
+                let shown = reopened.activeTerms()
+                XCTAssertEqual(shown?.bytes, third, label)
+                XCTAssertEqual(shown?.name, "three.yaml", label)
+                XCTAssertEqual(shown?.importedAt, "t3", label)
+                XCTAssertEqual(shown?.seal, exact, label)
+                XCTAssertEqual(names(files.state), ["active", "record.json"], label)
+            }
+        }
+    }
+
+    func testRecoveryFinishesAfterEachInterruptedRenameOrRemoval() throws {
+        let restoreOperations: [LedgerFiling.Operation] = [
+            .remove(active), .move(rollback.appendingPathComponent("active")),
+            .remove(record), .move(rollback.appendingPathComponent("record.json")),
+            .move(rollback),
+        ]
+        for operation in restoreOperations {
+            let label = "\(operation)"
+            let files = LedgerFiling()
+            let store = store(on: files, withPrevious: true)
+            let previous = try XCTUnwrap(store.activeTerms())
+            files.failStep = .protectActive
+            files.operationFault = (operation, 1)
+            XCTAssertEqual(importSecond(store), .failed, label)
+            XCTAssertEqual(files.operationFault?.remaining, 0, label)
+            XCTAssertTrue(files.exists(rollback), label)
+
+            let reopened = SnapshotStore(folder: folder, files: files)
+            XCTAssertEqual(reopened.activeTerms(), previous, label)
+            XCTAssertEqual(names(files.state), ["active", "record.json"], label)
+            assertSealed(files.state, label)
+        }
+
+        for orphan in [active, record] {
+            let label = orphan.lastPathComponent
+            let files = LedgerFiling()
+            let store = store(on: files, withPrevious: true)
+            try files.createDirectory(rollback)
+            try files.remove(orphan == active ? record : active)
+            files.operationFault = (.remove(orphan), 1)
+            XCTAssertNil(store.activeTerms(), label)
+            XCTAssertEqual(files.operationFault?.remaining, 0, label)
+            XCTAssertTrue(files.exists(rollback), label)
+            XCTAssertTrue(files.exists(orphan), label)
+
+            let reopened = SnapshotStore(folder: folder, files: files)
+            XCTAssertNil(reopened.activeTerms(), label)
+            XCTAssertEqual(names(files.state), [], label)
+        }
+    }
+
+    func testRetireFailureKeepsTheCompletedRestoreForTheNextRead() throws {
+        let files = LedgerFiling()
+        let store = store(on: files, withPrevious: true)
+        let previous = try XCTUnwrap(store.activeTerms())
+        let originalIDs = ids(files)
+        let originalBytes = pairBytes(files)
+        files.failStep = .protectActive
+        files.operationFault = (.move(rollback), 1)
+
+        XCTAssertEqual(importSecond(store), .failed)
+        XCTAssertEqual(files.operationFault?.remaining, 0)
+        XCTAssertTrue(files.exists(rollback))
+        XCTAssertEqual(pairBytes(files), originalBytes)
+        assertSealed(files.state, "before retrying retirement")
+        let restoredIDs = ids(files)
+        for (restored, original) in zip(restoredIDs, originalIDs) {
+            XCTAssertNotNil(restored)
+            XCTAssertNotEqual(restored, original)
+        }
+
+        XCTAssertEqual(store.activeTerms(), previous)
+        XCTAssertEqual(ids(files), restoredIDs)
+        XCTAssertEqual(names(files.state), ["active", "record.json"])
     }
 
     func testASecondImportReplacesTheFirstAndLeavesNoOtherFile() {

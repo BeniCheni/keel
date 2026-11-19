@@ -64,13 +64,17 @@ public final class SnapshotStore {
 
     public func activeTerms() -> StoredTerms? {
         try? files.remove(retired)
-        if files.exists(rollback) { recoverPrevious() }
+        if files.exists(rollback) {
+            recoverPrevious()
+            guard !files.exists(rollback) else { return nil }
+        }
         cleanTemporaryFiles()
         return keepSealedTerms()
     }
 
     public func importFile(bytes: Data, name: String, importedAt: String) -> StoreOutcome {
         _ = activeTerms()
+        guard !files.exists(rollback) else { return .failed }
         // A sealed pair can survive the opening read even if its contents are unavailable.
         let hadPrevious = files.exists(active) && files.exists(record)
         do {
@@ -99,6 +103,7 @@ public final class SnapshotStore {
         } catch {
             if files.exists(rollback) {
                 recoverPrevious()
+                guard !files.exists(rollback) else { return .failed }
             } else if !hadPrevious {
                 removeActivePair()
             }
@@ -129,10 +134,13 @@ public final class SnapshotStore {
                 try restore(savedActive, to: active)
                 try restore(savedRecord, to: record)
             }
-            _ = keepSealedTerms()
+            if activePairSeal() == nil {
+                try files.remove(record)
+                try files.remove(active)
+            }
             try files.move(rollback, to: retired)
         } catch {
-            removeActivePair()
+            // The remaining rollback copies and restored files record where to resume.
         }
     }
 
@@ -156,9 +164,13 @@ public final class SnapshotStore {
         return activeSeal
     }
 
+    private func activePairSeal() -> FileSeal? {
+        guard files.exists(active), files.exists(record) else { return nil }
+        return readPairSeal(active, record)
+    }
+
     private func keepSealedTerms() -> StoredTerms? {
-        guard files.exists(active), files.exists(record),
-              let seal = readPairSeal(active, record) else {
+        guard let seal = activePairSeal() else {
             removeActivePair()
             return nil
         }
