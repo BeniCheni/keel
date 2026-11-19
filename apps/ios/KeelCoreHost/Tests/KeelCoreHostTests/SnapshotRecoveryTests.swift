@@ -30,6 +30,8 @@ private final class LedgerFiling: SnapshotFiling {
     var onFailure: (() -> Void)?
     var beforeChange: ((State) -> Void)?
     var copyKeepsAttributes = true
+    var stopOnCopyOf: String?
+    private(set) var interruptedCopy: State?
     var sealReadThrowsFor: String?
     var readThrowsOnceFor: String?
     private(set) var failed = false
@@ -102,6 +104,12 @@ private final class LedgerFiling: SnapshotFiling {
         beforeChange?(state)
         guard let file = state.files[source.path] else { throw Fault.missing }
         guard !exists(destination) else { throw Fault.exists }
+        if stopOnCopyOf == source.path {
+            // A partial destination exists, with neither seal attribute yet applied.
+            state.files[destination.path] = File(data: Data(file.data.prefix(1)), id: newID())
+            interruptedCopy = state
+            throw Fault.injected
+        }
         var made = File(data: file.data, id: newID())
         if copyKeepsAttributes {
             made.protected = file.protected
@@ -398,6 +406,18 @@ final class SnapshotRecoveryTests: XCTestCase {
         XCTAssertEqual(ids(files), before)
         XCTAssertEqual(names(files.state), ["active", "record.json"])
         XCTAssertEqual(relaunch(files.state, "after the failed import"), .previous)
+    }
+
+    func testAStopInsideEitherRollbackCopyLeavesThePreviousImportWhole() throws {
+        for url in [active, record] {
+            let files = LedgerFiling()
+            let store = store(on: files, withPrevious: true)
+            files.stopOnCopyOf = url.path
+            XCTAssertEqual(importSecond(store), .failed, url.lastPathComponent)
+            let stopped = try XCTUnwrap(files.interruptedCopy, url.lastPathComponent)
+            XCTAssertEqual(relaunch(stopped, url.lastPathComponent), .previous, url.lastPathComponent)
+            XCTAssertEqual(relaunch(files.state, url.lastPathComponent), .previous, url.lastPathComponent)
+        }
     }
 
     func testImportingTheSameFileAgainAndFailingLateKeepsTheSealedPair() {
