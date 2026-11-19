@@ -2,6 +2,7 @@ import { createRequire } from "node:module";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { isInvokedDirectly } from "../../../tools/ios/entry-point.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, "../../..");
@@ -84,8 +85,7 @@ export async function buildBundle(givenRoot, options = {}) {
   return { ok: true, text, metafile: result.metafile, bytes: Buffer.byteLength(text) };
 }
 
-const isMain = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
-if (isMain) {
+if (isInvokedDirectly(import.meta.url)) {
   const root = process.argv[2] ? process.argv[2] : repoRoot;
   const dedupeLocaleCompare = process.env.KEEL_IOS_DEDUPE === "localeCompare";
   const built = await buildBundle(root, { dedupeLocaleCompare });
