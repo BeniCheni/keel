@@ -11,7 +11,7 @@ Pass 1's verdict is not mergeable, with two open Highs. The PM accepts all 18 of
 
 **Addendum, 2026-11-18, 14:32 EST.** By Beni's ruling 4, Codex builds the rework instead of Cursor. The addendum at the end of this brief gives the seat and what changes. Where it differs from the text above, the addendum wins.
 
-**Second, third and fourth addenda.** The second, at 14:56 EST, gives ruling 5. The third, at 19:28 EST, records the fresh Pass 1, rulings 6 to 8 and the C findings, and replaces "What Pass 2 does". The fourth, on 2026-11-19, records Pass 2, rulings 9 to 12 and D3's fix, and replaces "What Pass 2.5 does".
+**Second to fifth addenda.** The second, at 14:56 EST, gives ruling 5. The third, at 19:28 EST, records the fresh Pass 1, rulings 6 to 8 and the C findings, and replaces "What Pass 2 does". The fourth, on 2026-11-19, records Pass 2, rulings 9 to 12 and D3's fix, and replaces "What Pass 2.5 does". The fifth records Pass 2.5, rulings 13 to 17 and the E round.
 
 ## Order from here
 
@@ -557,3 +557,80 @@ git checkout -- .
 Authorship and runs: `git log --format='%h %an <%ae> %s' 95730ba..80dc177`, `git show --stat --format= <commit>` and `gh run list --repo BeniCheni/keel --commit <sha>`. The `swift` totals: `gh run view 44562739808 --repo BeniCheni/keel --job 135696143883 --log | grep 'Executed'`.
 
 The rulings' times come from the timestamps of the PM's `AskUserQuestion` call and its result, in this session's own transcript. The record checks are as in the third addendum.
+
+## Fifth addendum, 2026-11-19: Pass 2.5, and rulings 13 to 17
+
+Written by the PM at 14:37 EST, after Pass 2.5's comment ([issuecomment-7019236015](https://github.com/BeniCheni/keel/pull/52#issuecomment-7019236015), posted at 14:05:46 EST). It reviewed head `a39a5c7d4ac9dd264ca1301b137bfa0c6eec45c4` and pushed nothing. Where this addendum differs from the text above, it wins.
+
+**Between the fourth addendum and Pass 2.5.**
+- **Ruling 13.** Codex stopped before editing, because the fourth addendum's test (1) required both original file ids at all 12 steps. Once replacement has begun, the rollback restores sealed copies, which have new ids. The existing `testAFailureLeavesUntouchedFilesInPlaceAndNeverWritesThePreviousFileAgain` already splits the steps there. The PM's wording was wrong. Beni answered "Yes" in Codex's session, and confirmed it in Pass 2.5's session, together with rulings 9 and 10 ("Confirm" three times, asked at 13:09:43 EST and answered by 13:20:29 EST, as that comment records). The ruling:
+  - for writeTemporary, protectTemporary, excludeTemporary, readTemporary and replaceActive, both original file ids survive the failed import;
+  - from protectActive on, both names hold the sealed rollback copies, whose ids differ from the originals;
+  - at every step, both files are sealed, and their bytes and record equal what was on disk before the import;
+  - after a transient fault, the next `activeTerms()` returns the previous import.
+- **D3's fix.** Codex's `a39a5c7` ("Preserve sealed imports through opening read failures") changes `SnapshotStore.swift` (4 lines added, 2 removed) and adds four tests. Its run, [44581863296](https://github.com/BeniCheni/keel/actions/runs/44581863296), is green on all six checks, and the `swift` job printed `Executed 45 tests, with 5 tests skipped and 0 failures`. Pass 2's follow-up ([issuecomment-7017465594](https://github.com/BeniCheni/keel/pull/52#issuecomment-7017465594)) carries the same 39 finding ids as the fourth addendum's record, with D3 and PM2 fixed.
+
+**What Pass 2.5 found.** Claude Code on Fable 5.2 at High effort, on 72 of 72 replies, in a fresh session that wrote no commit. Its verdict is not mergeable, with E2 open. The shadow gate says would escalate.
+- **Cold reads:** all nine Codex commits, with 61 code mutants, of which 55 were killed. D3 and PM2 are closed. It confirmed the fourth addendum's claim that `1e02aab` introduced PM2.
+- **Re-run at the head:**
+  - installs and `pnpm verify` on Node 24.22.2 and 26.13.0, each with core 178, plugin 212 and tooling 166 tests passing;
+  - local Swift, with 45 tests, no skip and no failure;
+  - the determinism check;
+  - both unsigned builds, each with eight zero counts in the binary check;
+  - the tripwire, with a control that fired;
+  - Pass M and demo mode, as N/A with their commands.
+- **Device:** Beni reported "Not run yet" for criterion 12 and for the B11 picker step at `a39a5c7`.
+- **New findings:**
+
+| Id | Severity | Finding |
+| --- | --- | --- |
+| E2 | High | A `rollback` folder outlives a failed recovery and is later restored over a stored import. `recoverPrevious` removes the active pair on any throw and leaves `rollback` in place. The next import then sees no pair, is stored as a first import, and never retires `rollback`. The next read restores what is left of the stale copy. With the rename out of `rollback/record.json` failing twice, the next launch shows the third file's bytes under the first file's name and time, both sealed, with no error. In the branch since `2e4cd93` |
+| E1 | Medium | Two mutants of `a39a5c7`'s one changed line pass all 45 Swift tests: `files.exists(active)` alone, and `\|\|` in place of `&&`. No test has half a pair whose removal fails |
+| E3 | Medium | Four branches of `918f678`'s Swift literal scanner have no test that fails without them: the nested block-comment depth, the parenthesis depth inside an interpolation, the `"""` delimiter, and the skip over an escaped character |
+| E4 | Low | `apps/ios/bundle/build.mjs:87` kept the entry guard that C6 replaced, so a build started through a symbolic link writes nothing and exits 0 |
+
+**Per finding, Pass 2.5's.** The PM accepts all four and contests none. For E2, the PM read the code path at `a39a5c7`, which runs through `recoverPrevious`'s catch, `hadPrevious` and the conditional retire at the commit point. The PM did not re-run Pass 2.5's probe. E1, E3 and E4 are accepted on Pass 2.5's reproduction.
+
+**Ruling 14, on E2.** Given at 14:35:27 EST in the PM's session: "Fix it now (Recommended)". The PM asked at 14:14:06 EST, in four questions. The first read: "PR #52's E2 (new High from Pass 2.5): after a recovery fails and leaves its `rollback` folder, a later import can still be stored, and the next launch restores the stale rollback over it: the third file's bytes under the first file's name and time, sealed, no error. It needs the same rename to fail twice in a row, so it's rare. Does Codex fix E2 on this PR before merge?" The option read: "Codex fixes it as one commit with a test that fails first (Pass 2.5's probe gives one), and Pass 2.5 cold-reads the fix. It is the same kind of falsehood as PM2, which this PR graded High and fixed."
+
+**Ruling 15, on E2's shape.** "Refuse while pending (Recommended)". The question read: "If E2 is fixed now, which rule does the store follow so that no import is ever stored while a `rollback` folder exists?" The option read: "A new import starts only once the opening recovery has cleared `rollback`. If the folder is still there, the import fails before it writes anything, and every later read retries the recovery. A stale rollback can then never be restored over a newer import. The cost: while a rename keeps failing, imports keep failing too, and the screen says so."
+
+**Ruling 16, on E1, E3 and E4.** "Ride along (Recommended)". The question read: "PR #52's E1 (two surviving mutants of the D3 fix's line), E3 (four untested branches in B14's copy-lint scanner) and E4 (a seventh command, the bundle build, kept the old symlink guard): do they ride in the same Codex round as E2?" The option read: "All three are small and sit in this PR's own fixes: E1 and E3 are tests only, E4 is one guard. Pass 2.5 re-reads the round anyway for E2."
+
+**Ruling 17, on the device run.** "Picker now, 12 at final (Recommended)". The question read: "PR #52's device run: when do you run the B11 picker step and criterion 12 on your iPhone?" The option read: "The picker step doesn't touch the store, so running it now tells us whether B11 joins the next Codex round. Criterion 12 exercises the store, so it waits for the head that will merge."
+
+**The round for Codex.** This is rework under ruling 5, so Codex works on GPT-6.2 Sol at Extra High. There are four commits, in this order, each with a test shown failing at `a39a5c7` first, and each pushed alone after the previous push's `verify` and `swift` are green.
+
+1. **E2, under ruling 15.** The store holds three rules.
+   - **No import is stored while `rollback` exists.** After the opening recovery, if `rollback` is still there, the import returns failed before it writes anything, and it removes nothing.
+   - **Recovery always finishes.** Each recovery either restores a whole, exactly sealed pair and retires `rollback`, or finds that what is left cannot make a whole pair, removes what is left of it, and retires `rollback`. The screen then shows nothing, as ruling 2 gives. `rollback` remains only while an operation keeps throwing, never because a state is one the next recovery cannot finish.
+   - **A completed restore is kept.** When both restores have completed and only retiring `rollback` fails, the restored pair stays, and the next read retires the folder. This is Pass 2.5's "Deliberately not done" item on the same code path.
+
+   The tests:
+   - Pass 2.5's probe becomes a test, on the memory double, for both halves of `rollback` and for two and three failed renames. While `rollback` exists, the retry import returns failed and writes nothing. No relaunch, before or after the fault clears, shows a mixed pair, or the first import in place of an import reported as stored. Once the fault clears, a new import is stored and shown.
+   - From each state a failed recovery can leave (each rename and remove inside a recovery failing once), the next `activeTerms()` leaves no `rollback`, and it shows the previous import whole or nothing.
+   - A recovery whose two restores completed, but whose retire failed, keeps the restored pair, and the next read shows the previous import.
+2. **E1.** For each half of a pair, with one half on disk whose removal throws, the import is stored and shown. The test fails under both of Pass 2.5's mutants.
+3. **E3.** Pass 2.5's four plants go into `tools/acceptance/test/copy-swift.test.mjs`. Each one fails under its own mutant.
+4. **E4.** `apps/ios/bundle/build.mjs` uses `tools/ios/entry-point.mjs`, with a symbolic-link test like C6's that fails on the old guard.
+
+Then Codex posts one comment with a Pass 2 seat record: input `a39a5c7`, output the round's head, and the 43 ids from Pass 2.5's record, with E1 to E4 fixed. If any part of the round cannot be made as given, Codex stops and asks Beni. D1, D2, D4, B16, B17 and C9 stay as recorded. If Beni's picker step reproduces B11 before the round ends, the PM adds B11 to the round in writing.
+
+**Authorship record, extended.**
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `a39a5c7` | Codex | Claude, Pass 2.5 (done) |
+| The E round's four commits, still to come | Codex | Claude, the Pass 2.5 re-run |
+
+**What the Pass 2.5 re-run does.** The same Pass 2.5 session is still eligible, because it wrote no fix. A fresh Claude session on Fable 5.2 at High would also do. It does three things:
+- the cold read of the round's four commits;
+- a re-run of every number at the round's head, with Beni's criterion 12 run at that head, and his picker result;
+- the merge gate, in shadow mode.
+
+**Process notes.**
+- The Pass 2.5 session was opened in `~/code/keel`, and every reply in its transcript records that folder as its working folder. It wrote and ran everything in its own scratch folder and its clones. No command names the working copy itself, which is clean on `main` (`git -C ~/code/keel status --porcelain --untracked-files=all | wc -l` prints 0).
+- It saved a memory note of environment facts (mktemp, `gh`, zsh, mutant clones) in this project's own memory folder, which later sessions started in `~/code/keel` load, the PM's among them. The note holds no finding, and the folder held nothing before. For the rules PR: whether review seats may write memory at all, since memory is a channel between seats that the sealed appendix does not cover.
+- Pass 2.5's seat record validates against `seat-record-1.1.json`, with 43 ids: the 39 earlier ones and E1 to E4. elenchus records Pass 2.5 at `a39a5c7`, with next 3. Its failures are the known route failures on the PM's effort at passes 0 and 1.5, and the sha-chain failure at pass 2, where the follow-up record chains on its own first record. For the elenchus repo: a seat's follow-up record chains on that seat's earlier output.
+
+**The PM's commands.** The rulings' times come from this session's own transcript. The working copy's state comes from `git -C ~/code/keel status --porcelain --untracked-files=all`, `git -C ~/code/keel rev-parse --abbrev-ref HEAD` and `git -C ~/code/keel stash list`. The Pass 2.5 seat's working folders and file writes come from its transcript's `cwd` fields and its `Write` and `Edit` calls, read for those only. E2's code path is read at `a39a5c7` with `git show a39a5c7:apps/ios/KeelCoreHost/Sources/KeelCoreHost/SnapshotStore.swift`. The record checks are as in the third addendum.
