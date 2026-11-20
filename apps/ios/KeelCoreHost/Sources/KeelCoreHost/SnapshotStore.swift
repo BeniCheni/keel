@@ -77,6 +77,8 @@ public final class SnapshotStore {
         guard !files.exists(rollback) else { return .failed }
         // A sealed pair can survive the opening read even if its contents are unavailable.
         let hadPrevious = files.exists(active) && files.exists(record)
+        // An orphan record must be removed before a fresh import can replace active.
+        guard hadPrevious || !files.exists(record) else { return .failed }
         do {
             try files.write(bytes, to: incoming, step: .writeTemporary)
             try files.protect(incoming, step: .protectTemporary)

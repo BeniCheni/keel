@@ -32,6 +32,7 @@ private final class LedgerFiling: SnapshotFiling {
 
     var state: State
     var operationFault: (operation: Operation, remaining: Int)?
+    var removeAlwaysThrowsFor: URL?
     var failStep: StorageStep?
     var onFailure: (() -> Void)?
     var beforeChange: ((State) -> Void)?
@@ -146,6 +147,7 @@ private final class LedgerFiling: SnapshotFiling {
     }
 
     func remove(_ url: URL) throws {
+        if removeAlwaysThrowsFor == url { throw Fault.injected }
         try gate(.remove(url))
         beforeChange?(state)
         state.files[url.path] = nil
@@ -372,10 +374,103 @@ final class SnapshotRecoveryTests: XCTestCase {
             try files.remove(orphan == active ? record : active)
             files.operationFault = (.remove(orphan), 1)
 
-            XCTAssertEqual(importSecond(store), .stored(exact), label)
-            XCTAssertEqual(files.operationFault?.remaining, 0, label)
-            XCTAssertEqual(relaunch(files.state, label), .new, label)
+            if orphan == record {
+                let nextID = files.state.nextID
+                XCTAssertEqual(importSecond(store), .failed, label)
+                XCTAssertEqual(files.state.nextID, nextID, label)
+                XCTAssertEqual(files.operationFault?.remaining, 0, label)
+                XCTAssertEqual(names(files.state), ["record.json"], label)
+                XCTAssertEqual(relaunch(files.state, label), .nothing, label)
+                XCTAssertEqual(importSecond(store), .stored(exact), label)
+                XCTAssertEqual(relaunch(files.state, label), .new, label)
+            } else {
+                XCTAssertEqual(importSecond(store), .stored(exact), label)
+                XCTAssertEqual(files.operationFault?.remaining, 0, label)
+                XCTAssertEqual(relaunch(files.state, label), .new, label)
+            }
         }
+    }
+
+    func testProbeAStopAfterReplacingOverAnOrphanRecordShowsAWholeImportOrNothing() throws {
+        let files = LedgerFiling()
+        let store = store(on: files, withPrevious: true)
+        try files.remove(active)
+        files.operationFault = (.remove(record), 1)
+        var states: [LedgerFiling.State] = []
+        files.beforeChange = { states.append($0) }
+
+        XCTAssertEqual(importSecond(store), .failed)
+        states.append(files.state)
+        for (index, state) in states.enumerated() {
+            let label = "orphan record, relaunch \(index + 1) of \(states.count)"
+            XCTAssertEqual(relaunch(state, label), .nothing, label)
+        }
+    }
+
+    func testImportRelaunchesFromEveryPairStateAndRemovalFault() {
+        let seed = LedgerFiling()
+        _ = store(on: seed, withPrevious: true)
+
+        func fromPair(_ change: (inout LedgerFiling.State) -> Void) -> LedgerFiling.State {
+            var state = seed.state
+            change(&state)
+            return state
+        }
+
+        let starts: [(String, LedgerFiling.State)] = [
+            ("empty", LedgerFiling.State()),
+            ("sealed pair", seed.state),
+            ("active only", fromPair { $0.files[record.path] = nil }),
+            ("record only", fromPair { $0.files[active.path] = nil }),
+            ("unsealed active", fromPair { $0.files[active.path]?.protected = false }),
+            ("unsealed record", fromPair { $0.files[record.path]?.protected = false }),
+            ("both unsealed", fromPair {
+                $0.files[active.path]?.protected = false
+                $0.files[record.path]?.protected = false
+            }),
+        ]
+        let faults: [(URL?, Int?)] = [(nil, nil)] + [active, record].flatMap { url in
+            [(url, 1), (url, 2), (url, nil)]
+        }
+        let steps: [StorageStep?] = [nil] + StorageStep.allCases.map(Optional.some)
+        var imports = 0
+        var relaunches = 0
+        var mixed = 0
+        var stored = 0
+        var storedMismatches = 0
+        for (start, state) in starts {
+            for (remove, count) in faults {
+                for step in steps {
+                    let removal = remove?.lastPathComponent ?? "none"
+                    let tries = count.map(String.init) ?? "always"
+                    let label = "\(start), remove \(removal) faults \(tries), step \(step?.rawValue ?? "none")"
+                    let files = LedgerFiling(state)
+                    if let remove {
+                        if let count { files.operationFault = (.remove(remove), count) }
+                        else { files.removeAlwaysThrowsFor = remove }
+                    }
+                    files.failStep = step
+                    var stops: [LedgerFiling.State] = []
+                    files.beforeChange = { stops.append($0) }
+
+                    let outcome = importSecond(SnapshotStore(folder: folder, files: files))
+                    stops.append(files.state)
+                    imports += 1
+                    relaunches += stops.count
+                    let shown = stops.enumerated().map { relaunch($1, "\(label), relaunch \($0 + 1)") }
+                    mixed += shown.filter { $0 == nil }.count
+                    if case .stored = outcome {
+                        stored += 1
+                        let final = shown.last ?? nil
+                        if final != .new { storedMismatches += 1 }
+                        XCTAssertEqual(final, .new, label)
+                    }
+                }
+            }
+        }
+        XCTAssertEqual(imports, 637)
+        XCTAssertEqual(mixed, 0)
+        print("E5-SWEEP imports=\(imports) relaunches=\(relaunches) mixed=\(mixed) stored=\(stored) storedMismatches=\(storedMismatches)")
     }
 
     func testASecondImportReplacesTheFirstAndLeavesNoOtherFile() {
