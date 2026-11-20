@@ -11,7 +11,7 @@ Pass 1's verdict is not mergeable, with two open Highs. The PM accepts all 18 of
 
 **Addendum, 2026-11-18, 14:32 EST.** By Beni's ruling 4, Codex builds the rework instead of Cursor. The addendum at the end of this brief gives the seat and what changes. Where it differs from the text above, the addendum wins.
 
-**Second to fifth addenda.** The second, at 14:56 EST, gives ruling 5. The third, at 19:28 EST, records the fresh Pass 1, rulings 6 to 8 and the C findings, and replaces "What Pass 2 does". The fourth, on 2026-11-19, records Pass 2, rulings 9 to 12 and D3's fix, and replaces "What Pass 2.5 does". The fifth records Pass 2.5, rulings 13 to 17 and the E round.
+**Second to sixth addenda.** The second, at 14:56 EST, gives ruling 5. The third, at 19:28 EST, records the fresh Pass 1, rulings 6 to 8 and the C findings, and replaces "What Pass 2 does". The fourth, on 2026-11-19, records Pass 2, rulings 9 to 12 and D3's fix, and replaces "What Pass 2.5 does". The fifth records Pass 2.5, rulings 13 to 17 and the E round. The sixth records the Pass 2.5 re-run, E5, and rulings 18 and 19.
 
 ## Order from here
 
@@ -634,3 +634,125 @@ Then Codex posts one comment with a Pass 2 seat record: input `a39a5c7`, output 
 - Pass 2.5's seat record validates against `seat-record-1.1.json`, with 43 ids: the 39 earlier ones and E1 to E4. elenchus records Pass 2.5 at `a39a5c7`, with next 3. Its failures are the known route failures on the PM's effort at passes 0 and 1.5, and the sha-chain failure at pass 2, where the follow-up record chains on its own first record. For the elenchus repo: a seat's follow-up record chains on that seat's earlier output.
 
 **The PM's commands.** The rulings' times come from this session's own transcript. The working copy's state comes from `git -C ~/code/keel status --porcelain --untracked-files=all`, `git -C ~/code/keel rev-parse --abbrev-ref HEAD` and `git -C ~/code/keel stash list`. The Pass 2.5 seat's working folders and file writes come from its transcript's `cwd` fields and its `Write` and `Edit` calls, read for those only. E2's code path is read at `a39a5c7` with `git show a39a5c7:apps/ios/KeelCoreHost/Sources/KeelCoreHost/SnapshotStore.swift`. The record checks are as in the third addendum.
+
+## Sixth addendum, 2026-11-19: the Pass 2.5 re-run, and rulings 18 and 19
+
+Written by the PM at 20:04 EST, after the re-run's comment ([issuecomment-7026722230](https://github.com/BeniCheni/keel/pull/52#issuecomment-7026722230), posted at 19:46:05 EST). It reviewed head `a74aa56cb94ee5eec7ba6ac4a8b7e44beef12c98` and pushed nothing. Where this addendum differs from the text above, it wins.
+
+**Between the fifth addendum and the re-run.** Codex built the E round under rulings 14 to 16, in four commits, each pushed alone: `425a9d5` (E2), `82a672c` (E1), `a6798ea` (E3) and `a74aa56` (E4). Their runs, 44603395023, 44604199077, 44605480313 and 44606208017, each show six of six checks green on their first attempt. Codex's comment ([issuecomment-7021042959](https://github.com/BeniCheni/keel/pull/52#issuecomment-7021042959)) carries the 43 ids, with E1 to E4 fixed. The round stopped once on NSCocoaErrorDomain 513, and went on after Beni unlocked the Mac.
+
+**What the re-run found.** It ran as Claude Code on Fable 5.2 at High effort, on 126 of 126 replies. It is the same session as the first Pass 2.5, which wrote no commit. Its verdict is not mergeable, with E5 open, and the shadow gate says would escalate.
+- **Cold reads:** every hunk of the E round's four commits, with 18 mutants, all killed. E1 to E4 are closed.
+  - Ruling 15's three rules hold on the memory double, over 492 fault cases and 21,342 relaunch points. No import was stored while `rollback` existed. No point was left unfinished after one clean read. No point showed nothing or a mixed pair.
+  - The first pass's 13 store mutants, re-run against the changed store, are all killed.
+  - D3 holds in 36 of 36 cases, and PM2 at 22 of 22 relaunch points.
+- **Re-run at the head:**
+  - installs and `pnpm verify` on Node 24.22.2 and 26.13.0, each with core 178, plugin 212 and tooling 171 tests passing;
+  - local Swift, with 49 tests, no skip and no failure; the hosted `swift` job, read from its log, with 49 executed and 5 skipped;
+  - the determinism check;
+  - both unsigned builds, each with eight zero counts in the binary check;
+  - the tripwire, with 0 hits over 355 files and 18 commit messages, and a control that fired;
+  - Pass M and demo mode, as N/A with their commands.
+- **Authorship:** each of the 18 commits has a cold read from a vendor that did not write it.
+- **Device:** Beni reported "not run yet" for the B11 picker step and for criterion 12 at `a74aa56`.
+- **New finding:**
+
+| Id | Severity | Finding |
+| --- | --- | --- |
+| E5 | High | A `record.json` whose removal fails ends up describing a later import's bytes. `removeActivePair` removes the record first, with `try?`. If that removal fails and the removal of `active` succeeds, the record stays alone, sealed. The next import's opening read cannot remove it either, so `hadPrevious` is false, no `rollback` is made, and `active` is replaced before the new record is written. A stop between those two steps leaves the new bytes beside the old record, both sealed. The next launch shows the second file's bytes under the first file's name and time, with no error. A lost seal on `active` reaches the same start. Pass 2.5 reproduced it at 3 of 18 stop points on the memory double, and at 4 of 8 on real files on macOS. The store as at `a39a5c7` and as at `918f678` gives the same rows, so the E round did not introduce it |
+
+**Per finding.** The PM accepts E5 and contests nothing.
+- **Reproduction.** The PM ran Pass 2.5's test as a probe on the memory double. Stops 9, 10 and 11 of 17 show "second under one.yaml at t1". The rows are the same at `a74aa56` and with the store as at `a39a5c7`.
+- **Code path.** The PM read it at `a74aa56`: `removeActivePair`'s `try?` (`SnapshotStore.swift:186-189`), `hadPrevious` (`:79`), and the replacement (`:87`) before the record's write (`:94`).
+- **Not re-run:** the real-file probe.
+
+**The PM's error.** The fifth addendum's E1 item reads: "For each half of a pair, with one half on disk whose removal throws, the import is stored and shown." For the record half, that pinned E5's route as correct. As with test (1) before ruling 13, the PM specified the state at an operation's end without checking it at every stop. From here on, any outcome the PM specifies for the store is checked at every stop point too.
+
+**Ruling 18, on E5.** Given at 19:58:21 EST in the PM's session: "Fix it now (Recommended)". The PM asked at 19:54:15 EST, in two questions.
+- **The question:** "PR #52's E5, a new High from the Pass 2.5 re-run: when record.json can't be removed and the app stops inside a three-step window of the next import, the next launch shows the new file's bytes under the old file's name and time, sealed, with no error. It's rarer than E2 and was there before the E round (I reproduced it at a74aa56 and a39a5c7). Does Codex fix E5 on this PR before merge?"
+- **The option:** "One Codex commit with a test that fails first (Pass 2.5's test fails 3 times at the head), then a Pass 2.5 cold read. AGENTS.md's Severity table makes an open High "not mergeable", and PM2 and E2 (the same false screen by other routes) were fixed on this PR."
+
+**Ruling 19, on E5's shape.** "Refuse over orphan record (Recommended)".
+- **The question:** "If E5 is fixed on PR #52, which shape does the store take?"
+- **The option:** "After the opening read, if record.json is on disk without a whole sealed pair, the import fails before writing anything (the same shape as ruling 15). The record half of E1's pinned test (82a672c) changes from stored to failed; the active half stays stored. The new test relaunches at every stop from every start state of the two files, not only from a whole pair."
+- **Not chosen:** a digest of the file in `record.json`, checked on every read.
+
+**The round for Codex.** This is rework under ruling 5, so Codex works on GPT-6.2 Sol at Extra High. It is one commit, for E5, under ruling 19. Every new or changed test is shown failing at `a74aa56` first.
+
+- **The rule.** After the opening read, if `record.json` is on disk without a whole sealed pair, `importFile` returns failed before it writes anything. Every later read retries the removal, as it does now. Once the record is gone, an import is stored and shown.
+  - An `active` left alone stays storable, because its record is written only after it.
+  - A pair whose files are both on disk but not sealed is already refused by `preservePrevious`'s seal check, and it stays refused.
+- **The one existing test that changes** is `testAnOrphanThatCannotBeRemovedDoesNotPreventImport`, from `82a672c`.
+  - **The record half changes.** The import now returns failed and writes nothing, and no relaunch shows a file. After the fault clears, the next import is stored and shown. This supersedes the fifth addendum's E1 item for the record half.
+  - **The active half stays as it is:** stored and shown.
+  - Both of E1's mutants still fail the test.
+- **New tests, on the memory double:**
+  - **Pass 2.5's test.** Its `testProbeAStopAfterReplacingOverAnOrphanRecordShowsAWholeImportOrNothing`, from its comment, becomes a test under ruling 19: the import returns failed, and every relaunch shows nothing. It fails at `a74aa56`.
+  - **A sweep over every start state of the two files.** The starts are:
+    - nothing;
+    - a whole sealed pair;
+    - `active` alone;
+    - `record.json` alone;
+    - each file unsealed beside a sealed other;
+    - both unsealed.
+  - **The faults.** Each start runs with no fault, or with the removal of either file failing once, twice or on every try. Each of those runs with no failing step, or with each of the 12 steps failing once.
+  - **The relaunches.** Each run imports the second file and relaunches on the state before every change, and on the state at the end. A relaunch is a new store with no fault, as `relaunch(_:_:)` gives now.
+  - **What must hold.** Every relaunch shows one whole import or nothing, never a mixed pair. An import reported as stored is what the relaunch at the end shows. This is the harness that found E5, widened to every start.
+- **The real-file probe.** Then Codex runs Pass 2.5's real-file probe, `testProbeOrphanRecordOnRealFiles`, from its comment. It runs at the commit, on the unlocked Mac, and Codex reports its eight rows. Under ruling 19, each row reports the import as failed and the next launch as showing nothing.
+- **How it lands.** The commit goes in as before:
+  - commit as Codex, with no sign-off;
+  - `pnpm install --frozen-lockfile` and `pnpm verify` on Node 24 and on Node 26, and `swift test --package-path apps/ios/KeelCoreHost` on the unlocked Mac;
+  - `git fetch`, a check that `origin/s91/ios-foundation` is still `a74aa56`, then a push of that one commit, and a wait until the hosted checks are green.
+- **The comment.** Codex then posts one comment with a Pass 2 seat record:
+  - input `a74aa56`, and output the new head, with that one commit;
+  - the 44 ids from the re-run's record, with E5 fixed;
+  - the owner's private-list check, counts only, run first.
+- **Stops and scope.** If the commit cannot be made as given, or if this rule conflicts with an existing test's invariant other than the one named above, Codex stops and asks Beni. D1, D2, D4, B11, B16, B17 and C9 stay as recorded.
+
+**The PM's check of this specification.** The PM checked this specification at `a74aa56` before handing it on, in a scratch clone, on the memory double, with the two new tests written as probes. The disk tests ran too, on the unlocked Mac, with no skip and no 513.
+- **Without a change to the store:**
+  - the adapted Pass 2.5 test fails 11 times;
+  - the sweep runs 637 imports and 10,608 relaunch points, and 126 of those points show "second under one.yaml at t1".
+- **With one guard after `hadPrevious` that returns failed when `record.json` is on disk without the pair:**
+  - both pass, with 0 mixed points over 8,952;
+  - the 33 snapshot tests show 2 failures, both in the record half of `testAnOrphanThatCannotBeRemovedDoesNotPreventImport`, which is the one test this ruling changes.
+
+So the rule can be met without touching any other test's invariant. The shape of the code is Codex's.
+
+**Authorship record, extended.**
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `425a9d5`, `82a672c`, `a6798ea`, `a74aa56` | Codex | Claude, the Pass 2.5 re-run (done) |
+| The E5 commit, still to come | Codex | Claude, the next Pass 2.5 re-run |
+
+**What the next Pass 2.5 re-run does.** The same session is still eligible, because it wrote no fix. A fresh Claude session on Fable 5.2 at High would also do. It does three things:
+- **The cold read** of the E5 commit, with its own E5 probes on the double and on real files.
+- **A re-run of every number** at the new head, with Beni's criterion 12 run at that head, and his picker result.
+- **The merge gate,** in shadow mode.
+
+**Device run.** Ruling 17 stands. The picker step does not touch the store, so it can run at `a74aa56` or at any later head. Criterion 12 waits for the E5 commit's head.
+
+**Process notes.**
+- **Memory.** The re-run wrote no memory note. The seat's note and the index are unchanged since 14:06 EST.
+- **Comment length.** The re-run's comment is 41,961 characters, against the prompt's "one short PR comment". Its seat record is 20,692 of them. The first Pass 2.5 comment was 41,638. For the rules PR: whether a seat record's coverage list stays in the PR comment.
+- **Stops.** The re-run stopped once on NSCocoaErrorDomain 513 and asked Beni. After his "Unlocked", it ran the batch again in full. It also waited once on a usage limit.
+- **The record.** The re-run's seat record validates against `seat-record-1.1.json`, with 44 ids: the 43 earlier ones, in the same order, and E5. elenchus records Pass 2.5 at `a74aa56`, with next 3. Its failures are the three known ones, and its note "commits pushed after pass 2.5" is gone.
+- **How E5 was found.** E5 survived Pass 1, Pass 2 and the first Pass 2.5. It was found by relaunching at every stop from a start that no earlier test used. This round's sweep makes every start part of the suite.
+
+**The PM's commands.**
+- **The re-run's comment:** `gh api repos/BeniCheni/keel/issues/comments/7026722230`. Its record is the body's `json` block. It was checked with ajv against `schema/seat-record-1.1.json` in the elenchus repo, and its ids compared with Codex's E-round record. The lengths come from `jq '.body|length'` and `wc -c`.
+- **Head and branches:** `gh pr view 52 --repo BeniCheni/keel --json headRefOid,isDraft,mergeable,state` and `git ls-remote origin refs/heads/s91/ios-foundation refs/heads/docs/pr-52-records refs/heads/main`.
+- **Authorship:** `git log --reverse --format='%h %an <%ae>' origin/main..a74aa56`.
+- **Runs:** `gh run view <id> --repo BeniCheni/keel --json conclusion,headSha,attempt,jobs` for the four E-round runs.
+- **elenchus:** `node dist/cli.js status` and `check BeniCheni/keel#52 --config <config>`.
+- **E5's reproduction.**
+  - Pass 2.5's test was appended to `SnapshotRecoveryTests` in a scratch clone at `a74aa56`, and printed what each relaunch shows.
+  - It ran with `swift test --package-path apps/ios/KeelCoreHost --filter SnapshotRecoveryTests/testPMProbeE5`: once at the head, and once with `SnapshotStore.swift` taken from `a39a5c7`.
+  - Afterwards, `git checkout -- .` restored the clone.
+- **The check of the specification.** The adapted test and the sweep were appended to `SnapshotRecoveryTests` as `testPMProbeE5Ruling19` and `testPMProbeE5Sweep`. The guard was one line after `hadPrevious` in `SnapshotStore.swift`.
+  - The runs were `swift test --package-path apps/ios/KeelCoreHost --filter 'Snapshot'`, with the guard, and `--filter 'SnapshotRecoveryTests/testPMProbe'`, without it.
+  - The counts are from the probes' printed tallies and the runner's summary lines.
+  - Afterwards, `git checkout -- .` restored the clone.
+- **Memory:** `stat -f '%Sm'` on the seat's memory note and its index.
+- **The rulings' times** come from this session's own transcript.
