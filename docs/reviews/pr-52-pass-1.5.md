@@ -11,7 +11,7 @@ Pass 1's verdict is not mergeable, with two open Highs. The PM accepts all 18 of
 
 **Addendum, 2026-11-18, 14:32 EST.** By Beni's ruling 4, Codex builds the rework instead of Cursor. The addendum at the end of this brief gives the seat and what changes. Where it differs from the text above, the addendum wins.
 
-**Second to sixth addenda.** The second, at 14:56 EST, gives ruling 5. The third, at 19:28 EST, records the fresh Pass 1, rulings 6 to 8 and the C findings, and replaces "What Pass 2 does". The fourth, on 2026-11-19, records Pass 2, rulings 9 to 12 and D3's fix, and replaces "What Pass 2.5 does". The fifth records Pass 2.5, rulings 13 to 17 and the E round. The sixth records the Pass 2.5 re-run, E5, and rulings 18 and 19.
+**Second to seventh addenda.** The second, at 14:56 EST, gives ruling 5. The third, at 19:28 EST, records the fresh Pass 1, rulings 6 to 8 and the C findings, and replaces "What Pass 2 does". The fourth, on 2026-11-19, records Pass 2, rulings 9 to 12 and D3's fix, and replaces "What Pass 2.5 does". The fifth records Pass 2.5, rulings 13 to 17 and the E round. The sixth records the Pass 2.5 re-run, E5, and rulings 18 and 19. The seventh records the second Pass 2.5 re-run, E6 and E7, and ruling 20.
 
 ## Order from here
 
@@ -756,3 +756,90 @@ So the rule can be met without touching any other test's invariant. The shape of
   - Afterwards, `git checkout -- .` restored the clone.
 - **Memory:** `stat -f '%Sm'` on the seat's memory note and its index.
 - **The rulings' times** come from this session's own transcript.
+
+## Seventh addendum, 2026-11-19: the second Pass 2.5 re-run, and ruling 20
+
+Written by the PM at 21:10 EST. It follows two comments:
+- Codex's E5 comment ([issuecomment-7027500111](https://github.com/BeniCheni/keel/pull/52#issuecomment-7027500111)), posted at 20:28:24 EST;
+- the second re-run's comment ([issuecomment-7027943283](https://github.com/BeniCheni/keel/pull/52#issuecomment-7027943283)), posted at 20:56:17 EST.
+
+The re-run reviewed head `8b5d5be2e01113c5671867141f13f42024a21d24` and pushed nothing. Where this addendum differs from the text above, it wins.
+
+**Codex's E5 commit.** `8b5d5be` ("Refuse imports over an orphaned snapshot record") adds one guard to `SnapshotStore.swift`, in 2 lines. It adds 98 lines to `SnapshotRecoveryTests.swift` and removes 3. The PM's prompt for the re-run said 100 lines; that is the commit's total.
+- **The tests:** the record half of `82a672c`'s test, Pass 2.5's E5 test under ruling 19, and a 637-import sweep. The double gains `removeAlwaysThrowsFor`.
+- **The sweep:** 10,608 relaunches with 126 mixed at `a74aa56`, and 8,952 with 0 at the fix. These are the same counts as the PM's check.
+- **The real-file probe:** in 8 of 8 rows the import is refused and nothing is shown.
+- **The run:** 44653327005 is green on six of six checks, and its `swift` job printed "Executed 51 tests, with 5 tests skipped and 0 failures".
+- **The record:** it validates, with the 44 ids in order. Only E5 changed, to fixed.
+
+**What the second re-run found.** It ran as Claude Code on Fable 5.2 at High effort, on 154 of 154 replies, in the same session as both earlier Pass 2.5 comments. That session wrote no commit. Its verdict is mergeable, once Beni's device run passes. The shadow gate says would escalate, because of the sensitive paths and the `esbuild` dependency.
+- **Cold read of `8b5d5be`.** 11 mutants of the guard (removing it, changing its condition, moving it) are all killed. The store as at `a74aa56` fails the three new or changed tests. The 24 earlier store mutants are all killed too, so 35 of 35 in all.
+- **Ruling 19 on its own terms.** No import was refused once no fault was left, in 42 of 42 rows. From 401,227 stop points in a wider sweep, a fault-free import is stored and shown.
+- **Routes the commit's sweep does not cover.**
+  - The re-run crossed the 7 starts with 13 leftover files and folders, 16 fault modes and 13 steps, with a third import chained on.
+  - On the 11 leftovers the store can reach, 0 points are mixed. With the store as at `a74aa56`, 3,855 are.
+  - Two planted `rollback` shapes do show a mixed pair. The re-run found no route to either, by reading or by probing.
+- **Earlier probes still hold:** ruling 15 over 21,342 points, D3 in 36 of 36 cases, PM2, and E2 on real files in 4 of 4.
+- **Re-run at the head:**
+  - installs and `pnpm verify` on Node 24.22.2 and 26.13.0, each with core 178, plugin 212 and tooling 171 tests passing;
+  - local Swift, with 51 tests, no skip and no failure; the hosted `swift` job, with 51 executed and 5 skipped;
+  - the determinism check;
+  - both unsigned builds, each with eight zero counts in the binary check;
+  - the tripwire, with 0 hits over 355 files and 19 commit messages, and a control that fired;
+  - Pass M and demo mode, as N/A with their commands.
+- **Authorship:** each of the 19 commits has a cold read from a vendor that did not write it.
+- **Device:** Beni reported "not run yet" for the B11 picker step and for criterion 12 at `8b5d5be`.
+- **New findings:**
+
+| Id | Severity | Finding |
+| --- | --- | --- |
+| E6 | Low | The new sweep does not notice when its "every try" faults stop firing. It pins only `imports == 637` and `mixed == 0`. With the double's one new line removed, 182 of its 637 cases lose their fault, and every test still passes |
+| E7 | Low | A first import reported as failed can still be shown at the next launch. It happens when the last step, `readRecord`, throws and neither file can be removed: the import returns failed and leaves a whole, exactly sealed pair. Nothing false is shown, because the bytes, name and time agree. It needs three faults at once. The store as at `a74aa56` gives it too, so it is not from `8b5d5be` |
+
+**Per finding.** The PM accepts E6 and E7 and contests nothing.
+- **E6, reproduced.** At `8b5d5be`, with the double's `removeAlwaysThrowsFor` line removed, `SnapshotRecoveryTests` passes all 24 of its tests. The sweep then prints 9,998 relaunches and 41 stored imports, against 8,952 and 37.
+- **E7, read.** The PM read the path at `8b5d5be` (`SnapshotStore.swift:105-114`). With no `rollback` and no previous pair, a throw at `readRecord` calls `removeActivePair`. Both of its `try?` removals can fail, and the import then returns failed with a whole, sealed pair on disk. The PM did not re-run the seat's sweep for E7.
+- **Grading.** Low stands for both.
+  - E7 shows nothing false. At the import, the store could not confirm the record's seal, so "failed" was what it could evidence. At the next launch it confirms both seals.
+  - E6's mutant is in the test double, not in the store.
+
+**Ruling 20, on E6 and E7.** Given at 21:08:28 EST in the PM's session: "Carry both (Recommended)". The PM asked at 21:05:17 EST.
+- **The question:** "PR #52's second Pass 2.5 re-run says mergeable at 8b5d5be, once your device run passes, with two new Lows. E6: the new sweep can't tell when its "every try" faults stop firing (I reproduced it). E7: a first import reported as failed can show at the next launch when its last step throws and neither file can be removed; the bytes, name and time are all correct, so nothing false is shown. Carry E6 and E7 as ideas rows, or fix them before merge?"
+- **The option:** "Both are Low, and the gate allows open Lows. The head stays at 8b5d5be, so your device run there is the last step before Pass 3. The PM adds both to the ideas rows (ruling 9). E6's fix is an extra count assertion; E7 needs its own ruling on what a failed import may leave on disk."
+
+**What Pass 3 needs.** No High is open. Before Beni merges:
+- **His device run at `8b5d5be`,** under ruling 17: the B11 picker step and criterion 12 on his iPhone.
+  - If the picker step reproduces B11, B11 is a Medium to rule on before the merge.
+  - If criterion 12 fails, the PR is not mergeable at this head.
+- **His own private-list check.**
+- **Pass 3:** his rulings, `gh pr ready 52`, and the squash merge pinned to `8b5d5be` with `--match-head-commit`. The PM writes the handoff block after the device run.
+
+**Carried,** for the ideas rows under ruling 9: D1, D2, D4, B16, B17, C9, E6 and E7, with the items already listed in the earlier addenda.
+
+**Authorship record, extended.**
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `8b5d5be` | Codex | Claude, the second Pass 2.5 re-run (done) |
+
+**Process notes.**
+- **Comment length.** The re-run's comment is 25,048 characters, and its seat record is 15,679 of them. The previous comment was 41,961.
+- **Memory.** The re-run wrote no memory note. The seat's note and the index are unchanged since 14:06 EST.
+- **The record.** It validates against `seat-record-1.1.json`, with 46 ids: the 44 in order, then E6 and E7. elenchus records Pass 2.5 at `8b5d5be`, with next 3. It is blocked only on "no record for pass 3", and its failures are the three known ones.
+- **The seat's handoff block** leaves `gh pr ready` and the private-list check outside it. The PM's Pass 3 handoff puts both in, as PR #50's did.
+
+**The PM's commands.**
+- **The two comments:** `gh api repos/BeniCheni/keel/issues/comments/<id>`. Each record is the body's `json` block, checked with ajv against `schema/seat-record-1.1.json` in the elenchus repo, and its ids compared with the record before it.
+- **The commit:** `git log` and `git diff --stat a74aa56 8b5d5be`, and the store hunk read in full.
+- **The run:** `gh run view 44653327005 --repo BeniCheni/keel --json conclusion,headSha,attempt,event,jobs`, and the `swift` job's log through `gh run view --log --job`.
+- **Head, branches and authorship:**
+  - `gh pr view 52 --repo BeniCheni/keel --json headRefOid,isDraft,mergeable,state`;
+  - `git ls-remote origin refs/heads/s91/ios-foundation refs/heads/docs/pr-52-records`;
+  - `git log --reverse --format='%an' origin/main..8b5d5be | sort | uniq -c`.
+- **E6's reproduction.**
+  - In a scratch clone at `8b5d5be`, the line `if removeAlwaysThrowsFor == url { throw Fault.injected }` was deleted.
+  - The run was `swift test --package-path apps/ios/KeelCoreHost --filter 'SnapshotRecoveryTests'`.
+  - Afterwards, `git checkout -- .` restored the clone.
+- **elenchus:** `node dist/cli.js status` and `check BeniCheni/keel#52 --config <config>`.
+- **Memory:** `stat -f '%Sm'` on the seat's memory note and its index.
+- **The ruling's times** come from this session's own transcript.
