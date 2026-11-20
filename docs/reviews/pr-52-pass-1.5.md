@@ -11,7 +11,7 @@ Pass 1's verdict is not mergeable, with two open Highs. The PM accepts all 18 of
 
 **Addendum, 2026-11-18, 14:32 EST.** By Beni's ruling 4, Codex builds the rework instead of Cursor. The addendum at the end of this brief gives the seat and what changes. Where it differs from the text above, the addendum wins.
 
-**Second to seventh addenda.** The second, at 14:56 EST, gives ruling 5. The third, at 19:28 EST, records the fresh Pass 1, rulings 6 to 8 and the C findings, and replaces "What Pass 2 does". The fourth, on 2026-11-19, records Pass 2, rulings 9 to 12 and D3's fix, and replaces "What Pass 2.5 does". The fifth records Pass 2.5, rulings 13 to 17 and the E round. The sixth records the Pass 2.5 re-run, E5, and rulings 18 and 19. The seventh records the second Pass 2.5 re-run, E6 and E7, and ruling 20.
+**Second to eighth addenda.** The second, at 14:56 EST, gives ruling 5. The third, at 19:28 EST, records the fresh Pass 1, rulings 6 to 8 and the C findings, and replaces "What Pass 2 does". The fourth, on 2026-11-19, records Pass 2, rulings 9 to 12 and D3's fix, and replaces "What Pass 2.5 does". The fifth records Pass 2.5, rulings 13 to 17 and the E round. The sixth records the Pass 2.5 re-run, E5, and rulings 18 and 19. The seventh records the second Pass 2.5 re-run, E6 and E7, and ruling 20. The eighth records Beni's device run at `8b5d5be`, B11's reproduction, and rulings 21 and 22.
 
 ## Order from here
 
@@ -843,3 +843,86 @@ The re-run reviewed head `8b5d5be2e01113c5671867141f13f42024a21d24` and pushed n
 - **elenchus:** `node dist/cli.js status` and `check BeniCheni/keel#52 --config <config>`.
 - **Memory:** `stat -f '%Sm'` on the seat's memory note and its index.
 - **The ruling's times** come from this session's own transcript.
+
+## Eighth addendum, 2026-11-19: Beni's device run, B11, and rulings 21 and 22
+
+Written by the PM at 23:20 EST. It records Beni's device run at `8b5d5be2e01113c5671867141f13f42024a21d24` and two rulings. Beni ran the device steps with a side session forked from the PM's session, so that session's words and prompt are the PM's. The head has not moved. Where this addendum differs from the text above, it wins.
+
+**After this was written.** Codex pushed its B11 commit, `e76f296`, at 23:21:37 EST. It was built from the side session's prompt alone: it allows `[.yaml]` and leaves the `Info.plist` declaration in place, so ruling 22 is not built yet. The ninth addendum records `e76f296`. The PM added this paragraph at 09:47 EST on 2026-11-20, when the addendum was pushed.
+
+**Beni's device run at `8b5d5be`.** This is his report, relayed to the PM by the side session. He built the `Verification` configuration, signed it, and installed it on his iPhone through Xcode.
+- **The B11 picker step.** He put `minimal.yaml`, `example-autocall.yaml`, `missing-required-top.yaml` and an edited copy of `minimal.yaml` in the iPhone's Downloads folder. In the app's Files picker, none of the four can be selected. B11 reproduces.
+- **Criterion 12's launch half.** Five launches through `devicectl`, as he reported them, with no device or team identifier:
+
+```text
+KEEL v1 launch=2 pid=1056 contextMs=195.762 loadTermsMs=13.206
+KEEL v1 launch=3 pid=1061 contextMs=187.415 loadTermsMs=13.909
+KEEL v1 launch=4 pid=1062 contextMs=180.926 loadTermsMs=13.118
+KEEL v1 launch=5 pid=1063 contextMs=182.904 loadTermsMs=12.974
+KEEL v1 launch=6 pid=1065 contextMs=184.573 loadTermsMs=12.768
+```
+
+  The median `contextMs` is 184.573, under the spec's 500 ms limit. The median `loadTermsMs` is 13.118, under its 50 ms limit. Launch 1 was Xcode's own run and is not counted.
+- **Criterion 12's import half** cannot run at this head, because no file can be picked. So criterion 12 fails at `8b5d5be`, and under ruling 17 the PR is not mergeable at this head. Criterion 12 runs again in full, launches and imports, at the head the B11 commit makes.
+
+**B11's cause, corrected.** The side session told Beni, and wrote in its Codex prompt, that the app declares no `app.keel.yaml`. That is wrong.
+- At `8b5d5be`, `apps/ios/Keel/Info.plist:38-58` declares `app.keel.yaml` under `UTImportedTypeDeclarations`. The type conforms to `public.plain-text` and claims the extensions `yaml` and `yml`. It came in with `819433e`, and nothing else names it.
+- **The PM's reading, not run on a device.** On the phone, the picker's lookup returns that imported type. But iOS declares `public.yaml` for `.yaml` and `.yml` itself, and a system declaration outranks an app's imported one. So Files tags the fixtures `public.yaml`, which conforms to neither `app.keel.yaml` nor `public.plain-text`. The `.plainText` fallback would grey them out too.
+- The B11 details in the first per-finding table already said the PM's macOS check "says nothing about the app's own declared type". The side session read the filter without the plist.
+
+**Ruling 21, on B11.** Given at 23:10:30 EST in the side session: "Yes." The question, asked at 23:09:57 EST: "Your ruling, in one word: fix B11 on this PR, yes or no?" B11 is fixed on this PR, as rework under ruling 5.
+
+**Ruling 22, on the declaration.** Given at 23:16:38 EST in the PM's session: "Remove it (Recommended)". The PM asked at 23:16:19 EST.
+- **The question:** "PR #52's B11 prompt for Codex says the app declares no app.keel.yaml type. It does: Info.plist lines 38–58 at 8b5d5be declare it for .yaml and .yml, as plain text, and only the picker uses it. Should B11's commit remove that declaration along with the lookup?"
+- **The option:** "The picker allows [.yaml], and Info.plist drops its 21-line declaration. iOS already declares public.yaml for .yaml and .yml, so nothing is lost and no stale type is left behind."
+
+**The round for Codex.** One commit, as rework under ruling 5, on GPT-6.2 Sol at Extra High. The side session wrote the prompt, and the PM corrected it under ruling 22. The commit:
+- allows `[.yaml]` in the picker, from one value in `KeelCoreHost` that `RootView` uses, and drops the `app.keel.yaml` lookup and its `.plainText` fallback;
+- removes the `UTImportedTypeDeclarations` key from `Info.plist`;
+- adds two package tests, each shown failing by assertion at `8b5d5be`:
+  - the allowed types accept `public.yaml` and are not `public.plain-text` alone;
+  - `Info.plist` declares no type that claims `yaml` or `yml`;
+- runs frozen installs and `pnpm verify` on Node 24 and on Node 26, `swift test`, and both unsigned builds, with the binary check's counts unchanged;
+- pushes to `s91/ios-foundation` only if it is still `8b5d5be`, then posts one comment with a Pass 2 seat record of 46 ids, with B11 fixed.
+
+Adding any type declaration, or changing any other `Info.plist` key, needs Beni's yes first. Only Beni's device run at the new head proves the real picker.
+
+**Spec note.** `docs/specs/s91-ios-foundation.md:42` says the picker opens "for a plain-text `.yaml` or `.yml` file". Under rulings 21 and 22, it filters on `public.yaml`. This joins the spec amendments listed for the rules PR.
+
+**Setup gap, a docs note.**
+- `apps/ios/Config.xcconfig` sets `CODE_SIGN_IDENTITY =`, empty, at line 3, before `#include? "Local.xcconfig"` at line 4.
+- The PR body's `Local.xcconfig` lines set `CODE_SIGNING_ALLOWED`, `CODE_SIGNING_REQUIRED`, `CODE_SIGN_STYLE` and `DEVELOPMENT_TEAM`, but not `CODE_SIGN_IDENTITY`.
+- Beni's first install failed with "The executable is not codesigned" (`LaunchExecutableValidationErrorDomain` 1). Adding `CODE_SIGN_IDENTITY = Apple Development` to his `Local.xcconfig` fixed it.
+
+Codex's round leaves this out. It is carried to the ideas rows.
+
+**What comes next.**
+1. Codex's B11 commit and comment.
+2. The third Pass 2.5 re-run, by the same seat: the cold read of that commit, every number re-run at its head, and the gate.
+3. Beni's criterion 12 in full at that head: five launches, all four imports, and the digest lines.
+4. Beni's private-list check and Pass 3. The PM writes the handoff block after his device run.
+
+**Carried,** for the ideas rows under ruling 9: D1, D2, D4, B16, B17, C9, E6, E7 and the signing note, with the items already listed in the earlier addenda.
+
+**Authorship record.** Unchanged through `8b5d5be`: 19 commits, each with a cold read from a vendor that did not write it. Codex's B11 commit gets its cold read from the third re-run.
+
+**Process notes.**
+- **The side session's cause.** It stated B11's cause from `RootView.swift` alone. Its prompt told Codex to treat the cause as a lead, so Codex would likely have found the declaration, but its direction to remove "the undeclared app.keel.yaml lookup" could have left the declaration in place. When the PM checked, no commit had landed after `8b5d5be`. Lesson: a cause in a prompt names every file the mechanism runs through, here the filter and the type declaration.
+- **GitHub from the side session.** Its sandbox blocked GitHub, so it could not check the branch tips. The PM checked them: `s91/ios-foundation` at `8b5d5be`, `docs/pr-52-records` at `f4662b3`, `main` at `e499e5f`, and no PR comment after the PM's note 7028283198.
+
+**The PM's commands.**
+- **Head and branches:**
+  - `gh pr view 52 --repo BeniCheni/keel --json headRefOid,isDraft,state,mergeable`;
+  - `git ls-remote origin refs/heads/s91/ios-foundation refs/heads/docs/pr-52-records refs/heads/main`;
+  - `gh api --paginate repos/BeniCheni/keel/issues/52/comments`, for comments after 7028283198.
+- **B11's cause:**
+  - `git show 8b5d5be:apps/ios/Keel/RootView.swift` and `git show 8b5d5be:apps/ios/Keel/Info.plist`, both read in full;
+  - `git grep -n 'app\.keel\.yaml' 8b5d5be`, which prints only `Info.plist:42` and `RootView.swift:33`;
+  - `git log -S'app.keel.yaml' origin/main..8b5d5be -- apps/ios`, which prints only `819433e`.
+- **The signing gap:** `git show 8b5d5be:apps/ios/Config.xcconfig`, and `gh pr view 52 --json body` searched for `Local.xcconfig` and `CODE_SIGN`.
+- **The medians:**
+  - `printf '%s\n' 195.762 187.415 180.926 182.904 184.573 | sort -n | sed -n 3p` printed 184.573;
+  - the same over the `loadTermsMs` values printed 13.118;
+  - the limits are from `docs/specs/s91-ios-foundation.md:92`.
+- **The rulings' times:** ruling 21's come from the side session's transcript, and ruling 22's from the PM's.
+- **After it was written:** `git log --format='%h %an %cI %s' 8b5d5be..origin/s91/ios-foundation` and `git diff --stat 8b5d5be origin/s91/ios-foundation`, which shows `e76f296` touching `RootView.swift` and two new `KeelCoreHost` files, and not `Info.plist`.
