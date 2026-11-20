@@ -11,7 +11,7 @@ Pass 1's verdict is not mergeable, with two open Highs. The PM accepts all 18 of
 
 **Addendum, 2026-11-18, 14:32 EST.** By Beni's ruling 4, Codex builds the rework instead of Cursor. The addendum at the end of this brief gives the seat and what changes. Where it differs from the text above, the addendum wins.
 
-**Second to eighth addenda.** The second, at 14:56 EST, gives ruling 5. The third, at 19:28 EST, records the fresh Pass 1, rulings 6 to 8 and the C findings, and replaces "What Pass 2 does". The fourth, on 2026-11-19, records Pass 2, rulings 9 to 12 and D3's fix, and replaces "What Pass 2.5 does". The fifth records Pass 2.5, rulings 13 to 17 and the E round. The sixth records the Pass 2.5 re-run, E5, and rulings 18 and 19. The seventh records the second Pass 2.5 re-run, E6 and E7, and ruling 20. The eighth records Beni's device run at `8b5d5be`, B11's reproduction, and rulings 21 and 22.
+**Second to ninth addenda.** The second, at 14:56 EST, gives ruling 5. The third, at 19:28 EST, records the fresh Pass 1, rulings 6 to 8 and the C findings, and replaces "What Pass 2 does". The fourth, on 2026-11-19, records Pass 2, rulings 9 to 12 and D3's fix, and replaces "What Pass 2.5 does". The fifth records Pass 2.5, rulings 13 to 17 and the E round. The sixth records the Pass 2.5 re-run, E5, and rulings 18 and 19. The seventh records the second Pass 2.5 re-run, E6 and E7, and ruling 20. The eighth records Beni's device run at `8b5d5be`, B11's reproduction, and rulings 21 and 22. The ninth records Codex's B11 commits `e76f296` and `91b471e`, and ruling 23.
 
 ## Order from here
 
@@ -926,3 +926,94 @@ Codex's round leaves this out. It is carried to the ideas rows.
   - the limits are from `docs/specs/s91-ios-foundation.md:92`.
 - **The rulings' times:** ruling 21's come from the side session's transcript, and ruling 22's from the PM's.
 - **After it was written:** `git log --format='%h %an %cI %s' 8b5d5be..origin/s91/ios-foundation` and `git diff --stat 8b5d5be origin/s91/ios-foundation`, which shows `e76f296` touching `RootView.swift` and two new `KeelCoreHost` files, and not `Info.plist`.
+
+## Ninth addendum, 2026-11-20: Codex's B11 commits, and ruling 23
+
+Written by the PM at 10:39 EST. It follows two Codex comments:
+- the B11 comment ([issuecomment-7030387485](https://github.com/BeniCheni/keel/pull/52#issuecomment-7030387485)), posted at 23:26:15 EST on 2026-11-19;
+- the ruling 22 comment ([issuecomment-7043565194](https://github.com/BeniCheni/keel/pull/52#issuecomment-7043565194)), posted at 10:34:37 EST.
+
+The head is now `91b471e43631ace5bca5026e991f79e6d3df4379`. The eighth addendum's note was never posted, so this addendum's note covers both. Where this addendum differs from the text above, it wins.
+
+**Codex's B11 commit, `e76f296`** ("Fix B11 by accepting public YAML in the iOS file picker"), at 23:21:37 EST on 2026-11-19. Codex built it from the side session's prompt, before ruling 22 reached it.
+- **The change:** a new `TermsFilePicker.allowedContentTypes` in `KeelCoreHost`, whose only entry is `.yaml`, in 5 lines. `RootView` uses it, and drops `termsType` and its `UniformTypeIdentifiers` import.
+- **The test:** `testTermsPickerAcceptsOnlyYAML`. `.yaml` must conform to an allowed type, `.yml` too when the system maps it, and the list must equal `[.yaml]`. With the old expression restored in the shared value, it fails at `8b5d5be`.
+- **The checks:** installs and `pnpm verify` on Node 24.22.3 and 26.13.0; local Swift with 52 tests, no skip and no failure; both unsigned builds with the same eight zero counts as `8b5d5be`.
+- **The run:** 44673903761 is green, and its `swift` job executed 52 tests with 5 skipped.
+- **The record:** it validates, with the 46 ids in order. Only B11 changed, from open to fixed.
+
+**Codex's stop, and ruling 23.** Codex received the PM's correction after `e76f296` and stopped.
+- **Its points.** Ruling 22 could not land in the one commit without rewriting the branch. Its replay had also resolved the old lookup to `app.keel.yaml`, not `.plainText`.
+- **Its question:** "May I add one follow-up commit that removes the declaration and adds the plist regression, then update the existing comment and seat record to reflect both commits?" Beni brought it to the PM at 09:59:35 EST.
+- **Ruling 23.** Beni gave it in Codex's session, pasting the PM's draft of 10:00:57 EST: yes to one follow-up commit on top of `e76f296`; no to editing the posted comment or its seat record. A new comment carries the follow-up's record. Codex's comment does not give the time Beni pasted it.
+- **Why no edit.** Comment 7030387485's record is the record of `e76f296`, which the PM had already checked. elenchus chains the next record on it, and the records cite it.
+- **The check.** The comment's body is byte-identical to the PM's copy taken at 09:45 EST, and its `updated_at` equals its `created_at`.
+
+**Codex's ruling 22 commit, `91b471e`** ("Remove the legacy YAML type declaration for B11"), at 10:27:44 EST.
+- **The change:** the `UTImportedTypeDeclarations` key leaves `Info.plist`, all 21 of its lines, and nothing else there changes.
+- **The test:** `testAppDoesNotDeclareYAMLFilenameExtensions` reads `Info.plist` from the repo through `Repo.root()`. It fails if an imported or an exported declaration claims `yaml` or `yml` as a filename extension, given as a list or a string, in any case.
+- **The PM's run.** At `e76f296` with `91b471e`'s test, it fails with "UTImportedTypeDeclarations claims yaml, yml". With `91b471e`'s `Info.plist` as well, both picker tests pass.
+- **`plutil` on the built apps, Codex's report.** In both the Release and the Verification build, `plutil -extract UTImportedTypeDeclarations raw` prints `1` at `e76f296` and exits 1 at `91b471e`. Both fixed apps pass `plutil -lint`, and the binary check gives the same eight zero counts at both commits.
+- **The checks:** installs and `pnpm verify` on Node 24.22.3 and 26.13.0; local Swift with 53 tests, no skip and no failure.
+- **The run:** 44763557130 is green on six of six checks. Its `swift` job printed "Executed 53 tests, with 5 tests skipped and 0 failures", and the new test passed there.
+- **The record:** it validates, with input `e76f296`, output `91b471e` and commits `[91b471e]`. It has the 46 ids in order, and no finding changed.
+
+**The PM's error, corrected by Codex.** The PM's correction predicted that, in the test process, the old lookup would fall back to `.plainText`. On Codex's unlocked Mac, it resolved to `app.keel.yaml (not dynamic, declared)`.
+- The PM's reading, not checked: macOS had registered the type from a `Keel.app` built on that Mac.
+- The old filter fails the test either way.
+- Lesson: a type lookup in a macOS test depends on what that Mac has registered. A test that pins the declaration reads the file, as `91b471e`'s does.
+
+**B11's status.** Codex's record says fixed. The PM keeps B11 open in its own record until Beni's picker step passes at `91b471e`, because B11 is a device finding.
+
+**What comes next.**
+1. **The third Pass 2.5 re-run,** by the same seat, which still wrote no fix:
+   - the cold read of `e76f296` and `91b471e`;
+   - every number re-run at `91b471e`;
+   - Beni's device results;
+   - the gate.
+
+   No store source or store test changed after `8b5d5be`, so the store probes carry over from the second re-run unless the seat finds otherwise.
+2. **Beni's device run at `91b471e`,** under ruling 17:
+   - the B11 picker step;
+   - criterion 12 in full: five launches with both medians under their limits, all four imports, and the digest lines.
+
+   He sets `CODE_SIGN_IDENTITY = Apple Development` in his `Local.xcconfig`, as the eighth addendum's setup note gives.
+3. **Beni's private-list check and Pass 3.** The PM writes the handoff block after his device run.
+
+**Carried,** for the ideas rows under ruling 9: D1, D2, D4, B16, B17, C9, E6, E7 and the signing note, with the items already listed in the earlier addenda.
+
+**Authorship record, extended.** 21 commits through `91b471e`: Cursor 1, Claude 4, Codex 16.
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `e76f296` | Codex | Claude, the third Pass 2.5 re-run (pending) |
+| `91b471e` | Codex | Claude, the third Pass 2.5 re-run (pending) |
+
+**Process notes.**
+- **The cleared scratch folder.** Overnight the PM's scratch folder was cleared, taking the local eighth-addendum commit and its note with it. Nothing had been pushed. The PM rebuilt the addendum from its own session's text and pushed it at 09:47 EST, with a dated paragraph on `e76f296`.
+- **A new session id.** The PM's session continued under a new id at 09:52:56 EST. The note's seat record names that id.
+- **elenchus.** It now also fails "authors" on both Codex comments: "runtime Codex Desktop is not a configured vendor". This is a gap in the PM's config, and the rules PR adds the runtime. The sha-chain failure at pass 2 is the known kind. elenchus says next 3, blocked on "commits pushed after pass 2.5", which the re-run's record clears.
+
+**The PM's commands.**
+- **Head and branches:**
+  - `gh pr view 52 --repo BeniCheni/keel --json headRefOid,isDraft,state,mergeable`;
+  - `git ls-remote origin refs/heads/s91/ios-foundation refs/heads/docs/pr-52-records refs/heads/main`.
+- **The commits:**
+  - `git log --format='%h %an <%ae> %cI %s' 8b5d5be..91b471e`;
+  - `git diff 8b5d5be e76f296` and `git diff e76f296 91b471e`, read in full;
+  - `git diff --stat 8b5d5be 91b471e`, which lists only `Info.plist`, `RootView.swift`, `TermsFilePicker.swift` and `TermsFilePickerTests.swift`.
+- **The PM's test run.**
+  - In a scratch clone detached at `e76f296`, `git restore --source=91b471e -- apps/ios/KeelCoreHost/Tests/KeelCoreHostTests/TermsFilePickerTests.swift`.
+  - Then `swift test --package-path apps/ios/KeelCoreHost --filter 'TermsFilePickerTests'`, which exited 1.
+  - Then the same restore of `apps/ios/Keel/Info.plist`, and the same run, which passed both tests.
+  - Then `git checkout -- .` restored the clone.
+- **The runs:**
+  - `gh run view 44763557130 --repo BeniCheni/keel --json conclusion,headSha,attempt,event,jobs`;
+  - `gh run view --repo BeniCheni/keel --job 136382122246 --log`, searched for "Executed".
+- **The comments and records:**
+  - `gh api repos/BeniCheni/keel/issues/comments/<id>` for both;
+  - each record checked with ajv against `seat-record-1.1.json`, and its ids and statuses compared with the record before it;
+  - `cmp` between comment 7030387485's body and the PM's earlier copy.
+- **Authorship:** `git log --reverse --format='%an' origin/main..91b471e | sort | uniq -c`.
+- **elenchus:** `node dist/cli.js status` and `check BeniCheni/keel#52 --config <config>`.
+- **The times** of Codex's stop and the PM's draft come from the PM's session transcript.
