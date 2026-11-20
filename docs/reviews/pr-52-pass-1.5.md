@@ -11,7 +11,7 @@ Pass 1's verdict is not mergeable, with two open Highs. The PM accepts all 18 of
 
 **Addendum, 2026-11-18, 14:32 EST.** By Beni's ruling 4, Codex builds the rework instead of Cursor. The addendum at the end of this brief gives the seat and what changes. Where it differs from the text above, the addendum wins.
 
-**Second to ninth addenda.** The second, at 14:56 EST, gives ruling 5. The third, at 19:28 EST, records the fresh Pass 1, rulings 6 to 8 and the C findings, and replaces "What Pass 2 does". The fourth, on 2026-11-19, records Pass 2, rulings 9 to 12 and D3's fix, and replaces "What Pass 2.5 does". The fifth records Pass 2.5, rulings 13 to 17 and the E round. The sixth records the Pass 2.5 re-run, E5, and rulings 18 and 19. The seventh records the second Pass 2.5 re-run, E6 and E7, and ruling 20. The eighth records Beni's device run at `8b5d5be`, B11's reproduction, and rulings 21 and 22. The ninth records Codex's B11 commits `e76f296` and `91b471e`, and ruling 23.
+**Second to tenth addenda.** The second, at 14:56 EST, gives ruling 5. The third, at 19:28 EST, records the fresh Pass 1, rulings 6 to 8 and the C findings, and replaces "What Pass 2 does". The fourth, on 2026-11-19, records Pass 2, rulings 9 to 12 and D3's fix, and replaces "What Pass 2.5 does". The fifth records Pass 2.5, rulings 13 to 17 and the E round. The sixth records the Pass 2.5 re-run, E5, and rulings 18 and 19. The seventh records the second Pass 2.5 re-run, E6 and E7, and ruling 20. The eighth records Beni's device run at `8b5d5be`, B11's reproduction, and rulings 21 and 22. The ninth records Codex's B11 commits `e76f296` and `91b471e`, and ruling 23. The tenth records the third Pass 2.5 re-run, E8, and ruling 24.
 
 ## Order from here
 
@@ -1017,3 +1017,93 @@ The head is now `91b471e43631ace5bca5026e991f79e6d3df4379`. The eighth addendum'
 - **Authorship:** `git log --reverse --format='%an' origin/main..91b471e | sort | uniq -c`.
 - **elenchus:** `node dist/cli.js status` and `check BeniCheni/keel#52 --config <config>`.
 - **The times** of Codex's stop and the PM's draft come from the PM's session transcript.
+
+## Tenth addendum, 2026-11-20: the third Pass 2.5 re-run, E8, and ruling 24
+
+Written by the PM at 14:46 EST. It follows the third re-run's comment ([issuecomment-7046699629](https://github.com/BeniCheni/keel/pull/52#issuecomment-7046699629)), posted at 12:52:59 EST. The re-run reviewed head `91b471e43631ace5bca5026e991f79e6d3df4379` and pushed nothing. Beni's device run at `91b471e` has not happened yet; the next addendum records it. Where this addendum differs from the text above, it wins.
+
+**What the third re-run found.** It ran as Claude Code on Fable 5.2 at High effort, on 192 of 192 replies, in the same session as the three earlier Pass 2.5 comments. That session wrote no commit. Its verdict is mergeable, once Beni's B11 picker step and criterion 12 pass at `91b471e`. The shadow gate says would escalate, because of the sensitive paths and the `esbuild` dependency.
+- **Cold read of `e76f296`.** `testTermsPickerAcceptsOnlyYAML` kills 14 of 14 mutants of the type list. Eight of them fail only its equality assertion, which is what keeps the list from being wider than `[.yaml]`.
+- **Cold read of `91b471e`.** `testAppDoesNotDeclareYAMLFilenameExtensions` kills 10 of 10 mutants of the plist. Five other shapes pass, each outside what the test's name claims, such as a declaration with no tag or a `CFBundleDocumentTypes` entry. The re-run gave them no id.
+- **Host registrations.** What a Mac has registered cannot change either test's outcome. The plist test reads the repo's file. The picker test's equality assertion compares constants.
+  - That Mac has `app.keel.yaml` registered. A read-only query lists `public.yaml` first for both extensions.
+  - The re-run ran no registration command.
+- **Built apps.** In both unsigned builds at `91b471e`, `plutil -extract UTImportedTypeDeclarations raw` exits 1. Each built `Info.plist` has 26 keys, against 27 at `8b5d5be`, and the removed key is the only difference.
+- **Store probes carry over,** as the ninth addendum expected: no store source or store test changed after `8b5d5be`.
+- **Re-run at the head:**
+  - installs and `pnpm verify` on Node 24.22.2 and 26.13.0, each with core 178, plugin 212 and tooling 171 tests passing;
+  - the determinism check;
+  - local Swift, with 53 tests, no skip and no failure. The hosted `swift` job's 53 executed and 5 skipped were read from its log;
+  - both unsigned builds, each with eight zero counts in the binary check;
+  - the tripwire, with 0 hits over 357 files and 21 commit messages, and a control that fired;
+  - Pass M and demo mode, as N/A with their commands.
+- **Authorship:** each of the 21 commits has a cold read from a vendor that did not write it.
+- **Device:** Beni reported "not run yet" for the B11 picker step and for criterion 12 at `91b471e`.
+- **Rulings 21 and 23:** Beni confirmed both in the seat's session, "Both confirmed".
+- **The new finding:**
+
+| Id | Severity | Finding |
+| --- | --- | --- |
+| E8 | Medium | B11's regression test passes with B11 put back where it lived. `testTermsPickerAcceptsOnlyYAML` pins the shared list, and no check ties `RootView` to it. With `RootView.swift` restored from `8b5d5be` and everything else at `91b471e`, `pnpm verify` exits 0, `swift test` passes 53 of 53, and both unsigned builds pass the binary check. At the head, `RootView.swift:24` does use the list, so the app as built is right |
+
+**Per finding.** The PM accepts E8 and contests nothing.
+- **E8, read, not re-run.** At `91b471e`, `RootView.swift:24` passes `TermsFilePicker.allowedContentTypes` to `fileImporter`.
+  - Outside that line, `git grep` finds the name only in `TermsFilePicker.swift:4`, `TermsFilePickerTests.swift:8`, and two allowlist lines that name SwiftUI's `fileImporter` symbol.
+  - The two Node tests that name `RootView.swift` write throwaway copies with a `Text` line. Neither reads the repo's file.
+  - So nothing reads the filter in the real `RootView`. The PM did not re-run the seat's restore.
+- **Grading.** Medium stands. The test that guards B11 can fail, and it killed every mutant of the list. What is missing is a check on the one line that joins the list to the screen. That is a missed edge case, not a test that cannot fail.
+
+**Ruling 24, on E8.** Given at 13:11:58 EST in the PM's session: "Carry it (Recommended)". The PM asked at 13:04:40 EST.
+- **The question:** "PR #52's third Pass 2.5 re-run says mergeable at 91b471e once your device run passes, with one new Medium, E8: nothing checks that RootView uses the tested [.yaml] list, so putting B11 back in RootView would pass every automated check. The app at 91b471e is correct. Carry E8 as an ideas row, or fix it before merge?"
+- **The option:** "Your picker step at 91b471e checks that wiring directly, and the head stays where it is, so your device run there is the last step before Pass 3. A lasting check needs a UI test in the app target or a source check, which fits an ideas row (ruling 9)."
+- **The same ruling, in the seat's session.** The re-run asked at 12:53:26 EST: "Carry E8 as an ideas row, or fix it before your device run?" At 14:26:23 EST Beni answered "Carry E8". It agrees with ruling 24, so it takes no number of its own.
+
+The head stays at `91b471e`, and no fix round follows. E8 goes to the ideas rows under ruling 9, with the fix the re-run names: a package test that reads `RootView.swift` through `Repo.root()`, as the plist test reads `Info.plist`, or an `ios-source` rule.
+
+**What Pass 3 needs.** No High is open. Before Beni merges:
+- **His device run at `91b471e`,** under ruling 17.
+  - **The B11 picker step:** each of the four files can be selected in the app's Files picker.
+  - **Criterion 12 in full:** five launches with both medians under 500 ms and 50 ms; the four imports in the spec's order; and the digest lines. The digests are `200ba5951b9a09853cbe6ff8e7c879d29bc8b7870ee377c30c6ebe7fd1ee5665` once, then `6215ee32b0fb9c3fc262bac8bdcd8b17050a4df5b47690d35ad79997b370c302` twice, and the edited copy imports and logs no digest.
+  - He sets `CODE_SIGN_IDENTITY = Apple Development` in his `Local.xcconfig`, as the eighth addendum's setup note gives.
+- **If the picker step passes,** B11 closes in the PM's record. If B11 still reproduces, or criterion 12 fails, the PR is not mergeable at this head and goes back as rework.
+- **His own private-list check.**
+- **Pass 3:** his rulings, `gh pr ready 52`, and the squash merge pinned to `91b471e` with `--match-head-commit`. The PM writes the handoff block after the device run.
+
+**Carried,** for the ideas rows under ruling 9: D1, D2, D4, B16, B17, C9, E6, E7, E8 and the signing note, with the items already listed in the earlier addenda.
+
+**Authorship record, extended.** The ninth addendum's two rows are now done.
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `e76f296` | Codex | Claude, the third Pass 2.5 re-run (done) |
+| `91b471e` | Codex | Claude, the third Pass 2.5 re-run (done) |
+
+**Process notes.**
+- **The prompt reached Codex's session first.** Beni first pasted the third re-run's prompt into Codex's session.
+  - Codex read its own transcript, found GPT-6.2 Sol at Extra High in the session that wrote `e76f296` and `91b471e`, and stopped at the seat check.
+  - Beni brought the stop to the PM at 11:41:36 EST. He pasted the prompt into the Pass 2.5 seat's session at 11:44:24 EST.
+  - Codex pushed and posted nothing. The head stayed at `91b471e`, and the re-run's is the only comment after the PM's note 7044702396.
+  - Lesson: the prompt's seat check is what made this harmless. The PM's next seat prompts also name the target session by its sidebar title in the line above the block.
+- **Comment length.** The re-run's comment is 26,314 characters, and its seat record block is 16,482 of them. The second re-run's was 25,048.
+- **Memory.** The re-run wrote no memory note. The seat's note and the index are unchanged since 14:06 EST on 2026-11-19.
+- **The record.** It validates against `seat-record-1.1.json`, with 47 ids: the 46 in order, then E8. 37 are fixed and 10 open: B11, B16, B17, C9, D1, D2, D4, E6, E7 and E8. Each status matches the PM's note record of 46 ids, B11 open included.
+- **elenchus** records Pass 2.5 at `91b471e`, with next 3. It is blocked only on "no record for pass 3", and its failures are the four known ones: the route at passes 0 and 1.5, the sha chain at pass 2, and the authors check at pass 2.
+- **The seat's handoff block** leaves out `gh pr ready`, the private-list check, a checked `KEEL_DATA_DIR`, the squash tree check, `set -o pipefail`, and a fast-forward-only pull on a clean `main`. The PM's Pass 3 handoff puts all six in.
+
+**The PM's commands.**
+- **Head and branches:**
+  - `gh pr view 52 --repo BeniCheni/keel --json headRefOid,isDraft,state,mergeable`;
+  - `git ls-remote origin refs/heads/s91/ios-foundation refs/heads/docs/pr-52-records refs/heads/main`;
+  - `gh api --paginate repos/BeniCheni/keel/issues/52/comments`, for comments after 7044702396.
+- **The comment and record:**
+  - `gh api repos/BeniCheni/keel/issues/comments/7046699629`, its body compared with `cmp` against the PM's earlier copy, and its `updated_at` equal to its `created_at`;
+  - the record is the body's `json` block, checked with ajv against `schema/seat-record-1.1.json` in the elenchus repo, and its ids and statuses compared with the PM's note record;
+  - the lengths are Python's `len` over the body, less its trailing newline, and over the `json` block with its fences.
+- **E8:**
+  - `git show 91b471e:apps/ios/Keel/RootView.swift`;
+  - `git grep -n 'allowedContentTypes' 91b471e -- apps tools`;
+  - `git grep -l 'RootView' 91b471e -- . ':!docs'`, and each Node test's `RootView` lines read.
+- **The device steps:** criterion 12 is read from `docs/specs/s91-ios-foundation.md` at `91b471e`.
+- **elenchus:** `node dist/cli.js status` and `check BeniCheni/keel#52 --config <config>`.
+- **Memory:** `stat -f '%Sm'` on the seat's memory note and its index.
+- **The times.** Ruling 24's come from the PM's session transcript. The seat's question and Beni's "Carry E8" come from the Pass 2.5 session's transcript. The prompt's times come from both, read for those messages only.
