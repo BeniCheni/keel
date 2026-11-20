@@ -35,26 +35,5 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
-	<key>UTImportedTypeDeclarations</key>
-	<array>
-		<dict>
-			<key>UTTypeIdentifier</key>
-			<string>app.keel.yaml</string>
-			<key>UTTypeDescription</key>
-			<string>Terms file</string>
-			<key>UTTypeConformsTo</key>
-			<array>
-				<string>public.plain-text</string>
-			</array>
-			<key>UTTypeTagSpecification</key>
-			<dict>
-				<key>public.filename-extension</key>
-				<array>
-					<string>yaml</string>
-					<string>yml</string>
-				</array>
-			</dict>
-		</dict>
-	</array>
 </dict>
 </plist>
