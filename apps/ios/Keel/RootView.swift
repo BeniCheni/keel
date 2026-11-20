@@ -1,6 +1,5 @@
 import KeelCoreHost
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct RootView: View {
     @ObservedObject var model: AppModel
@@ -22,15 +21,11 @@ struct RootView: View {
             .navigationTitle(model.title)
             .fileImporter(
                 isPresented: $model.picking,
-                allowedContentTypes: [termsType],
+                allowedContentTypes: TermsFilePicker.allowedContentTypes,
                 allowsMultipleSelection: false,
                 onCompletion: model.finishPick
             )
         }
-    }
-
-    private var termsType: UTType {
-        UTType("app.keel.yaml") ?? .plainText
     }
 
     private var leading: [ScreenRow] {
