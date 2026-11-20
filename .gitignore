@@ -17,3 +17,10 @@ coverage/
 .env
 .env.*
 .DS_Store
+
+# iOS local signing and build products
+apps/ios/Local.xcconfig
+apps/ios/**/.build/
+apps/ios/**/DerivedData/
+**/xcuserdata/
+*.xcuserstate
