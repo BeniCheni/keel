@@ -58,6 +58,8 @@ A PR touching any of these is a sensitive-path PR: Fable pins apply, fast-track 
 - `docs/providers/**`
 - `.github/workflows/**`
 - `AGENTS.md`, `CLAUDE.md`, `.claude/skills/**`, `.agents/skills/**`
+- `apps/ios/**` (the whole app: any file can reroute the import or the bridge)
+- `tools/ios/**` (the guards)
 
 ## Engineering
 

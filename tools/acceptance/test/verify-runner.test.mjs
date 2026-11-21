@@ -4,7 +4,7 @@ import { expect, test } from "vitest";
 import { steps } from "../../verify/steps.mjs";
 import { NESTED_RUN_TIMEOUT_MS, repoRoot, repoTempPath, run } from "./helpers.mjs";
 
-const names = ["typecheck", "tests", "tooling", "tripwire", "network", "determinism", "copy", "boundaries"];
+const names = ["typecheck", "tests", "tooling", "tripwire", "network", "determinism", "copy", "boundaries", "ios-source", "ios-bundle", "ios-signing", "ios-inline"];
 
 function runner(args, env = process.env) {
   return run(process.execPath, ["tools/verify/run.mjs", ...args], { env });

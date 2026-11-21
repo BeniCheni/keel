@@ -158,6 +158,42 @@ test("a failing fixtures:regen fails the determinism check even when the tree is
   }
 }, NESTED_RUN_TIMEOUT_MS);
 
+test("an edited or stale iOS bundle fails the determinism check, and a fresh one passes", () => {
+  const bundle = "apps/ios/Keel/Resources/core.js";
+  const repo = tempGit();
+  try {
+    write(repo.root, "package.json", JSON.stringify({
+      name: "keel-bundle-probe",
+      private: true,
+      scripts: {
+        "fixtures:regen": 'node -e "process.exit(0)"',
+        "fixtures:trees": 'node -e "console.log(\'fixtures\')"',
+      },
+    }));
+    write(repo.root, "pnpm-workspace.yaml", 'packages:\n  - "apps/ios/bundle"\n');
+    write(repo.root, "apps/ios/bundle/package.json", JSON.stringify({
+      name: "@keel/ios-bundle",
+      private: true,
+      scripts: { build: "node build.mjs" },
+    }));
+    write(
+      repo.root,
+      "apps/ios/bundle/build.mjs",
+      'import { writeFileSync } from "node:fs";\nwriteFileSync(new URL("../Keel/Resources/core.js", import.meta.url), "fresh\\n");\n',
+    );
+    write(repo.root, bundle, "fresh\n");
+    commitAll(repo.root, "add a bundle and its recipe");
+    expect(verifyDeterminism(repo.root)).toEqual({ status: 0, stdout: "" });
+    write(repo.root, bundle, "fresh\nedited\n");
+    expect(verifyDeterminism(repo.root)).toEqual({ status: 1, stdout: `${bundle} differs from a fresh build\n` });
+    write(repo.root, bundle, "stale\n");
+    commitAll(repo.root, "commit a bundle the recipe does not build");
+    expect(verifyDeterminism(repo.root)).toEqual({ status: 1, stdout: `${bundle} differs from a fresh build\n` });
+  } finally {
+    repo.cleanup();
+  }
+}, NESTED_RUN_TIMEOUT_MS);
+
 test("the production determinism check is clean on this repo", () => {
   const result = verifyDeterminism(repoRoot);
   expect(result.status).toBe(0);

@@ -62,7 +62,11 @@ test("the workflow names verify, checks needs, and confines Linux", () => {
   expect(workflow).toContain("fetch-depth: 0");
   expect(workflow).toContain("contents: read");
   expect(workflow).toContain("if: always()");
-  expect(workflow).toMatch(/^    needs: \[cells\]$/m);
+  expect(workflow).toMatch(/^    needs: \[cells, swift\]$/m);
+  expect(workflow).toContain("runs-on: xcode-27");
+  expect(workflow).toContain("ios-sdk: selected Xcode iOS SDK is older than 27.0");
+  expect(workflow).toContain("swift test --package-path apps/ios/KeelCoreHost");
+  expect(workflow).toMatch(/^      - name: Binary controls\n        env:\n          KEEL_IOS_CONTROLS: required\n        run: pnpm exec vitest run --config tools\/vitest\.config\.mjs tools\/ios\/test\/binary-check\.test\.mjs$/m);
   expect(workflow).toContain("tools/ci/needs-check.mjs");
   expect(workflow).toContain("name: verify");
   expect(workflow).toContain("fail-fast: false");
