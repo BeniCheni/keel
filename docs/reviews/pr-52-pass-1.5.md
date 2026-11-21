@@ -11,7 +11,7 @@ Pass 1's verdict is not mergeable, with two open Highs. The PM accepts all 18 of
 
 **Addendum, 2026-11-18, 14:32 EST.** By Beni's ruling 4, Codex builds the rework instead of Cursor. The addendum at the end of this brief gives the seat and what changes. Where it differs from the text above, the addendum wins.
 
-**Second to tenth addenda.** The second, at 14:56 EST, gives ruling 5. The third, at 19:28 EST, records the fresh Pass 1, rulings 6 to 8 and the C findings, and replaces "What Pass 2 does". The fourth, on 2026-11-19, records Pass 2, rulings 9 to 12 and D3's fix, and replaces "What Pass 2.5 does". The fifth records Pass 2.5, rulings 13 to 17 and the E round. The sixth records the Pass 2.5 re-run, E5, and rulings 18 and 19. The seventh records the second Pass 2.5 re-run, E6 and E7, and ruling 20. The eighth records Beni's device run at `8b5d5be`, B11's reproduction, and rulings 21 and 22. The ninth records Codex's B11 commits `e76f296` and `91b471e`, and ruling 23. The tenth records the third Pass 2.5 re-run, E8, and ruling 24.
+**Second to eleventh addenda.** The second, at 14:56 EST, gives ruling 5. The third, at 19:28 EST, records the fresh Pass 1, rulings 6 to 8 and the C findings, and replaces "What Pass 2 does". The fourth, on 2026-11-19, records Pass 2, rulings 9 to 12 and D3's fix, and replaces "What Pass 2.5 does". The fifth records Pass 2.5, rulings 13 to 17 and the E round. The sixth records the Pass 2.5 re-run, E5, and rulings 18 and 19. The seventh records the second Pass 2.5 re-run, E6 and E7, and ruling 20. The eighth records Beni's device run at `8b5d5be`, B11's reproduction, and rulings 21 and 22. The ninth records Codex's B11 commits `e76f296` and `91b471e`, and ruling 23. The tenth records the third Pass 2.5 re-run, E8, and ruling 24. The eleventh records Beni's device run at `91b471e`, which closes B11 and passes criterion 12.
 
 ## Order from here
 
@@ -1107,3 +1107,111 @@ The head stays at `91b471e`, and no fix round follows. E8 goes to the ideas rows
 - **elenchus:** `node dist/cli.js status` and `check BeniCheni/keel#52 --config <config>`.
 - **Memory:** `stat -f '%Sm'` on the seat's memory note and its index.
 - **The times.** Ruling 24's come from the PM's session transcript. The seat's question and Beni's "Carry E8" come from the Pass 2.5 session's transcript. The prompt's times come from both, read for those messages only.
+
+## Eleventh addendum, 2026-11-21: Beni's device run at `91b471e`, and B11 closed
+
+Written by the PM at 12:35 EST. It records Beni's device run at `91b471e43631ace5bca5026e991f79e6d3df4379`, reported to the PM at 12:29:37 EST, and his answers to two questions. The head has not moved. Where this addendum differs from the text above, it wins.
+
+**The run.** Beni built the `Verification` configuration from a clone at `91b471e`, changed only by his `Local.xcconfig`. He signed it and installed it on his iPhone. His log holds criterion 12 twice, each time with five launches through `devicectl` and the four imports. These are his lines, filtered to `KEEL v1`, with no device or team identifier:
+
+```text
+KEEL v1 launch=9 pid=6739 contextMs=382.063 loadTermsMs=37.815
+KEEL v1 launch=2 pid=6759 contextMs=176.186 loadTermsMs=12.794
+KEEL v1 launch=3 pid=6762 contextMs=180.461 loadTermsMs=13.018
+KEEL v1 launch=4 pid=6763 contextMs=183.793 loadTermsMs=12.970
+KEEL v1 launch=5 pid=6765 contextMs=179.883 loadTermsMs=13.405
+KEEL v1 launch=6 pid=6766 contextMs=179.871 loadTermsMs=12.905
+KEEL v1 import sha256=200ba5951b9a09853cbe6ff8e7c879d29bc8b7870ee377c30c6ebe7fd1ee5665 protection=complete backupExcluded=true
+KEEL v1 import sha256=6215ee32b0fb9c3fc262bac8bdcd8b17050a4df5b47690d35ad79997b370c302 protection=complete backupExcluded=true
+KEEL v1 import sha256=6215ee32b0fb9c3fc262bac8bdcd8b17050a4df5b47690d35ad79997b370c302 protection=complete backupExcluded=true
+KEEL v1 import fixture=no
+KEEL v1 launch=2 pid=6794 contextMs=176.797 loadTermsMs=12.990
+KEEL v1 launch=3 pid=6795 contextMs=181.094 loadTermsMs=13.119
+KEEL v1 launch=4 pid=6796 contextMs=182.463 loadTermsMs=13.000
+KEEL v1 launch=5 pid=6797 contextMs=182.368 loadTermsMs=12.938
+KEEL v1 launch=6 pid=6798 contextMs=184.631 loadTermsMs=13.036
+KEEL v1 import sha256=200ba5951b9a09853cbe6ff8e7c879d29bc8b7870ee377c30c6ebe7fd1ee5665 protection=complete backupExcluded=true
+KEEL v1 import sha256=6215ee32b0fb9c3fc262bac8bdcd8b17050a4df5b47690d35ad79997b370c302 protection=complete backupExcluded=true
+KEEL v1 import sha256=6215ee32b0fb9c3fc262bac8bdcd8b17050a4df5b47690d35ad79997b370c302 protection=complete backupExcluded=true
+KEEL v1 import fixture=no
+```
+
+**The launches.** The spec's limits are 500 ms for `contextMs` and 50 ms for `loadTermsMs` (`docs/specs/s91-ios-foundation.md:92`).
+
+| Run | Launches | Median `contextMs` | Median `loadTermsMs` |
+| --- | --- | --- | --- |
+| 1 | 2 to 6 | 179.883 | 12.970 |
+| 2 | 2 to 6 | 182.368 | 13.000 |
+
+- Both runs pass, each with both medians under their limits.
+- In each run, launch 1 was Xcode's own run and is not in the log, as at `8b5d5be`.
+- The counter is the app's `keel.launch.count` default (`AppModel.swift:35-36`), so it starts again when the app is deleted.
+- **The `launch=9` line.** It comes before the counter started again, so the PM leaves it out of both runs. The PM's reading, not checked: it is a launch of the install that was there before. Its times, 382.063 and 37.815 ms, are under the limits too.
+
+**The imports.** Each run gives the same four lines, in the spec's order, and the two blocks are byte-identical.
+1. `minimal.yaml`: its digest, with `protection=complete backupExcluded=true`.
+2. `example-autocall.yaml`: its digest, with the same seal.
+3. `missing-required-top.yaml`: the second file's digest again, so the second file is kept. The invalid file's own digest, `57429d2148ace259202ced2324a84c48843dc87126f26f83d3f491e8ae62d99b`, does not appear.
+4. The edited copy: `fixture=no`, with no digest.
+
+The digests match `shasum -a 256` of the fixtures at `91b471e`: `200ba595…5665` once, then `6215ee32…c302` twice.
+
+**What the log proves, and what rests on Beni's word.** The PM read the import path at `91b471e`.
+- **The picker is the app's only import route.** `RootView.swift:22` holds the only `fileImporter`. `Info.plist` declares no document types, and nothing handles an opened URL. So four import lines mean four files picked, the invalid one included.
+- **A digest line follows two events.** After a stored import, it logs the new bytes (`AppModel.swift:116-120`). After a failure, it logs the file still stored (`AppModel.swift:125-130`). `DigestLog.swift:28-34` prints `fixture=no` for bytes outside the three fixtures.
+- **What the log proves:**
+  - lines 1 and 2 are two stored imports;
+  - `fixture=no` means the edited copy became the active file;
+  - line 3 proves the second file was kept. A read failure would print the same line.
+- **What Beni saw.** The PM asked at 12:31:51 EST, and Beni answered at 12:32:28 EST.
+  - "PR #52 device run at 91b471e: your log proves the digests and that all four files were picked, but not the screens. Did each import show what criterion 12 says: minimal.yaml's summary with ESTIMATE on its generated dates, then example-autocall.yaml's summary and schedule in its place, then missing-required-top.yaml's diagnostics with example-autocall.yaml kept, then the edited copy imported?" He answered "Yes, all four".
+  - "Was the Verification build you installed for PR #52 made from a clone checked out at 91b471e, with no changes except your Local.xcconfig?" He answered "Yes".
+
+**B11 closes.** All four files were picked in the app's Files picker at `91b471e`, so the picker step passes. B11 is fixed in the PM's record, by:
+- `e76f296` and `91b471e`;
+- their two package tests, each shown failing first;
+- this device run.
+
+**Criterion 12 passes at `91b471e`,** in full:
+- five launches in each of two runs, with both medians under their limits;
+- the four imports as the spec says, with the screens on Beni's word;
+- the digest lines in the spec's order.
+
+**The verdict.** The PM agrees with the third re-run: mergeable at `91b471e`.
+- No High is open, nothing is contested between vendors, and the device run the verdict waited on has passed.
+- The shadow gate still says would escalate, because of the sensitive paths and the `esbuild` dependency.
+- Beni merges.
+
+**What Pass 3 needs.**
+- **His own private-list check.**
+- **Pass 3:** `gh pr ready 52`, and the squash merge pinned to `91b471e` with `--match-head-commit`. The PM gives the handoff block in chat after this note is posted.
+
+**Carried,** for the ideas rows under ruling 9: D1, D2, D4, B16, B17, C9, E6, E7, E8 and the signing note, with the items already listed in the earlier addenda.
+
+**Process notes.**
+- **The cleared scratch folder, again.** Overnight the PM's scratch folder was cleared again. Nothing unpushed was lost, because the tenth addendum had been pushed at 14:49 EST on 2026-11-20. In a new scratch folder, the PM:
+  - made a fresh clone;
+  - rebuilt its elenchus config from its memory note;
+  - rewrote its tripwire counter;
+  - took its last record from comment 7044702396.
+
+  elenchus gives the same four known failures.
+- **Two runs.** Beni's log holds criterion 12 twice. Both pass, and this addendum records both.
+
+**The PM's commands.**
+- **Head and comments:**
+  - `gh pr view 52 --repo BeniCheni/keel --json headRefOid,isDraft,state,mergeable`;
+  - `git ls-remote origin refs/heads/s91/ios-foundation refs/heads/docs/pr-52-records refs/heads/main`;
+  - `gh api --paginate repos/BeniCheni/keel/issues/52/comments`, for comments after 7046699629.
+- **The medians:** with Beni's lines saved to a file, `sed -n 2,6p <file> | grep -o 'contextMs=[0-9.]*' | cut -d= -f2 | sort -n | sed -n 3p`. The same was run for `loadTermsMs`, and for lines 11 to 15.
+- **The digests:**
+  - `git show 91b471e:<fixture> | shasum -a 256` for the three fixtures;
+  - `grep -o 'sha256=[0-9a-f]*' <file> | sort | uniq -c`;
+  - `cmp` between lines 7 to 10 and 16 to 19.
+- **The import route:**
+  - `git grep -n -E 'onOpenURL|CFBundleDocumentTypes|LSSupportsOpeningDocumentsInPlace|UIDocumentPicker|openURL|fileImporter|finishPick' 91b471e -- apps/ios`;
+  - `git show 91b471e:apps/ios/Keel/Info.plist`, for its keys;
+  - `AppModel.swift`, `Verification.swift` and `DigestLog.swift` at `91b471e`, read along the import path.
+- **The limits:** `git show 91b471e:docs/specs/s91-ios-foundation.md | grep -n 'limit 500 ms'`.
+- **elenchus:** `node dist/cli.js status` and `check BeniCheni/keel#52 --config <config>`.
+- **The times** come from the PM's session transcript.
