@@ -1,5 +1,9 @@
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { generators } from "./registry.mjs";
+
+const BUNDLE_REL = "apps/ios/Keel/Resources/core.js";
 
 export function treesOf(list) {
   const trees = [];
@@ -38,6 +42,27 @@ export function verifyRegistered(cwd, list) {
   return check(cwd, treesOf(list));
 }
 
+function verifyBuiltBundle(cwd) {
+  const abs = join(cwd, BUNDLE_REL);
+  let before;
+  try {
+    before = readFileSync(abs);
+  } catch {
+    return { status: 1, stdout: `${BUNDLE_REL} missing\n` };
+  }
+  const built = spawnSync("pnpm", ["--filter", "@keel/ios-bundle", "build"], { cwd, encoding: "utf8" });
+  if (built.error || built.status === null) return { status: 127, stdout: "" };
+  if (built.status !== 0) return { status: built.status, stdout: built.stderr ?? built.stdout ?? "" };
+  let after;
+  try {
+    after = readFileSync(abs);
+  } catch {
+    return { status: 1, stdout: `${BUNDLE_REL} missing\n` };
+  }
+  if (!before.equals(after)) return { status: 1, stdout: `${BUNDLE_REL} differs from a fresh build\n` };
+  return check(cwd, [BUNDLE_REL]);
+}
+
 export function verifyDeterminism(cwd) {
   const regen = spawnSync("pnpm", ["fixtures:regen"], { cwd, encoding: "utf8" });
   if (regen.error || regen.status === null) return { status: 127, stdout: "" };
@@ -45,7 +70,9 @@ export function verifyDeterminism(cwd) {
   const treesRun = spawnSync("pnpm", ["-s", "fixtures:trees"], { cwd, encoding: "utf8" });
   if (treesRun.error || treesRun.status === null) return { status: 127, stdout: "" };
   if (treesRun.status !== 0) return { status: treesRun.status, stdout: treesRun.stdout ?? "" };
-  return check(cwd, splitTrees(treesRun.stdout ?? ""));
+  const trees = check(cwd, splitTrees(treesRun.stdout ?? ""));
+  if (trees.status !== 0) return trees;
+  return verifyBuiltBundle(cwd);
 }
 
 export function productionTrees() {

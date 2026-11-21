@@ -51,10 +51,71 @@ jobs:
         if: runner.os == 'Linux'
         run: bash tools/ci/verify-netns.sh
 
+  swift:
+    name: swift
+    runs-on: xcode-27
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: iOS SDK
+        run: |
+          sdk="$(xcrun --sdk iphoneos --show-sdk-version)"
+          major="${sdk%%.*}"
+          if [ "$major" -lt 27 ]; then
+            echo "ios-sdk: selected Xcode iOS SDK is older than 27.0" >&2
+            exit 1
+          fi
+          echo "ios-sdk $sdk"
+
+      - name: Swift tests
+        run: swift test --package-path apps/ios/KeelCoreHost
+
+      - name: Binary controls
+        env:
+          KEEL_IOS_CONTROLS: required
+        run: pnpm exec vitest run --config tools/vitest.config.mjs tools/ios/test/binary-check.test.mjs
+
+      - name: Unsigned app
+        run: |
+          set -euo pipefail
+          work="$(mktemp -d)"
+          trap 'rm -rf "$work"' EXIT
+          for configuration in Release Verification; do
+            xcodebuild build \
+              -project apps/ios/Keel.xcodeproj \
+              -scheme Keel \
+              -configuration "$configuration" \
+              -destination 'generic/platform=iOS' \
+              -derivedDataPath "$work/derived" \
+              CODE_SIGNING_ALLOWED=NO
+            app="$work/derived/Build/Products/$configuration-iphoneos/Keel.app"
+            cmp -s "$app/core.js" apps/ios/Keel/Resources/core.js
+            node tools/ios/binary-check.mjs "$app/Keel"
+          done
+          node tools/ios/allowlist-usage.mjs \
+            "$work/derived/Build/Products/Release-iphoneos/Keel.app/Keel" \
+            "$work/derived/Build/Products/Verification-iphoneos/Keel.app/Keel"
+
   verify:
     name: verify
     if: always()
-    needs: [cells]
+    needs: [cells, swift]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

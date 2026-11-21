@@ -1,0 +1,126 @@
+# One allowlist for the source check and the binary check. A selector that begins initWithURL:, a ContentsOfURL selector, or a contentsOf: reader of a Foundation.URL still fails the binary check when it is listed here.
+module	Foundation	File storage, dates, and the security-scoped read.
+module	SwiftUI	The one read-only screen.
+module	JavaScriptCore	The bundled core runs in a JSContext.
+module	UniformTypeIdentifiers	The Files picker accepts a yaml or yml file.
+module	CryptoKit	SHA-256 for the verification digest gate.
+module	KeelCoreHost	The app calls the tested host package.
+module	XCTest	The host package tests.
+module	PackageDescription	The Swift package manifest.
+framework	Combine	Linked by the screen's observable model.
+framework	CoreFoundation	Linked by Foundation.
+framework	CryptoKit	Linked by the digest gate.
+framework	Foundation	Linked by the store and the screen.
+framework	JavaScriptCore	Linked by the JSContext host.
+framework	SwiftUI	Linked by the screen.
+framework	UIKit	Linked by SwiftUI on iPhone.
+selector	JSONObjectWithData:options:error:	Decodes the local import record.
+selector	URLForResource:withExtension:	The app loads its bundled core and the timing fixture.
+selector	URLsForDirectory:inDomains:	The store locates Application Support.
+selector	callWithArguments:	Calls the bundled core in JavaScriptCore.
+selector	closeAndReturnError:	Closes the local file handle.
+selector	code	Identifies an error or a picker cancellation.
+selector	copyItemAtURL:toURL:error:	Makes sealed rollback copies within Application Support.
+selector	createDirectoryAtURL:withIntermediateDirectories:attributes:error:	The store creates its folder.
+selector	dataWithJSONObject:options:error:	Encodes the name and import time as a local record.
+selector	defaultManager	Gets the local file manager.
+selector	domain	Identifies a picker cancellation.
+selector	evaluateScript:	Evaluates the bundled core and its local helpers.
+selector	exception	Reads errors from JavaScriptCore.
+selector	fileExistsAtPath:	Checks the presence of a local store file.
+selector	fileHandleForReadingFromURL:error:	The screen reads the picked file with FileHandle.
+selector	init	Initializes a Foundation or JavaScriptCore object.
+selector	initWithPattern:options:error:	Compiles a regular expression for the synthetic timing input.
+selector	integerForKey:	Reads the local launch counter.
+selector	integerValue	Unboxes a numeric value from the bundled core.
+selector	isString	Checks the bundled core's serialized result.
+selector	isUndefined	Checks that the bundled core returned a result.
+selector	mainBundle	Locates the bundled core and synthetic timing input.
+selector	moveItemAtURL:toURL:error:	The store places the first active file.
+selector	objectForKeyedSubscript:	Looks up the bundled core's local entry point.
+selector	processIdentifier	Records the process ID in the launch timing line.
+selector	processInfo	Gets the current process for the launch timing line.
+selector	removeItemAtURL:error:	The store removes a temporary file after a failed import.
+selector	setException:	Clears a previous JavaScriptCore error.
+selector	setExceptionHandler:	Captures a JavaScriptCore error.
+selector	setInteger:forKey:	Updates the local launch counter.
+selector	setResourceValue:forKey:error:	Sets the local file protection class.
+selector	standardUserDefaults	Accesses the local launch counter.
+selector	stringByReplacingMatchesInString:options:range:withTemplate:	Prepares the bundled synthetic input.
+selector	stringFromDate:	Formats the import timestamp.
+selector	toString	Reads the bundled core's string result.
+symbol	(extension in Foundation):__C.NSFileManager.replaceItemAt(_: Foundation.URL, withItemAt: Foundation.URL, backupItemName: Swift.String?, options: __C.NSFileManagerItemReplacementOptions) throws -> Foundation.URL?	Replaces the active file inside Application Support.
+symbol	(extension in SwiftUI):SwiftUI.View.fileImporter(isPresented: SwiftUI.Binding<Swift.Bool>, allowedContentTypes: [UniformTypeIdentifiers.UTType], allowsMultipleSelection: Swift.Bool, onCompletion: (Swift.Result<[Foundation.URL], Swift.Error>) -> ()) -> some	Receives a file URL from the system picker.
+symbol	Foundation.Data.write(to: Foundation.URL, options: __C.NSDataWritingOptions) throws -> ()	Atomically writes the incoming bytes and the record to local files.
+symbol	Foundation.URL._bridgeToObjectiveC() -> __C.NSURL	Bridges local file URLs to Foundation.
+symbol	Foundation.URL.appendingPathComponent(Swift.String) -> Foundation.URL	Derives paths inside the app's local store.
+symbol	Foundation.URL.appendingPathComponent(_: Swift.String, isDirectory: Swift.Bool) -> Foundation.URL	Derives paths inside the app's local store.
+symbol	Foundation.URL.init(fileURLWithPath: __shared Swift.String) -> Foundation.URL	Constructs a local file URL from its path, including fresh attribute reads.
+symbol	Foundation.URL.init(fileURLWithPath: __shared Swift.String, isDirectory: Swift.Bool) -> Foundation.URL	Constructs a local file URL from its path, including fresh attribute reads.
+symbol	Foundation.URL.isFileURL.getter : Swift.Bool	Rejects non-file URLs from the picker.
+symbol	Foundation.URL.lastPathComponent.getter : Swift.String	Reads the imported file's name without displaying its path.
+symbol	Foundation.URL.path.getter : Swift.String	Passes the local path to file operations or a fresh URL.
+symbol	Foundation.URL.resourceValues(forKeys: Swift.Set<__C.NSURLResourceKey>) throws -> Foundation.URLResourceValues	Reads protection and backup exclusion from disk.
+symbol	Foundation.URL.setResourceValues(Foundation.URLResourceValues) throws -> ()	Sets backup exclusion on a local file.
+symbol	Foundation.URL.startAccessingSecurityScopedResource() -> Swift.Bool	Opens scoped access to the picked file.
+symbol	Foundation.URL.stopAccessingSecurityScopedResource() -> ()	Ends scoped access to the picked file.
+symbol	nominal type descriptor for Foundation.URL	Identifies the file URL type in Swift metadata.
+symbol	opaque type descriptor for <<opaque return type of (extension in SwiftUI):SwiftUI.View.fileImporter(isPresented: SwiftUI.Binding<Swift.Bool>, allowedContentTypes: [UniformTypeIdentifiers.UTType], allowsMultipleSelection: Swift.Bool, onCompletion: (Swift.Result<[Foundation.URL], Swift.Error>) -> ()) -> some>>	Identifies the SwiftUI file-importer view type.
+symbol	static Foundation.URL._unconditionallyBridgeFromObjectiveC(__C.NSURL?) -> Foundation.URL	Bridges Foundation file URLs to Swift.
+symbol	type metadata accessor for Foundation.URL	Loads Swift metadata for Foundation file URLs.
+undefined	_CFAbsoluteTimeGetCurrent	Measures bundled core launch time.
+undefined	_NSCocoaErrorDomain	Recognizes cancellation of the file picker.
+undefined	_NSTemporaryDirectory	Fallback directory for local storage.
+undefined	_NSURLFileProtectionComplete	Required complete protection class.
+undefined	_NSURLFileProtectionKey	Sets and checks the protection class.
+undefined	_NSURLIsExcludedFromBackupKey	Sets and checks backup exclusion.
+undefined	_OBJC_CLASS_$_JSContext	Runs the bundled core.
+undefined	_OBJC_CLASS_$_NSBundle	Finds bundled resources.
+undefined	_OBJC_CLASS_$_NSFileHandle	Reads local files.
+undefined	_OBJC_CLASS_$_NSFileManager	Manages the local snapshot and rollback.
+undefined	_OBJC_CLASS_$_NSISO8601DateFormatter	Formats the local import timestamp.
+undefined	_OBJC_CLASS_$_NSJSONSerialization	Encodes and decodes the local import record.
+undefined	_OBJC_CLASS_$_NSNumber	Unboxes bundled core results.
+undefined	_OBJC_CLASS_$_NSProcessInfo	Reads the process ID for launch timing.
+undefined	_OBJC_CLASS_$_NSRegularExpression	Prepares the synthetic timing input.
+undefined	_OBJC_CLASS_$_NSUserDefaults	Stores the launch counter locally.
+undefined	_OBJC_CLASS_$__TtCs12_SwiftObject	Imports the Objective-C class record for Swift objects.
+undefined	_OBJC_METACLASS_$__TtCs12_SwiftObject	Imports the Objective-C metaclass record for Swift objects.
+undefined	__Block_copy	Retains an Objective-C callback.
+undefined	__Block_release	Releases an Objective-C callback.
+undefined	__NSConcreteStackBlock	Represents an Objective-C callback's stack storage.
+undefined	___chkstk_darwin	Compiler-generated stack probing.
+undefined	___stack_chk_fail	Compiler-generated stack canary failure handler.
+undefined	___stack_chk_guard	Compiler-generated stack canary.
+undefined	__objc_empty_cache	Initializes Objective-C class metadata.
+undefined	_malloc_size	Reads the size of an existing allocation.
+undefined	_memcmp	Compares byte buffers.
+undefined	_memcpy	Copies byte buffers.
+undefined	_memmove	Moves potentially overlapping byte buffers.
+undefined	_objc_allocWithZone	Allocates Foundation and JavaScriptCore objects.
+undefined	_objc_msgSend	Dispatches Objective-C selectors checked separately.
+undefined	_objc_opt_self	Gets the Objective-C class object.
+undefined	_objc_release	Releases an Objective-C object.
+undefined	_objc_release_x19	Compiler-generated Objective-C release preserving register x19.
+undefined	_objc_release_x20	Compiler-generated Objective-C release preserving register x20.
+undefined	_objc_release_x21	Compiler-generated Objective-C release preserving register x21.
+undefined	_objc_release_x22	Compiler-generated Objective-C release preserving register x22.
+undefined	_objc_release_x23	Compiler-generated Objective-C release preserving register x23.
+undefined	_objc_release_x24	Compiler-generated Objective-C release preserving register x24.
+undefined	_objc_release_x25	Compiler-generated Objective-C release preserving register x25.
+undefined	_objc_release_x26	Compiler-generated Objective-C release preserving register x26.
+undefined	_objc_release_x27	Compiler-generated Objective-C release preserving register x27.
+undefined	_objc_release_x28	Compiler-generated Objective-C release preserving register x28.
+undefined	_objc_release_x8	Compiler-generated Objective-C release preserving register x8.
+undefined	_objc_retain	Retains an Objective-C object.
+undefined	_objc_retainAutoreleasedReturnValue	Retains an autoreleased Objective-C return value.
+undefined	_objc_retain_x1	Compiler-generated Objective-C retain preserving register x1.
+undefined	_objc_retain_x19	Compiler-generated Objective-C retain preserving register x19.
+undefined	_objc_retain_x20	Compiler-generated Objective-C retain preserving register x20.
+undefined	_objc_retain_x21	Compiler-generated Objective-C retain preserving register x21.
+undefined	_objc_retain_x22	Compiler-generated Objective-C retain preserving register x22.
+undefined	_objc_retain_x23	Compiler-generated Objective-C retain preserving register x23.
+undefined	_objc_retain_x25	Compiler-generated Objective-C retain preserving register x25.
+undefined	_objc_retain_x26	Compiler-generated Objective-C retain preserving register x26.
+undefined	_objc_retain_x27	Compiler-generated Objective-C retain preserving register x27.
+undefined	_objc_retain_x8	Compiler-generated Objective-C retain preserving register x8.
