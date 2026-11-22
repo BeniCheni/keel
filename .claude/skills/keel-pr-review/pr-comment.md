@@ -3,11 +3,13 @@
 Verdict: <mergeable | mergeable after fixes | not mergeable>. An open High makes the verdict "not mergeable". A High in tracked files closes with a fix commit and a test that fails without it; a High outside tracked files closes with a recorded remediation check plus Beni's confirmation.
 
 - Head SHA reviewed: `<sha>`; post-fix SHA: `<sha or none>`; date: <YYYY-MM-DD, America/New_York>
-- Seat: <Claude Code | Codex>, model <name and effort>, fallback used: <no | yes, why>
+- Seat: <Claude Code | Codex | Cursor>, model <name and effort>, fallback used: <no | yes, why>
 - Fresh clone: <yes>; `KEEL_DATA_DIR` pointed at an empty temp directory: <yes>
 - Baseline: <tests run / passed / failed> on Node <floor> and <current>; `pnpm verify` <green | red>
 - Diff: <files changed, insertions, deletions> against `origin/main`; `verify` run: <link and result>
 - Sensitive paths touched: <none | list>
+
+Keep the prose short: one or two lines per finding plus the as-run list. Long evidence goes in the seat record's evidence fields.
 
 ## Findings
 
@@ -66,3 +68,9 @@ Matched values are never printed.
 
 - Caught: <one line>
 - Missed or wasted: <one line>
+
+## Seat record
+
+```json
+<the seat record, valid against schema/seat-record-1.1.json in BeniCheni/elenchus; nothing follows this block>
+```
