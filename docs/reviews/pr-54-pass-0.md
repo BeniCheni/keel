@@ -43,7 +43,8 @@ From `git log --format='%h %an' origin/main..HEAD`. A commit that adds or change
 | `ebcca8c` | Claude | Codex |
 | The commit that adds this brief and its index row (`git log --diff-filter=A -1 --format='%h %an' -- docs/reviews/pr-54-pass-0.md`) | Claude | Codex |
 | `2f2e59e`, which answers the cold review | Claude | Codex |
-| The commit that answers the re-read (`git log -1 --format='%h %an' -- docs/reviews/pr-54-pass-0.md`) | Claude | Codex |
+| `c8c2c41`, which answers the re-read | Claude | Codex |
+| The commit that answers the second re-read (`git log -1 --format='%h %an' -- docs/reviews/pr-54-pass-0.md`) | Claude | Codex |
 
 ## Fast-track
 
@@ -63,3 +64,5 @@ Out of scope: any change to code, tests, fixtures, schemas, `AGENTS.md` or the s
 Corrected on 2026-11-21, after Codex's cold review ([issuecomment-7073117214](https://github.com/BeniCheni/keel/pull/54#issuecomment-7073117214)) found six Mediums. Ideas 81, 82, 89 and 92 now match the code and records they cite (F1, F2, F3 and F5). Idea 91 is removed and its rank left unused, because the store it described changed before PR #52 merged (F4). The PR body's rank-count row now gives its command (F6).
 
 Corrected again on 2026-11-22, after Codex's re-read ([issuecomment-7073867814](https://github.com/BeniCheni/keel/pull/54#issuecomment-7073867814)) found three Mediums. Idea 82 now says a quote inside a backslash escape does not split the literal (F7). The idea 91 row now says which rollback copies a failed recovery keeps, and that a missing file also removes the pair (F8). The PR body's rank-count command now reads the grouped ranks in the taken-up table (F9). The third authorship row now names `2f2e59e`, because its command would find the newest commit to change this brief.
+
+Corrected a third time on 2026-11-22, after Codex's second re-read ([issuecomment-7079098882](https://github.com/BeniCheni/keel/pull/54#issuecomment-7079098882)) found one Medium. Idea 82 now gives its examples, a line-comment case among them, and states no rule for every embedded quote, so it no longer carries the rule F7 corrected (F10). The fourth authorship row now names `c8c2c41`, for the reason the third names `2f2e59e`.
