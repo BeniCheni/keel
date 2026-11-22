@@ -8,7 +8,7 @@ Written by the PM on <date, America/New_York> after reading the Pass 1 comment a
 | --- | --- | --- | --- | --- |
 | 1 | | | | no |
 
-A finding goes back to the builder as rework only when it needs redesign rather than a patch; that rework gets its own short build prompt and a fresh Pass 1. On a Codex-built PR, every finding that needs a change goes to Codex as rework, because Claude seats commit no fixes there, and a later Claude pass gives each rework commit its cold read.
+A finding goes back to the builder as rework only when it needs redesign rather than a patch; that rework gets its own short build prompt and a fresh Pass 1. On a Codex-built PR, every finding that needs a change goes to Codex as rework, because review seats commit no fixes there, and a later Claude pass gives each rework commit its cold read.
 
 ## Authorship record
 

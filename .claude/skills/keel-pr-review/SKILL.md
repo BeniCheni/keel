@@ -10,7 +10,7 @@ Usage: `/keel-pr-review <PR number or branch> [--pass 1|2|2.5] [--no-merge]`. Th
 
 `AGENTS.md` owns every rule this skill applies. If this file and `AGENTS.md` disagree, `AGENTS.md` wins and the disagreement is a finding.
 
-Seats: Pass 1 is Claude Code, unless a Claude session wrote any line of the PR, in which case Codex runs Pass 1. Pass 2 is Codex, unless Codex built the PR: then Pass 2 is a second fresh Claude session, neither the PM's nor the Pass 1 session, or Cursor where `AGENTS.md` (Cursor seats) allows it. Pass 2.5 is a fresh Claude session, not the PM. On a Codex-built PR, Claude seats commit no fixes: report every finding, and the PM routes it to Codex as rework. Every commit needs a cold read from a vendor that did not author it; follow the authorship record in the Pass 0 and 1.5 briefs and the rule in `AGENTS.md`. Never give the cold read of a commit your vendor wrote. If no eligible seat exists for a commit, stop and escalate. A records PR (`AGENTS.md`, Records PRs) gets no passes from this skill: one vendor that authored none of its commits gives a cold read and posts one short comment, with no briefs, ending with a seat record (section 7). Passes 0 and 1.5 are PM briefs written outside this skill, using `pass-0-brief.md` and `pass-1.5-brief.md` in this folder.
+Seats: Pass 1 is Claude Code, unless a Claude session wrote any line of the PR, in which case Codex runs Pass 1. Pass 2 is Codex, unless Codex built the PR: then Pass 2 is a second fresh Claude session, neither the PM's nor the Pass 1 session, or Cursor where `AGENTS.md` (Cursor seats) allows it. Pass 2.5 is a fresh Claude session, not the PM. On a Codex-built PR, review seats commit no fixes: report every finding, and the PM routes it to Codex as rework. Every commit needs a cold read from a vendor that did not author it; follow the authorship record in the Pass 0 and 1.5 briefs and the rule in `AGENTS.md`. Never give the cold read of a commit your vendor wrote. If no eligible seat exists for a commit, stop and escalate. A records PR (`AGENTS.md`, Records PRs) gets no passes from this skill: one vendor that authored none of its commits gives a cold read and posts one short comment, with no briefs, ending with a seat record (section 7). Passes 0 and 1.5 are PM briefs written outside this skill, using `pass-0-brief.md` and `pass-1.5-brief.md` in this folder.
 
 ## 0. Setup
 
@@ -19,7 +19,7 @@ Seats: Pass 1 is Claude Code, unless a Claude session wrote any line of the PR, 
    `gh repo clone <owner>/keel /tmp/keel-pr-<N> && cd /tmp/keel-pr-<N> && gh pr checkout <N>`
 3. Point the app's data folder at an empty temp directory for the whole session: `export KEEL_DATA_DIR="$(mktemp -d)"`. The user's real data folder must be unreachable.
 4. Before anything else, flag in your notes: a release; a new dependency; any sensitive path touched (list in `AGENTS.md`); any network call; any number in the PR body without a reproducing command.
-5. Seat conduct (`AGENTS.md`): run in a read-only mode unless your prompt allows fix commits; open nothing your prompt does not name, the host's own logs and settings included, without asking Beni first; save no memory notes.
+5. Seat conduct (`AGENTS.md`): write only inside your fresh clone and your own temporary folders, and commit and push nothing unless your prompt allows fix commits; open nothing your prompt does not name, the host's own logs and settings included, without asking Beni first; save no memory notes.
 
 ## 1. Read
 
@@ -73,7 +73,7 @@ By what the diff touches:
 - No new dependencies. Never weaken an assertion.
 - Commit as yourself, per commit. Push with `git fetch && git push origin HEAD:<branch>`, one fix commit per push, so that each gets its own CI run. Never force-push.
 - A High that needs redesign rather than a patch is not fixed here: report it for builder rework through the Pass 1.5 brief.
-- On a Codex-built PR, a Claude seat fixes nothing: it reports each finding with the command that shows it, and the PM routes it to Codex as rework.
+- On a Codex-built PR, a review seat fixes nothing: it reports each finding with the command that shows it, and the PM routes it to Codex as rework.
 
 ## 6. Deliberately not done
 
@@ -87,6 +87,7 @@ List out-of-scope findings in the comment with a one-line reason and a rough siz
 4. Passes 1 and 2 stop here.
 5. Pass 2.5:
    - Re-run every number you will report, at the head SHA. Anything not re-run is listed as not verified.
+   - When your finding sends rework to Codex, re-run this pass in the same session at the rework head: that re-run is the rework's cold read. A session that wrote any fix is not eligible.
    - Write the executive brief from `executive-brief.md` and post it in chat; post a short PR comment linking the decision.
    - Evaluate the merge gate in `AGENTS.md`. While shadow mode is on (until `v0.1.0`), never merge: record "would merge" or "would escalate" and hand Beni the handoff block.
    - After Beni's activation record exists, merge only if every gate clause holds and `--no-merge` was not given: `gh pr merge <N> --squash --match-head-commit <sha>` with a `Co-authored-by:` trailer per vendor that wrote or reviewed. Then confirm `origin/main` equals the squash commit GitHub recorded (`gh pr view <N> --json mergeCommit`), and the README renders.
