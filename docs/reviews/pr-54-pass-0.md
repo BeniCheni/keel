@@ -12,7 +12,7 @@ Codex, GPT-6.2 Sol High, by Beni's ruling "Allow 6.2 for PR #54 (Recommended)", 
 - Sensitive paths touched: none. `git diff --name-only origin/main...HEAD -- packages tools schemas fixtures .github AGENTS.md CLAUDE.md .claude .agents docs/providers apps` prints nothing.
 - Release: no. New dependencies: none.
 - Bootstrap path: no. `verify` applies. Mutations and Pass M are N/A: no code, test or fixture changes. Demo mode is N/A while the README has no demo step (`grep -c -i demo README.md` prints `0`), the known gap of idea 50.
-- Files: `docs/v0.1.0-ideas.md` (ideas 80 to 92), `docs/README.md` (this PR's row), and this brief.
+- Files: `docs/v0.1.0-ideas.md` (ideas 80 to 90 and 92), `docs/README.md` (this PR's row), and this brief.
 
 ## Where each item comes from
 
@@ -27,7 +27,7 @@ PR #52's records name the ideas rows and send them to the next docs PR: `docs/re
 | E8, carried by ruling 24 | Idea 88 |
 | The signing note for `Local.xcconfig` | Idea 89 |
 | `tools/test-tooling.mjs`'s entry guard, from C6 | Idea 90 |
-| The fresh Pass 1's note that a failed recovery removes the pair | Idea 91 |
+| The fresh Pass 1's note that a failed recovery removes the pair | Not carried. It described the store at `95730ba`. At the head a failed recovery keeps its rollback copies and resumes at the next read (`apps/ios/KeelCoreHost/Sources/KeelCoreHost/SnapshotStore.swift:129-146`), and only an inexact seal removes the pair, which is ruling 2. Rank 91 is left unused |
 | The fresh Pass 1's note that the framework rule reads only `.framework/` rows | Folded into idea 80, which D1 ran |
 | Pass 2.5's note that PR #52's body keeps `819433e`'s numbers (`docs/reviews/pr-52-pass-2.5.md:69`) | Idea 92 |
 | The spec amendments for rulings 1 to 3, 7, 11, 15, 19 and 22, and the items marked for the rules PR | Not here: `docs/reviews/pr-52-pass-2.5.md:463` sends them to the rules PR |
@@ -42,6 +42,7 @@ From `git log --format='%h %an' origin/main..HEAD`. A commit that adds or change
 | --- | --- | --- |
 | `ebcca8c` | Claude | Codex |
 | The commit that adds this brief and its index row (`git log --diff-filter=A -1 --format='%h %an' -- docs/reviews/pr-54-pass-0.md`) | Claude | Codex |
+| The commit that answers the cold review (`git log -1 --format='%h %an' -- docs/reviews/pr-54-pass-0.md`) | Claude | Codex |
 
 ## Fast-track
 
@@ -49,9 +50,13 @@ Allowed: the diff is docs outside sensitive paths, and this is not a release or 
 
 ## What to check, beyond the skill's standing checks
 
-1. **The ideas.** Does each of ideas 80 to 92 state its finding fairly, against the record line it cites and the review comment behind it, with every file and line number right at the head? Do they continue the numbering from 79, and does each say whether a fix would touch a sensitive path? Is any already a row, or already taken up?
+1. **The ideas.** Does each of ideas 80 to 90 and 92 state its finding fairly, against the record line it cites and the review comment behind it, with every file and line number right at the head? Do they continue the numbering from 79, and does each say whether a fix would touch a sensitive path? Is any already a row, or already taken up?
 2. **Coverage.** Does the table above match PR #52's records? Is anything those records send to the ideas rows missing, or anything here that they send elsewhere?
 3. **The index row.** Is this PR's row in `docs/README.md` in the form PR #49's row had while it was in review?
 4. **Privacy.** This seat runs the owner's private-list check, counts only, over the diff, the commit messages, the PR title and body, every comment and its own proposed comment.
 
 Out of scope: any change to code, tests, fixtures, schemas, `AGENTS.md` or the skills. Findings there go in the comment for the PM to carry.
+
+## After the cold review
+
+Corrected on 2026-11-21, after Codex's cold review ([issuecomment-7073117214](https://github.com/BeniCheni/keel/pull/54#issuecomment-7073117214)) found six Mediums. Ideas 81, 82, 89 and 92 now match the code and records they cite (F1, F2, F3 and F5). Idea 91 is removed and its rank left unused, because the store it described changed before PR #52 merged (F4). The PR body's rank-count row now gives its command (F6).
