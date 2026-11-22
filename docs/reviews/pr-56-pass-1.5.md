@@ -80,3 +80,81 @@ In the PM's clone, on the branch at `1e155856b1b6e355bd708cafaa90a1ef00233a49`, 
 | Tripwire | `node tools/tripwire/cli.mjs .` | Exit 0, no output |
 
 Under Beni's ruling "Cut to pointers" on PR #48, the per-class counts, the body scan and the private-list check are the reviewer's.
+
+## After Pass 2
+
+Written by the PM on 2026-11-22 (America/New_York), after Codex's Pass 2 ([issuecomment-7085489566](https://github.com/BeniCheni/keel/pull/56#issuecomment-7085489566), posted at 15:43:00 EST) and its seat-record correction ([issuecomment-7085577152](https://github.com/BeniCheni/keel/pull/56#issuecomment-7085577152), posted at 15:49:47 EST), both at `1e155856b1b6e355bd708cafaa90a1ef00233a49`. Where this addendum differs from the text above, it wins.
+
+Pass 2's verdict is "mergeable after fixes", with no fix commit. It accepted F1 to F6 as fixed, F6 on this branch, and found three Mediums, F7 to F9, and two Lows, F10 and F11. Both of its seat records validate against `schema/seat-record-1.1.json` (the PM's ajv runs printed `valid true` for each, and a bad control exited 1), and they differ only in `model`. GitHub lists no edit to either comment (`gh api graphql` on each comment's `userContentEdits` gives a `totalCount` of 0).
+
+The PM reproduced all five new findings with Pass 2's own commands, run on `git show 1e15585:<path>`, and accepts all five. F7 to F9 are fixed in one Claude commit, `06b5cdb23ab4998fc5b55e472be12a5568838185`, and F11 in the PR body. F7 and F9 sit in wording from the PM's own fixes for F5 and F4.
+
+| # | Severity | PM disposition | Reason | Answer |
+| --- | --- | --- | --- | --- |
+| F7 | Medium | accept | Reproduced. At `1e15585`, `README.md:17` says reviewers come "from vendors that did not write it", while `AGENTS.md:29` sets the cold read per commit. On this PR a Claude session wrote every commit, and a fresh Claude session still takes Pass 2.5. | `06b5cdb`: the README says the builder reviews nothing it built, and every commit gets its cold read from a vendor that did not write it. |
+| F8 | Medium | accept | Reproduced. At `1e15585`, `AGENTS.md:21` names Claude or Cursor as the seat, but its model and fallback cells give only Claude's, while `AGENTS.md:33` and ruling 6 put Cursor on Grok 4.7 Medium. | `06b5cdb`, under ruling 18: Cursor's Pass 2 on a Codex build gets its own row, on Grok 4.7 Medium, with the Claude Pass 2 seat on a Codex build as its fallback. The Claude row names Claude only. |
+| F9 | Medium | accept | Reproduced. At `1e15585`, `.agents/skills/keel-pr-review/SKILL.md:11` names records and fast-track PRs, then gives the fallback only for "the records PR's commits", though `AGENTS.md:118` lets any vendor that did not write a fast-track PR give its cold read. | `06b5cdb`: the fallback names both records and fast-track PRs. |
+| F10 | Low | accept | Reproduced. The PM's records 7084628081 and 7085217948 give effort requested `high` and observed `xhigh`, against the Planner's High pin on `main`'s `AGENTS.md:16`. The records disclose it, and PR #52's records report the same gap. | No change, under ruling 20. It stays open as a Low; the PM's records keep disclosing it, and an ideas row takes the Planner's pin to a later PR. |
+| F11 | Low | accept | Reproduced. The body's Review log said Pass 1 "continued on GPT-6.2 Sol Extra High", while Pass 1's record gives model and effort observed `null`. | The Review log now says the answer let GPT-6.2 Sol Extra High stand in, and that Codex's session did not report the model or effort it ran on. |
+
+### Rulings from Beni
+
+All came on 2026-11-22, in the PM's session, which no seat can open. They continue the numbering above; cite them outside this record as R56.18 to R56.20. All three were asked at 16:00:51 EST and answered at 16:04:30 EST.
+
+18. **"The Claude seat (Recommended)"**, to "PR #56 F8: AGENTS.md's "Pass 2 on a Codex build" row lists Claude or Cursor as the seat, but its model and fallback cells give only Claude's models (Fable 5.2 Extra / Opus 5.5 High). If Cursor gets its own row (Grok 4.7 Medium, per your ruling 6), what is Cursor's fallback?". The option read: "Cursor's row: Grok 4.7 Medium, with "the Claude seat on a Codex build" as fallback. This reads ruling 6's "Otherwise a second fresh Claude session takes Pass 2" as also covering an unavailable Cursor."
+19. **"PM fixes, Codex re-reads (Recommended)"**, to "PR #56: Pass 2 committed no fixes. Who fixes F7 to F9 (wording in README.md, the AGENTS.md table, the .agents pointer), and who cold-reads the fix? A Claude commit can't get its cold read from the Claude Pass 2.5 seat.". The option read: "As on PR #50: one Claude commit, an "After Pass 2" addendum on the records branch, then a Codex re-read on GPT-6.2 Sol Extra High (R56.14 covers "any re-read"), then Pass 2.5."
+20. **"Record only (Recommended)"**, to "PR #56 F10 (Low): the PM's Pass 0 and 1.5 records show effort observed "xhigh" against the Planner's High pin. The records disclose it, and it has been known since PR #52. What now?". The option read: "The records keep disclosing it, and Pass 2 proposed no edit. The PM adds an ideas row to settle the Planner's pin in a later PR."
+
+As on PR #50, this addendum's record posts as pass `"1.5"` and Codex's re-read as pass `"2"`, each carrying every finding id.
+
+### Authorship record, extended
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `06b5cdb` docs(agents): Pass 2 fixes F7 to F9 | Claude | Codex, Pass 2's re-read |
+
+`06b5cdb` changes 3 files, with 5 insertions and 4 deletions (`git diff --shortstat 1e15585 06b5cdb`). The PM's body edit for F11 is also Claude's text after Pass 2, and the re-read reads it too.
+
+### Process notes
+
+- **Pass 2 resumed on "Yes".** Pass 2 stopped at the GPT-6.1 Sol pin, as its prompt said. It resumed after Beni answered "Yes" in Codex's session, before the PM's drafted answer citing ruling 14 reached it, so its first record gave `"requested": "gpt-6.1-sol"`. When Beni pasted the drafted answer, Codex posted a separate correction that quotes ruling 14 and supersedes the first record. It did not edit the comment, as the prompt asked. No finding, count or verdict changed.
+- **The PM's Pass 2 prompt was wrong on one point.** It said the fresh Claude session at Pass 2.5 would cold-read the PM's answers to Pass 2's findings. Under the `AGENTS.md` on `main`, every commit needs a cold read from a vendor that did not author it, so a Claude commit after Pass 2 cannot get its cold read from a Claude seat. Ruling 19 routes `06b5cdb` to a Codex re-read, as on PR #50. Pass 2 committed nothing, so that line routed nothing.
+- **Model and effort.** Both Pass 2 records give model and effort observed `null`, "not reported". The mode was observed as `workspace-write`, as requested.
+- **Paths.** Pass 2 names every path it opened outside its clone: the owner's private list, its own temporary folders, both pinned Node binaries and the installed pnpm. All are within its prompt.
+- **Length.** Pass 2's comment is 16,216 characters and the correction 10,073, each with its seat record last.
+
+### What Pass 2's re-read does
+
+Codex, on GPT-6.2 Sol Extra High under ruling 14, in a fresh clone:
+
+1. Give `06b5cdb` its cold read (`git diff 1e15585 06b5cdb`). Does it carry ruling 18 and the F7 and F9 wording, and nothing else? Does any live instruction still contradict them?
+2. Say with a command whether each of F7 to F9 closes at `06b5cdb`, and whether the body edit closes F11.
+3. Read this addendum's account of Pass 2, and the PM's body edit against GitHub's edit history.
+4. Confirm that F1 to F6 stand as Pass 2 left them, and that F10 stays open as a Low under ruling 20.
+
+Pass M and mutations stay N/A, and demo mode stays N/A under idea 50.
+
+### Sealed appendix for Pass 2's re-read
+
+Pass 2's findings and the PM's fixes are suspicions to re-derive, not conclusions.
+
+#### PM runs at `06b5cdb`
+
+In the PM's clone, on the branch at `06b5cdb23ab4998fc5b55e472be12a5568838185`, against `origin/main` at `f5515590a0d3b1adf79430a96c48e3f23b023d83`, between 16:06:08 and 16:07:22 EST:
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Files | `git diff --name-only origin/main...HEAD` | The same 7 files as at `1e15585` |
+| Size | `git diff --shortstat origin/main...HEAD` | 7 files, 57 insertions, 30 deletions |
+| Commits | `git log --format='%an' origin/main..HEAD \| sort \| uniq -c` | `3 Claude` |
+| Pass 2's wording | `git grep -n -E "vendors that did not write it \(\|session; or Cursor \(Cursor seats\|records PR's commits takes those" HEAD -- AGENTS.md README.md .claude .agents` | Prints nothing and exits 1; at `1e15585`, `git grep -c` with the same pattern prints 1 each for `.agents/skills/keel-pr-review/SKILL.md`, `AGENTS.md` and `README.md` |
+| Older wording | The "Old wording" and "Pass 1's F1, F3 and F4 wording" commands above, at `HEAD` | Each prints nothing and exits 1 |
+| Cursor's row | `git grep -c '^\| Cursor Pass 2 on a Codex build \| Cursor, on Beni.s word for that PR (Cursor seats, below) \| Grok 4.7 Medium \| The Claude Pass 2 seat on a Codex build \|' HEAD -- AGENTS.md` | `1` |
+| New pin | `git grep -c 'GPT-6.2 Sol' HEAD -- AGENTS.md` | `3` |
+| No dependency change | `git diff --exit-code --stat origin/main...HEAD -- package.json pnpm-lock.yaml pnpm-workspace.yaml` | Exits 0 |
+| Tables | `python3 -I tablecols.py AGENTS.md .claude/skills/keel-pr-review/pr-comment.md .claude/skills/keel-pr-review/pass-1.5-brief.md` | 3/26/0, 6/19/0, 2/6/0; the control exits 1 |
+| Copy lint | `node tools/verify/one.mjs copy` | Exit 0 |
+| Install and verify | `CI=true pnpm install --frozen-lockfile`, `pnpm verify`, on Node 24.22.2 and 26.13.0, with an empty `mktemp -d` as `KEEL_DATA_DIR`, outside the app's command sandbox | Exit 0 for each, 12 of 12 steps; core 178, plugin 212, tooling 171 tests; the clone clean and each data folder empty afterwards |
+| Tripwire | `node tools/tripwire/cli.mjs .` | Exit 0, no output |
+
+Under Beni's ruling "Cut to pointers" on PR #48, the per-class counts, the body scan and the private-list check are the reviewer's.
