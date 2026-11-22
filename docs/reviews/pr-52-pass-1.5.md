@@ -568,7 +568,7 @@ Written by the PM at 14:37 EST, after Pass 2.5's comment ([issuecomment-70192360
   - from protectActive on, both names hold the sealed rollback copies, whose ids differ from the originals;
   - at every step, both files are sealed, and their bytes and record equal what was on disk before the import;
   - after a transient fault, the next `activeTerms()` returns the previous import.
-- **D3's fix.** Codex's `a39a5c7` ("Preserve sealed imports through opening read failures") changes `SnapshotStore.swift` (4 lines added, 2 removed) and adds four tests. Its run, [44581863296](https://github.com/BeniCheni/keel/actions/runs/44581863296), is green on all six checks, and the `swift` job printed `Executed 45 tests, with 5 tests skipped and 0 failures`. Pass 2's follow-up ([issuecomment-7017465594](https://github.com/BeniCheni/keel/pull/52#issuecomment-7017465594)) carries the same 39 finding ids as the fourth addendum's record, with D3 and PM2 fixed.
+- **D3's fix.** Codex's `a39a5c7` ("Preserve sealed imports through opening read failures") changes `SnapshotStore.swift` (3 lines added, 1 removed) and adds four tests. Its run, [44581863296](https://github.com/BeniCheni/keel/actions/runs/44581863296), is green on all six checks, and the `swift` job printed `Executed 45 tests, with 5 tests skipped and 0 failures`. Pass 2's follow-up ([issuecomment-7017465594](https://github.com/BeniCheni/keel/pull/52#issuecomment-7017465594)) carries the same 39 finding ids as the fourth addendum's record, with D3 and PM2 fixed.
 
 **What Pass 2.5 found.** Claude Code on Fable 5.2 at High effort, on 72 of 72 replies, in a fresh session that wrote no commit. Its verdict is not mergeable, with E2 open. The shadow gate says would escalate.
 - **Cold reads:** all nine Codex commits, with 61 code mutants, of which 55 were killed. D3 and PM2 are closed. It confirmed the fourth addendum's claim that `1e02aab` introduced PM2.
@@ -1098,7 +1098,7 @@ The head stays at `91b471e`, and no fix round follows. E8 goes to the ideas rows
 - **The comment and record:**
   - `gh api repos/BeniCheni/keel/issues/comments/7046699629`, its body compared with `cmp` against the PM's earlier copy, and its `updated_at` equal to its `created_at`;
   - the record is the body's `json` block, checked with ajv against `schema/seat-record-1.1.json` in the elenchus repo, and its ids and statuses compared with the PM's note record;
-  - the lengths are Python's `len` over the body, less its trailing newline, and over the `json` block with its fences.
+  - the lengths are Python's `len` over the body as GitHub stores it, its final newline included, and over the `json` block with its fences.
 - **E8:**
   - `git show 91b471e:apps/ios/Keel/RootView.swift`;
   - `git grep -n 'allowedContentTypes' 91b471e -- apps tools`;
@@ -1157,24 +1157,25 @@ KEEL v1 import fixture=no
 The digests match `shasum -a 256` of the fixtures at `91b471e`: `200ba595…5665` once, then `6215ee32…c302` twice.
 
 **What the log proves, and what rests on Beni's word.** The PM read the import path at `91b471e`.
-- **The picker is the app's only import route.** `RootView.swift:22` holds the only `fileImporter`. `Info.plist` declares no document types, and nothing handles an opened URL. So four import lines mean four files picked, the invalid one included.
-- **A digest line follows two events.** After a stored import, it logs the new bytes (`AppModel.swift:116-120`). After a failure, it logs the file still stored (`AppModel.swift:125-130`). `DigestLog.swift:28-34` prints `fixture=no` for bytes outside the three fixtures.
+- **The picker is the app's only import route.** `RootView.swift:22` holds the only `fileImporter`. `Info.plist` declares no document types, and nothing handles an opened URL. But a picker error other than a cancel also reaches the log: `finishPick` sends it to `show(.read)` (`AppModel.swift:22-31`).
+- **A digest line follows two events.** After a stored import, it logs the new bytes (`AppModel.swift:116-120`). After a failure, it logs the file still stored (`AppModel.swift:125-130`), whether a file was rejected, could not be read, or the picker failed. `DigestLog.swift:28-34` prints `fixture=no` for bytes outside the three fixtures.
 - **What the log proves:**
-  - lines 1 and 2 are two stored imports;
-  - `fixture=no` means the edited copy became the active file;
-  - line 3 proves the second file was kept. A read failure would print the same line.
+  - lines 1 and 2 are two stored imports, so two files picked;
+  - `fixture=no` means the edited copy was picked and became the active file;
+  - line 3 proves the second file was kept, but not that a file was picked, because a rejected file, a read failure and a picker error print the same line. That the invalid file was picked rests on Beni's "Yes, all four" below.
 - **What Beni saw.** The PM asked at 12:31:51 EST, and Beni answered at 12:32:28 EST.
   - "PR #52 device run at 91b471e: your log proves the digests and that all four files were picked, but not the screens. Did each import show what criterion 12 says: minimal.yaml's summary with ESTIMATE on its generated dates, then example-autocall.yaml's summary and schedule in its place, then missing-required-top.yaml's diagnostics with example-autocall.yaml kept, then the edited copy imported?" He answered "Yes, all four".
   - "Was the Verification build you installed for PR #52 made from a clone checked out at 91b471e, with no changes except your Local.xcconfig?" He answered "Yes".
+- **Correction, 2026-11-21.** The first question says the log proves all four picks. It proves three, as above. Codex's cold read of PR #53 found this ([F1](https://github.com/BeniCheni/keel/pull/53#issuecomment-7068391184)), and the PM corrected this addendum.
 
-**B11 closes.** All four files were picked in the app's Files picker at `91b471e`, so the picker step passes. B11 is fixed in the PM's record, by:
+**B11 closes.** All four files were picked in the app's Files picker at `91b471e`: three on the log, and the invalid file on Beni's word. So the picker step passes. B11 is fixed in the PM's record, by:
 - `e76f296` and `91b471e`;
 - their two package tests, each shown failing first;
 - this device run.
 
 **Criterion 12 passes at `91b471e`,** in full:
 - five launches in each of two runs, with both medians under their limits;
-- the four imports as the spec says, with the screens on Beni's word;
+- the four imports as the spec says, with the screens and the invalid file's pick on Beni's word;
 - the digest lines in the spec's order.
 
 **The verdict.** The PM agrees with the third re-run: mergeable at `91b471e`.
