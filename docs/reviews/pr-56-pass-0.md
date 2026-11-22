@@ -49,7 +49,7 @@ All came from Beni on 2026-11-22, in the PM's session, which no seat can open. T
 
 The rulings this PR writes down from earlier records:
 - the seat-record rulings in `docs/reviews/pr-50-pass-0.md:41` (`grep -n 'Seat records' docs/reviews/pr-50-pass-0.md`);
-- Beni's ruling "Records PR (Recommended)" on PR #55, given in the PM's session on 2026-11-22 at 12:35:00 EST, which [PR #55's cold-read comment](https://github.com/BeniCheni/keel/pull/55#issuecomment-7083330456) quotes.
+- Beni's ruling "Records PR (Recommended)" on PR #55, given in the PM's session on 2026-11-22 at 12:35:00 EST, which PR #55's body quotes (`gh pr view 55 --repo BeniCheni/keel --json body --jq .body | grep -c 'Records PR (Recommended)'` prints `1`), and which its squash message, `f5515590a0d3b1adf79430a96c48e3f23b023d83`, gives as "Records PR" (`git log -1 --format=%B f5515590a0d3b1adf79430a96c48e3f23b023d83 | grep -c 'Records PR'` prints `1`). (Corrected on 2026-11-22, after Pass 1's F6. This line first said that [PR #55's cold-read comment](https://github.com/BeniCheni/keel/pull/55#issuecomment-7083330456) quotes the ruling, which it does not: `gh api repos/BeniCheni/keel/issues/comments/7083330456 --jq .body | grep -c 'Records PR'` prints `0`.)
 
 The occasion is the items PR #52's records mark "For the rules PR" (`grep -n 'For the rules PR' docs/reviews/pr-52-pass-1.5.md`). `docs/reviews/pr-52-pass-2.5.md:463` sends them, with the S91 spec amendments, to the rules PR.
 
