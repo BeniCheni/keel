@@ -6,6 +6,10 @@ Written by the PM on <date, America/New_York>, from a fresh read of the PR at `<
 
 <Claude Code | Codex (a Claude session wrote part of this PR)>, model <pin>, fallback <pin>.
 
+## Seat for Pass 2
+
+<Codex (Claude or Cursor built this PR) | on a Codex-built PR, a second fresh Claude session, or Cursor on Beni's word for this PR, only where "Cursor seats" in AGENTS.md allows it: the PM's one-line reason, and Beni's answer verbatim with its time>, model <pin>, fallback <pin>.
+
 ## Scope
 
 - Spec: `docs/specs/<file>`; design brief: <file or none>
