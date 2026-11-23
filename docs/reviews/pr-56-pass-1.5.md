@@ -188,3 +188,80 @@ A fresh Claude session, not the PM, on Fable 5.2 High (fallback Opus 5.5 High), 
 4. Give the squash message and its trailers: Claude for every commit, and Codex for Pass 1, Pass 2 and the re-read. The message attributes only F7 and F9 to the Pass 1 fixes (F12).
 
 Pass M and mutations stay N/A, and demo mode stays N/A under idea 50. The PM's runs at `06b5cdb` are in the sealed appendix of "After Pass 2", above.
+
+## After Pass 2.5
+
+Written by the PM on 2026-11-22 (America/New_York), after Claude's Pass 2.5 ([issuecomment-7090042008](https://github.com/BeniCheni/keel/pull/56#issuecomment-7090042008), posted at 21:34:18 EST) at `06b5cdb23ab4998fc5b55e472be12a5568838185`. Where this section differs from the text above, it wins.
+
+Pass 2.5's verdict is "mergeable after fixes", and its shadow gate would escalate, because the PR touches sensitive paths and Beni merges it. No High is open. It found F1 to F9 and F11 fixed and F10 and F12 open Lows, and it adds two Mediums, F13 and F14, and two Lows, F15 and F16. Its seat record validates against `schema/seat-record-1.1.json`, with 16 finding ids (the PM's ajv run printed `valid true`, and a bad control failed). GitHub lists no edit to the comment. The comment carries the executive brief in full, as its prompt asked.
+
+The PM reproduced all four with the seat's own commands and accepts all four. They are fixed in one Claude commit, `1c71942063577dd9bd3e1b79b0749e5bbf1d6b2b`. F13 and F14 sit in wording that was already on `main`, F15 in a template the PR had not touched, and F16 in a label that came in with `25f4531`. The PM's check: `git grep -c -F <phrase> <ref> -- .claude` for each of F13 and F14's four phrases gives one file at `origin/main`, at `25f4531` and at `06b5cdb`, and the old row label gives none at `origin/main` and one at `25f4531`.
+
+| # | Severity | PM disposition | Reason | Answer |
+| --- | --- | --- | --- | --- |
+| F13 | Medium | accept | Reproduced. At `06b5cdb`, `pass-1.5-brief.md:3` and `:27` say Codex receives the brief and re-derives Pass 1's findings, and `executive-brief.md:16` says "Codex's own findings" for Pass 2. On a Codex-built PR, `AGENTS.md:20` bars Codex from that Pass 2. | `1c71942`: the three lines name the Pass 2 seat: Codex, or on a Codex-built PR the Claude Pass 2 seat or Cursor. |
+| F14 | Medium | accept | Reproduced. At `06b5cdb`, `SKILL.md:113` tells a seat to add skill changes "to the ideas note", while `SKILL.md:80` (ruling 11) says the PM appends ideas rows and a review seat does not edit that file. | `1c71942`: the seat lists them under Deliberately not done, and the PM appends them to the ideas note. |
+| F15 | Low | accept | Reproduced. `AGENTS.md:34` has the PM propose Cursor in the Pass 0 brief and the brief record Beni's answer, and on a Codex-built PR that brief names the Pass 2 seat, but `pass-0-brief.md` has a "Seat for Pass 1" slot only. | `1c71942`: the template gains "Seat for Pass 2": Codex, a second fresh Claude session, or Cursor with the PM's one-line reason and Beni's answer. |
+| F16 | Low | accept | Reproduced. The row "Records and fast-track cold read" at `AGENTS.md:24` holds Cursor's cells only, while `AGENTS.md:100` and the pointer give that read to any vendor that wrote none of the PR. | `1c71942`: the row is "Cursor records and fast-track cold read", beside "Cursor Pass 2 on a Codex build". |
+
+### Rulings from Beni
+
+All came on 2026-11-22. They continue the numbering above; cite them outside this record as R56.21 and R56.22.
+
+21. **"Yes, fix first"**, given in the Pass 2.5 seat's own session at about 21:36 EST, as that seat's last message records, to its question 1 in comment 7090042008: "Should the PM fix F13 and F14 in this PR before the merge? "Yes" means one Claude fix commit, a Codex re-read, and this seat re-runs at the new head. "No" means the block below merges this head, and F13 to F16 go to the next docs PR."
+22. **"Ride along (Recommended)"**, in the PM's session, asked at 21:39:16 and answered at 21:40:59 EST, to "PR #56 Pass 2.5's Lows: F15 (the Pass 0 template has no slot for the Pass 2 seat or a Cursor proposal) and F16 (the "Records and fast-track cold read" row is Cursor-only but its label reads as covering every such read). Fix them in the same commit as F13 and F14?". The option read: "One Claude commit fixes F13 to F16. F15 adds a Pass 2 seat slot to pass-0-brief.md; F16 renames the row "Cursor records and fast-track cold read". Same Codex re-read, same Pass 2.5 re-run."
+
+At the same times Beni answered "Yes, until the merge block (Recommended)" to "For the rest of PR #56's loop, may I push the PM's fix and records commits, update the body, post the PM's records and message the Pass 2.5 seat with the new SHAs, without stopping for your yes each time?". The option read: "I still stop for any new ruling, any High, any seat's stop, and anything outside those four actions. You still paste Codex's prompt, run the merge, and mark the PR ready." That is an approval, not a ruling.
+
+The seat's question 2, "Are rulings 1 to 20 right as the two briefs quote them?", is still open. Beni answers it in the seat's session at its re-run.
+
+### Authorship record, extended
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `1c71942` docs(agents): Pass 2.5 fixes F13 to F16 | Claude | Codex, Pass 2's second re-read |
+
+`1c71942` changes 5 files, with 9 insertions and 5 deletions (`git diff --shortstat 06b5cdb 1c71942`), and brings `pass-0-brief.md` and `executive-brief.md` into the PR, so the PR now changes 9 files, 7 of them on sensitive paths. After Codex's second re-read, the same Pass 2.5 seat, which wrote no fix, re-runs at the new head.
+
+### Process notes
+
+- **The seat's worktree.** The app started the Pass 2.5 session in a worktree of its clone, cut from `origin/main`, at `~/code/keel-pr-56-p25/.claude/worktrees/keel-pr-56-pass-25-99c405`. The seat detached that worktree at the head, ran every check there, put it back afterwards, and says so in its comment. The clone and its worktree stay until PR #56 merges.
+- **The handoff block is void.** The seat's block answered a "No" to its question 1 and pins `06b5cdb`; its re-run replaces it.
+- **The PM and the seat.** At Beni's request to guide the Pass 2.5 session to completion, the PM read that session's last message, to see where it stopped. Nothing reaches the seat from the PM but this brief, the PM's records and the new SHAs.
+
+### What Pass 2's second re-read does
+
+Codex, on GPT-6.2 Sol Extra High under ruling 14, in a fresh clone:
+
+1. Give `1c71942` its cold read (`git diff 06b5cdb 1c71942`). Does it carry rulings 21 and 22 and the F13 to F16 wording, and nothing else? Does any live instruction still contradict them?
+2. Say with a command whether each of F13 to F16 closes at `1c71942`.
+3. Confirm that F1 to F12 stand as the re-read and Pass 2.5 left them, F10 and F12 open as Lows.
+
+Then the Pass 2.5 seat re-runs at `1c71942`. Pass M and mutations stay N/A, and demo mode stays N/A under idea 50.
+
+### Sealed appendix for Pass 2's second re-read
+
+The findings and the PM's fixes are suspicions to re-derive, not conclusions.
+
+#### PM runs at `1c71942`
+
+In the PM's clone, on the branch at `1c71942063577dd9bd3e1b79b0749e5bbf1d6b2b`, against `origin/main` at `f5515590a0d3b1adf79430a96c48e3f23b023d83`, between 21:42:18 and 21:43:18 EST:
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Files | `git diff --name-only origin/main...HEAD` | 9 files: the 7 earlier ones, `pass-0-brief.md` and `executive-brief.md` |
+| Size | `git diff --shortstat origin/main...HEAD` | 9 files, 64 insertions, 33 deletions |
+| Commits | `git log --format='%an' origin/main..HEAD \| sort \| uniq -c` | `4 Claude` |
+| Sensitive paths | `git diff --name-only origin/main...HEAD -- packages tools schemas fixtures .github AGENTS.md CLAUDE.md .claude .agents docs/providers apps \| wc -l` | `7` |
+| Pass 2.5's wording | `git grep -n -E "Codex receives this brief for Pass 2\|Codex reproduces or disproves each one\|plus Codex's own findings\|otherwise add them to the ideas note\|^[\|] Records and fast-track cold read [\|]" HEAD -- AGENTS.md README.md .claude .agents` | Prints nothing and exits 1; at `06b5cdb`, `git grep -c` with the same pattern gives `SKILL.md` 1, `executive-brief.md` 1, `pass-1.5-brief.md` 2 and `AGENTS.md` 1 |
+| Earlier wording | The "Old wording", "Pass 1's F1, F3 and F4 wording" and "Pass 2's wording" commands above, at `HEAD` | Each prints nothing and exits 1 |
+| The Pass 2 slot | `git grep -c '^## Seat for Pass 2$' HEAD -- .claude/skills/keel-pr-review/pass-0-brief.md` | `1` |
+| Cursor's rows | `git grep -c -E '^[\|] Cursor (Pass 2 on a Codex build\|records and fast-track cold read) [\|]' HEAD -- AGENTS.md` | `2` |
+| New pin | `git grep -c 'GPT-6.2 Sol' HEAD -- AGENTS.md` | `3` |
+| No dependency change | `git diff --exit-code --stat origin/main...HEAD -- package.json pnpm-lock.yaml pnpm-workspace.yaml` | Exits 0 |
+| Tables | `python3 -I tablecols.py AGENTS.md` and the four templates `pr-comment.md`, `pass-1.5-brief.md`, `pass-0-brief.md`, `executive-brief.md` | 3/26/0, 6/19/0, 2/6/0, 2/6/0, 2/19/0; the control exits 1 |
+| Copy lint | `node tools/verify/one.mjs copy` | Exit 0 |
+| Install and verify | `CI=true pnpm install --frozen-lockfile`, `pnpm verify`, on Node 24.22.2 and 26.13.0, with an empty `mktemp -d` as `KEEL_DATA_DIR`, outside the app's command sandbox | Exit 0 for each, 12 of 12 steps; core 178, plugin 212, tooling 171 tests; the clone clean and each data folder empty afterwards |
+| Tripwire | `node tools/tripwire/cli.mjs .` | Exit 0, no output |
+
+Under Beni's ruling "Cut to pointers" on PR #48, the per-class counts, the body scan and the private-list check are the reviewer's.
