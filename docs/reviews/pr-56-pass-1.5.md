@@ -158,3 +158,33 @@ In the PM's clone, on the branch at `06b5cdb23ab4998fc5b55e472be12a5568838185`, 
 | Tripwire | `node tools/tripwire/cli.mjs .` | Exit 0, no output |
 
 Under Beni's ruling "Cut to pointers" on PR #48, the per-class counts, the body scan and the private-list check are the reviewer's.
+
+## After Pass 2's re-read
+
+Written by the PM on 2026-11-22 (America/New_York), after Codex's re-read of Pass 2 ([issuecomment-7089510550](https://github.com/BeniCheni/keel/pull/56#issuecomment-7089510550), posted at 20:54:37 EST) at `06b5cdb23ab4998fc5b55e472be12a5568838185`. Where this section differs from the text above, it wins.
+
+The re-read's verdict is "mergeable", with no fix commit. It closes F1 to F9 and F11, keeps F10 open as a Low under ruling 20, and finds one new Low, F12. Its seat record validates against `schema/seat-record-1.1.json`, with 12 finding ids (the PM's ajv run printed `valid true`, and a bad control failed on three counts). GitHub lists no edit to the comment (`userContentEdits` gives a `totalCount` of 0). All six hosted checks passed at `06b5cdb` ([run 45095998960](https://github.com/BeniCheni/keel/actions/runs/45095998960)), and GitHub reports the PR `MERGEABLE` and `CLEAN` (`gh pr view 56 --json mergeable,mergeStateStatus`).
+
+| # | Severity | PM disposition | Reason | Answer |
+| --- | --- | --- | --- | --- |
+| F12 | Low | accept | Reproduced. `git log -1 --format=%B 06b5cdb` says at lines 3 and 4 that Pass 2's three Mediums were "each in wording from the Pass 1 fixes". But `git show 25f4531:AGENTS.md` and `git show 1e15585:AGENTS.md` give line 21 the same Who, model and fallback cells, the cells F8 is about; `1e15585` changed only the row's "Does" cell. F8's defect came in with `25f4531`. This brief's "After Pass 2" section has it right: only F7 and F9 sit in the PM's fix wording. | Corrected here. The commit message stays as pushed, because changing it needs a force-push. `main` keeps the squash message instead, and that message attributes only F7 and F9 to the Pass 1 fixes. F12 stays open until the squash lands. |
+
+### Authorship record
+
+Unchanged. `06b5cdb` has its cold read from Codex, in this re-read. Every commit on the PR now has a cold read from a vendor that did not author it: `25f4531` from Codex's Pass 1, `1e15585` from Codex's Pass 2, and `06b5cdb` from Codex's re-read. No Codex commit exists, so Pass 2.5 has no commit to cold-read.
+
+### Process notes
+
+- **The same chat.** The re-read ran in the chat that gave Pass 2; its record's session id matches the Pass 2 records. It made a fresh clone, and it read three of its own scripts from its Pass 2 temporary folder, read-only, as the prompt allowed.
+- **The PM's scratch folder was cleared again,** after the push of 20:41 EST and before 21:01 EST. Nothing pushed was lost, and the PM's receipts are kept outside it. The PM re-cloned keel and rebuilt its checks: the seat-record validator on the repository's own ajv 8.20.0, with a control that fails on three counts; and `tablecols.py` from `docs/reviews/pr-32-pass-2.5.md`, with a control that exits 1. The rebuilt validator also passes records 7085489566, 7085577152 and 7089353143, as the first one did.
+
+### What Pass 2.5 does
+
+A fresh Claude session, not the PM, on Fable 5.2 High (fallback Opus 5.5 High), in a fresh clone:
+
+1. Re-run every number it reports at `06b5cdb`, against `origin/main` at `f5515590a0d3b1adf79430a96c48e3f23b023d83`. Anything not re-run is listed as not verified.
+2. Read the whole diff, `origin/main...06b5cdb`, against rulings 1 to 20. Check that every commit has a cold read from a vendor that did not author it, and that F1 to F12 each have a disposition.
+3. Write the executive brief from `executive-brief.md`, and evaluate the merge gate in shadow mode. The PR touches sensitive paths, so Beni merges it.
+4. Give the squash message and its trailers: Claude for every commit, and Codex for Pass 1, Pass 2 and the re-read. The message attributes only F7 and F9 to the Pass 1 fixes (F12).
+
+Pass M and mutations stay N/A, and demo mode stays N/A under idea 50. The PM's runs at `06b5cdb` are in the sealed appendix of "After Pass 2", above.
