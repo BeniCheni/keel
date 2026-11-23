@@ -21,7 +21,7 @@ The specs in `docs/specs/` are the build authority. The product research behind 
 | Pass 2 on a Codex build | Claude Code, a second fresh session and fresh clone, neither the PM's nor the Pass 1 session | Fable 5.2 Extra on sensitive-path PRs; Opus 5.5 High otherwise | Opus 5.5 High | The Pass 2 adjudicator's work on a PR Codex built, with findings only | Commits a fix on a Codex-built PR |
 | Cursor Pass 2 on a Codex build | Cursor, on Beni's word for that PR (Cursor seats, below) | Grok 4.7 Medium | The Claude Pass 2 seat on a Codex build | The same work, with findings only, where Cursor seats allows it | Commits a fix on a Codex-built PR |
 | Pass 2.5 synthesis | Claude, fresh session, not the PM | Fable 5.2 High on sensitive-path PRs; Opus 5.5 High otherwise | Opus 5.5 High | Re-runs every number at the head, gives the cold read of any Codex-authored commit, writes the executive brief, evaluates the merge gate; findings only on a Codex-built PR | Runs in a session that wrote the build or any fix |
-| Records and fast-track cold read | Cursor, on Beni's word | Grok 4.7 Extra High | none | The one cold read of a records or fast-track PR it wrote none of, unless that PR records or reports on a PR with any Cursor-authored commit | Gives the cold read of a commit it wrote |
+| Cursor records and fast-track cold read | Cursor, on Beni's word | Grok 4.7 Extra High | none | The one cold read of a records or fast-track PR it wrote none of, unless that PR records or reports on a PR with any Cursor-authored commit | Gives the cold read of a commit it wrote |
 | Merge logistics | Cursor, on Beni's word | Grok 4.7 Medium | none | Runs the merge and tag commands Beni approved | Merges or tags without Beni's word |
 
 Independence rules:

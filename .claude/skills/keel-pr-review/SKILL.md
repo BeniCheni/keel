@@ -110,4 +110,4 @@ These apply to whichever seat holds Pass 2: Codex, or on a Codex-built PR the Cl
 
 ## 10. Retro
 
-Put two lines just before the seat record in every comment: what this method caught, and what it missed or wasted. Changes to this skill ride in the same PR only if Beni rules them in; otherwise add them to the ideas note.
+Put two lines just before the seat record in every comment: what this method caught, and what it missed or wasted. Changes to this skill ride in the same PR only if Beni rules them in; otherwise list them under Deliberately not done, and the PM appends them to the ideas note.

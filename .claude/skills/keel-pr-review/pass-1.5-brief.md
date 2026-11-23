@@ -1,6 +1,6 @@
 # Pass 1.5 brief: PR #<N>
 
-Written by the PM on <date, America/New_York> after reading the Pass 1 comment and any rulings from Beni. Save as `docs/reviews/pr-<N>-pass-1.5.md`. Codex receives this brief for Pass 2.
+Written by the PM on <date, America/New_York> after reading the Pass 1 comment and any rulings from Beni. Save as `docs/reviews/pr-<N>-pass-1.5.md`. The Pass 2 seat receives this brief: Codex, or on a Codex-built PR the Claude Pass 2 seat or Cursor.
 
 ## Per finding
 
@@ -24,4 +24,4 @@ The Pass 0 record, extended with every fix commit since. Every commit needs a co
 
 ## Sealed appendix for Pass 2
 
-Pass 1's findings and fixes are suspicions to re-derive, not conclusions. Codex reproduces or disproves each one independently and adds its own read.
+Pass 1's findings and fixes are suspicions to re-derive, not conclusions. The Pass 2 seat reproduces or disproves each one independently and adds its own read.
