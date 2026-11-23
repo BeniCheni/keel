@@ -265,3 +265,71 @@ In the PM's clone, on the branch at `1c71942063577dd9bd3e1b79b0749e5bbf1d6b2b`, 
 | Tripwire | `node tools/tripwire/cli.mjs .` | Exit 0, no output |
 
 Under Beni's ruling "Cut to pointers" on PR #48, the per-class counts, the body scan and the private-list check are the reviewer's.
+
+## After Pass 2's second re-read
+
+Written by the PM on 2026-11-22 (America/New_York), after Codex's second re-read ([issuecomment-7090547948](https://github.com/BeniCheni/keel/pull/56#issuecomment-7090547948), posted at 22:12:08 EST) at `1c71942063577dd9bd3e1b79b0749e5bbf1d6b2b`. Where this section differs from the text above, it wins.
+
+The second re-read's verdict is "mergeable after fixes", with no fix commit. It closes F13 to F16, keeps F10 and F12 open as Lows, and finds one Medium, F17, and two Lows, F18 and F19. Its seat record validates against `schema/seat-record-1.1.json`, with 19 finding ids (the PM's ajv run printed `valid true`, and a bad control failed), and its session id matches the records of Pass 2 and the re-read. GitHub lists no edit to the comment. All six hosted checks passed at `1c71942` ([run 45102335577](https://github.com/BeniCheni/keel/actions/runs/45102335577)), and GitHub reports the PR `MERGEABLE` and `CLEAN`.
+
+| # | Severity | PM disposition | Reason | Answer |
+| --- | --- | --- | --- | --- |
+| F17 | Medium | accept | Reproduced. At `1c71942`, `pass-0-brief.md:11` ties "(Codex built this PR)" to the Claude option only, so its Cursor option reads as open on any PR. `AGENTS.md:34` gives Cursor's Pass 2 only on a Codex-built PR, outside sensitive paths and engine code, after a shadowed trial, and on a PR Claude or Cursor built, Codex takes Pass 2. The line came in with `1c71942`, for F15. | `aa609a4`, under ruling 23: the slot names Codex when Claude or Cursor built the PR, and on a Codex-built PR a second fresh Claude session, or Cursor on Beni's word only where "Cursor seats" in `AGENTS.md` allows it. |
+| F18 | Low | accept | Reproduced. Body v5's "Cursor seats" bullet says the row "Cursor records and fast-track cold read" keeps that read and merge logistics, but `AGENTS.md:25` gives merge logistics a row of its own, on Grok 4.7 Medium, where the cold-read row is on Extra High. Body v4 had it right; the PM's v5 rewrite for F16 brought the error in. | Body v6: Cursor keeps the records and fast-track cold read, in the row of that name, and merge logistics, in a row of its own. |
+| F19 | Low | accept | Reproduced. Split into cells, row 21 of `git show 25f4531:AGENTS.md` and of `git show 1e15585:AGENTS.md` has the same Seat, Who, Model pin and Fallback cells, and different Does and Never cells. The PM wrote that `1e15585` changed only the Does cell in this brief's F12 row, above, and in the seat records of comments 7089726492 and 7090239912. F12 stands: the cells F8 is about came in with `25f4531`. | Corrected here: `1e15585` changed row 21's Does and Never cells, and not its Who, Model pin or Fallback cells. The two comments stay as posted, and the PM's next record carries the corrected evidence. |
+
+### Ruling from Beni
+
+It came on 2026-11-22 and continues the numbering above; cite it outside this record as R56.23.
+
+23. **"Fix first (Recommended)"**, in the PM's session, asked at 22:22:09 and answered by 22:22:31 EST, to "PR #56, Codex's second re-read raised F17 (Medium): the new 'Seat for Pass 2' line in pass-0-brief.md offers Cursor on any PR, though AGENTS.md:34 allows Cursor's Pass 2 only on a Codex-built PR, outside sensitive paths, after a shadowed trial. 1c71942 introduced that line. Fix it in this PR before the merge?". The option read: "One Claude commit rewrites line 11; Codex gives it a third re-read; the Pass 2.5 seat re-runs at that head. F18's body fix and F19's records correction ride along." Its preview gave the new line, which `aa609a4` carries word for word.
+
+F18 and F19 are answered under Beni's approval of "Yes, until the merge block (Recommended)", above: a body edit and this records commit, with no commit on the PR branch.
+
+### Authorship record, extended
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| `aa609a4` docs(agents): Pass 2's second re-read fixes F17 | Claude | Codex, Pass 2's third re-read |
+
+`aa609a4` changes 1 file, with 1 insertion and 1 deletion (`git diff --shortstat 1c71942 aa609a4`). The line it replaces came in with this PR, so the PR still changes 9 files, with 64 insertions and 33 deletions, 7 of the files on sensitive paths. After Codex's third re-read, the same Pass 2.5 seat, which wrote no fix, re-runs at the new head.
+
+### Process notes
+
+- **The same chat, a new scratch folder.** The second re-read ran in the chat that gave Pass 2 and the re-read, in the fresh clone `/tmp/keel-pr-56-p2r2`. It says its three reads of scripts from the re-read's temporary folder found the files missing, so it rebuilt them in its own temporary folder.
+- **The PM's errors.** F18 came from the PM's body v5, and F19 from the PM's description of `1e15585`, repeated in two records. Neither changes a rule or a finding's status.
+
+### What Pass 2's third re-read does
+
+Codex, on GPT-6.2 Sol Extra High under ruling 14, in a fresh clone:
+
+1. Give `aa609a4` its cold read (`git diff 1c71942 aa609a4`). Does it carry ruling 23 and the F17 wording, and nothing else? Does any live instruction still contradict it?
+2. Say with a command whether F17 closes at `aa609a4`, F18 in body v6, and F19 in this section.
+3. Confirm that F1 to F16 stand as the second re-read left them, F10 and F12 open as Lows.
+
+Then the Pass 2.5 seat re-runs at `aa609a4`. Pass M and mutations stay N/A, and demo mode stays N/A under idea 50.
+
+### Sealed appendix for Pass 2's third re-read
+
+The findings and the PM's fixes are suspicions to re-derive, not conclusions.
+
+#### PM runs at `aa609a4`
+
+In the PM's clone, on the branch at `aa609a4a2b5bc49926a2034bc9f5e0132049659a`, against `origin/main` at `f5515590a0d3b1adf79430a96c48e3f23b023d83`, with the install and verify between 22:23:02 and 22:23:59 EST and the other rows between 22:25:05 and 22:25:06 EST:
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Files | `git diff --name-only origin/main...HEAD` | The same 9 files as at `1c71942` |
+| Size | `git diff --shortstat origin/main...HEAD` | 9 files, 64 insertions, 33 deletions |
+| Commits | `git log --format='%an' origin/main..HEAD \| sort \| uniq -c` | `5 Claude` |
+| Sensitive paths | `git diff --name-only origin/main...HEAD -- packages tools schemas fixtures .github AGENTS.md CLAUDE.md .claude .agents docs/providers apps \| wc -l` | `7` |
+| F17's new line | `git grep -c -F 'Codex (Claude or Cursor built this PR)' HEAD -- .claude/skills/keel-pr-review/pass-0-brief.md` | `1` |
+| F17's old line | `git grep -n -F 'a second fresh Claude session (Codex built this PR)' HEAD -- AGENTS.md README.md .claude .agents` | Prints nothing and exits 1; at `1c71942` it prints `pass-0-brief.md:11` |
+| F19's cells | `diff <(git show 25f4531:AGENTS.md \| sed -n 21p \| tr '\|' '\n') <(git show 1e15585:AGENTS.md \| sed -n 21p \| tr '\|' '\n')` | `6,7c6,7`: fields 6 and 7, the Does and Never cells, differ; fields 2 to 5, Seat, Who, Model pin and Fallback, do not |
+| Earlier wording | The "Old wording", "Pass 1's F1, F3 and F4 wording", "Pass 2's wording" and "Pass 2.5's wording" commands above, at `HEAD` | Each prints nothing and exits 1 |
+| Tables | `python3 -I tablecols.py AGENTS.md` and the four templates `pr-comment.md`, `pass-1.5-brief.md`, `pass-0-brief.md`, `executive-brief.md` | 3/26/0, 6/19/0, 2/6/0, 2/6/0, 2/19/0; the control exits 1 |
+| Copy lint | `node tools/verify/one.mjs copy` | Exit 0 |
+| Install and verify | `CI=true pnpm install --frozen-lockfile`, `pnpm verify`, on Node 24.22.2 and 26.13.0, with an empty `mktemp -d` as `KEEL_DATA_DIR`, outside the app's command sandbox, between 22:23:02 and 22:23:59 EST | Exit 0 for each, 12 of 12 steps; core 178, plugin 212, tooling 171 tests; the clone clean and each data folder empty afterwards |
+| Tripwire | `node tools/tripwire/cli.mjs .` | Exit 0, no output |
+
+Under Beni's ruling "Cut to pointers" on PR #48, the per-class counts, the body scan and the private-list check are the reviewer's.
