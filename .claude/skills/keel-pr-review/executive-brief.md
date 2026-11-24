@@ -13,7 +13,7 @@ Every number below comes from a command run in this session. A number taken from
 ## What the passes found
 
 - Pass 1: <one line per finding>
-- Pass 2: <one line per disposition, plus Codex's own findings and the Pass M result>
+- Pass 2: <one line per disposition, plus the Pass 2 seat's own findings and the Pass M result>
 - Pass 2.5 corroboration: <one line per finding re-checked>
 - Contested: <each point, with both positions and the evidence for each>
 

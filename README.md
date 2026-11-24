@@ -13,8 +13,8 @@ keel shows your instruments, what each term says and where that term came from, 
 Every change is one slice, one pull request:
 
 - A planner (Claude) writes the spec in `docs/specs/`.
-- A builder (Cursor) implements it.
-- Reviewers from two other vendors (Claude Code, then Codex) review it cold and adjudicate each other's findings.
+- A builder (Codex, or Cursor when the owner approves) implements it.
+- Reviewers (Claude Code, Codex or Cursor, as `AGENTS.md` assigns them) review it cold and adjudicate each other's findings. The builder reviews nothing it built, and every commit gets its cold read from a vendor that did not write it.
 - A human merges.
 
 The rules are in `AGENTS.md`; the review procedure is `.claude/skills/keel-pr-review/`.
