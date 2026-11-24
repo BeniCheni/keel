@@ -22,7 +22,7 @@ PR #56's records send these items to the next docs PR: F10 by ruling 20, F20 by 
 | --- | --- |
 | F10, the Planner's effort against its pin, carried by ruling 20 | Idea 93 |
 | F20, no slot for Beni's word on a Cursor build, carried by ruling 24 | Idea 94 |
-| Idea 48 now reaching every slice | Idea 95, which extends idea 48 |
+| Idea 48 now reaching every Codex-built slice, the default | Idea 95, which extends idea 48 |
 | No seats row or pin for a Claude or Codex records cold read | Idea 96, with PR #57's cold read as a second source |
 | The skill's unguarded `mktemp -d` | Idea 97 |
 | F10's ideas row | Idea 93 |
@@ -37,6 +37,7 @@ From `git log --format='%h %an' origin/main..HEAD`. A commit that adds or change
 | Commit | Authoring vendor | Cold read by |
 | --- | --- | --- |
 | The commit that adds ideas 93 to 97, this brief and its index row (`git log --diff-filter=A -1 --format='%h %an' -- docs/reviews/pr-58-pass-0.md`) | Claude | Codex |
+| The commit that answers the cold review (`git log -1 --format='%h %an' -- docs/reviews/pr-58-pass-0.md`) | Claude | Codex |
 
 ## Fast-track
 
@@ -51,3 +52,14 @@ Allowed: the diff is docs outside sensitive paths, and this is not a release or 
 5. **Privacy.** This seat runs the owner's private-list check, counts only, over the diff, the commit messages, the PR title and body, every comment and its own proposed comment.
 
 Out of scope: any change to code, tests, fixtures, schemas, `AGENTS.md` or the skills. Findings there go in the comment for the PM to carry.
+
+## After the cold review
+
+Corrected on 2026-11-24, after Codex's fast-track cold review ([issuecomment-7140062707](https://github.com/BeniCheni/keel/pull/58#issuecomment-7140062707)) found three Mediums and three Lows.
+
+- **F1:** idea 94 scopes the gap to the template. `AGENTS.md:34` already has the brief record Beni's answer; what the template lacks is a slot for it on a Cursor build.
+- **F2:** idea 95 and the table above now say every Codex-built slice, the default, and not every slice. Cursor still builds on Beni's word for a PR.
+- **F3:** idea 95 cites the ruling it quotes as R24.4.
+- **F4:** idea 96 says PR #57's cold read ran in a sub-agent configured for GPT-6.2 Sol High, with its observed model and effort not reported.
+- **F5:** idea 97's guard ends with `|| exit`, so it fails closed.
+- **F6:** ideas 95 to 97 also cite the record line that sends them here, `docs/reviews/pr-56-pass-1.5.md:370`, as the PR body says every row does.
