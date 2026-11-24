@@ -367,5 +367,5 @@ No commit was added to the PR after `aa609a4`. `git log --format='%h %an' f55155
 ### What comes next
 
 - Codex's cold read of the records PR, as one short PR comment. Beni merges it.
-- The ideas docs PR, with rows from rank 93: F10, F20, and the four items of the seat's "Deliberately not done" list (idea 48 now reaching every slice; no seats row or pin for a Claude or Codex records cold read; the skill's unguarded `mktemp -d`; F10's row).
+- The ideas docs PR, with rows from rank 93: F10, F20, and three more items from the seat's "Deliberately not done" list (idea 48 now reaching every slice; no seats row or pin for a Claude or Codex records cold read; the skill's unguarded `mktemp -d`). The list's fourth item is F10's own row. *Corrected on 2026-11-24, after the records cold read's [F2](https://github.com/BeniCheni/keel/pull/57#issuecomment-7137593571): this line had listed F10 twice.*
 - The S91 spec-amendment PR that `pr-52-pass-2.5.md` owes.

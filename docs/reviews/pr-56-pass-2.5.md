@@ -211,7 +211,7 @@ Added by the PM for the records PR on 2026-11-23 (America/New_York). The two exe
 - the first is from [issuecomment-7090042008](https://github.com/BeniCheni/keel/pull/56#issuecomment-7090042008), posted 2026-11-22 at 21:34:18 EST, at `06b5cdb`;
 - the re-run's is from [issuecomment-7102977585](https://github.com/BeniCheni/keel/pull/56#issuecomment-7102977585), posted 2026-11-23 at 08:45:10 EST, at `aa609a4`.
 
-GitHub lists no edit to either comment: the PR's GraphQL `comments` nodes give each `lastEditedAt` null and 0 `userContentEdits`. Each brief is its comment's "Executive brief" section, written out by `brief-from-comment.py` below. The script turns the section's first line into the title and its `###` headings outside code fences into `##`, and keeps every other line as the seat wrote it. The first brief is lines 1 to 102 of this file, with SHA-256 `c67a26290222d44bd7e31095481cd0bdfce47cbab9bae952c91338c50614d06e`; the re-run's is lines 104 to 205, with SHA-256 `a663a5721179790289c4b29f70661c20482bcbb23c4c6fb9588af8addefe2ea8`. To check: `gh api repos/BeniCheni/keel/issues/comments/<id> > c.json`, `python3 -I brief-from-comment.py c.json out.md`, and `sed -n 1,102p docs/reviews/pr-56-pass-2.5.md | cmp - out.md` (`104,205p` for the re-run).
+GitHub lists no edit to either comment: the PR's GraphQL `comments` nodes give each `lastEditedAt` null and 0 `userContentEdits`. Each brief is its comment's "Executive brief" section, written out by `brief-from-comment.py` below. The script turns the section's first line into the title and its `###` headings outside code fences into `##`, drops the blank lines at the section's start and end (one at each end in both comments), and keeps every other line as the seat wrote it. *Corrected on 2026-11-24, after the records cold read's [F1](https://github.com/BeniCheni/keel/pull/57#issuecomment-7137593571): this sentence had left out the dropped blank lines, and so had the script's header comment.* The first brief is lines 1 to 102 of this file, with SHA-256 `c67a26290222d44bd7e31095481cd0bdfce47cbab9bae952c91338c50614d06e`; the re-run's is lines 104 to 205, with SHA-256 `a663a5721179790289c4b29f70661c20482bcbb23c4c6fb9588af8addefe2ea8`. To check: `gh api repos/BeniCheni/keel/issues/comments/<id> > c.json`, `python3 -I brief-from-comment.py c.json out.md`, and `sed -n 1,102p docs/reviews/pr-56-pass-2.5.md | cmp - out.md` (`104,205p` for the re-run).
 
 **The first brief's handoff block never ran.** It was written for a "No" to its question 1. Beni answered "Yes, fix first" (R56.21), and the re-run's block replaced it.
 
@@ -231,7 +231,8 @@ GitHub lists no edit to either comment: the PR's GraphQL `comments` nodes give e
 # Writes the "## Executive brief" section of a keel PR review comment as a record:
 # the section's first line ("PR #N, Pass ..., <date> America/New_York.") becomes the
 # H1 "# Executive brief: PR #N, Pass ..., <date> America/New_York", "### " headings
-# outside code fences become "## ", and every other line is kept byte for byte.
+# outside code fences become "## ", blank lines at the section's start and end are
+# dropped, and every other line is kept byte for byte.
 # The section ends at the next "## " heading outside a fence. Prints lines and SHA-256.
 import hashlib, json, re, sys
 
