@@ -333,3 +333,39 @@ In the PM's clone, on the branch at `aa609a4a2b5bc49926a2034bc9f5e0132049659a`, 
 | Tripwire | `node tools/tripwire/cli.mjs .` | Exit 0, no output |
 
 Under Beni's ruling "Cut to pointers" on PR #48, the per-class counts, the body scan and the private-list check are the reviewer's.
+
+## After Pass 2.5's re-run
+
+Written by the PM on 2026-11-23 (America/New_York), after Codex's third re-read, the Pass 2.5 seat's re-run at `aa609a4a2b5bc49926a2034bc9f5e0132049659a`, and Beni's merge. Where this section differs from the text above, it wins.
+
+**Codex's third re-read** ([issuecomment-7090852509](https://github.com/BeniCheni/keel/pull/56#issuecomment-7090852509), posted 2026-11-22 at 22:34:31 EST) finds `aa609a4` mergeable. It makes no fix commit and raises no new finding. It closes F17 to F19 and keeps F10 and F12 open as Lows. Its seat record validates against `schema/seat-record-1.1.json` with 19 finding ids. Its session id, `01a204f1-6080-79e3-adbe-056585b04662`, is the second re-read's. All six hosted checks passed at `aa609a4` (`gh api repos/BeniCheni/keel/commits/aa609a4a2b5bc49926a2034bc9f5e0132049659a/check-runs`: 6 of 6 `success`).
+
+**The Pass 2.5 re-run** ([issuecomment-7102977585](https://github.com/BeniCheni/keel/pull/56#issuecomment-7102977585), posted 2026-11-23 at 08:45:10 EST) finds `aa609a4` mergeable, with no High or Medium open. Its shadow gate would escalate, because the PR touches sensitive paths. It raises one Low, F20. Its seat record validates with 20 finding ids. Its session id, `e74c71dd-7102-4264-b43d-0ece3f7863bf`, is the first run's. The PM's ajv runs printed `valid true` for both records, and a bad control printed `valid false` and exited 1. The control was the re-run's record with `verdict` removed, `pass` set to "4" and a finding's status set to "maybe". GitHub lists no edit to either comment. The executive briefs of both Pass 2.5 runs are in `pr-56-pass-2.5.md`.
+
+| # | Severity | PM disposition | Reason | Answer |
+| --- | --- | --- | --- | --- |
+| F20 | Low | accept | Reproduced. `git grep -n -i cursor aa609a4 -- .claude/skills/keel-pr-review/pass-0-brief.md` prints line 11 only, where Cursor appears as a builder only in "Claude or Cursor built this PR". `AGENTS.md:34` at `aa609a4` has the PM propose Cursor for the Builder seat or for Pass 2, "and the brief records Beni's answer". The template has a slot for that answer on Pass 2 only. | No change in this PR, under ruling 24. An ideas row, from rank 93, in the next docs PR. |
+| F12 | Low | closed | The squash landed. `git log -1 --format=%B dacfef3 \| grep -c -F 'F7 and F9 sat in wording from the Pass 1 fixes, and F8 came in with'` prints `1`, so `main` carries the attribution that this brief's F12 answer set out. | Closed by `dacfef3`. |
+| F10 | Low | accept | Unchanged. This section was written in the Opus 5.5 PM session, and the PM did not read the session's effort for this record. | Open as a Low, under ruling 20. An ideas row, from rank 93, in the next docs PR. |
+
+### Rulings from Beni
+
+They came on 2026-11-23 and continue the numbering above. Cite them outside this record as R56.24 and R56.25.
+
+24. **"Yes"**, in the Pass 2.5 seat's session, to its question 1: "Merge this head, with F20 going to the ideas note and not to another fix in this PR? "No" means one more Claude fix commit, a Codex re-read, and this seat re-runs again." The PM did not see it given. It came between the question's post at 08:45:10 EST and Beni's message to the PM at 08:56:33 EST that the seat's session had finished. The seat's own reply records it: "I take your "Yes" as the answer to question 1", adding that "the button only answered question 1". The PM read that reply through the app's session events at 08:57:40 EST. Beni's merge of `aa609a4` at 11:32:38 EST carries it out.
+25. **"Yes, all right"**, in the PM's session, asked at 11:40:35 and answered by 11:43:35 EST. The question was: "In the Pass 2.5 seat's session for PR #56 you were asked its question 2: "Are rulings 1 to 23 right as the two briefs quote them?" What was your answer? (The records PR has to quote it, and I never saw it.)". The option read: "Rulings R56.1 to R56.23 stand as the briefs quote them." So rulings 1 to 23 stand as this brief and the Pass 0 brief quote them. The ruling rests on Beni's word to the PM: the last reply of the seat's that the PM read, at 08:57:40 EST, still lists question 2 as open.
+
+### Authorship record
+
+No commit was added to the PR after `aa609a4`. `git log --format='%h %an' f551559..aa609a4` lists 5 commits, all Claude's, and Codex gave each its cold read, as the records above set out. GitHub made the squash `dacfef3`, with both vendors' trailers. This records branch holds only Claude's commits, plus a merge of `main` at `dacfef3`, made with a merge commit and not a rebase. So Codex, which authored none of them, gives the records PR its one cold read.
+
+### Process notes
+
+- **The Planner seat.** By Beni's ruling of 11:44 EST on 2026-11-23, a Fable 5.2 session in another clone held the Planner seat from then until 16:00 EST. It left no handback note and nothing on origin. At 22:22 EST, `git ls-remote --heads origin` listed the same four branches as at the merge, and `gh pr list --state open` printed `[]`. Beni said at 22:22:29 EST that the seat was back with the Opus PM session ("Yes, it's back"), and that session wrote this section.
+- **The merge.** `pr-56-pass-2.5.md`'s records note holds the PM's post-merge checks, each with its command.
+
+### What comes next
+
+- Codex's cold read of the records PR, as one short PR comment. Beni merges it.
+- The ideas docs PR, with rows from rank 93: F10, F20, and the four items of the seat's "Deliberately not done" list (idea 48 now reaching every slice; no seats row or pin for a Claude or Codex records cold read; the skill's unguarded `mktemp -d`; F10's row).
+- The S91 spec-amendment PR that `pr-52-pass-2.5.md` owes.
