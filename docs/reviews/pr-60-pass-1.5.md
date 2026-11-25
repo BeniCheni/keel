@@ -91,3 +91,55 @@ These are claims, not facts. Re-derive each one, and report any that do not repr
 | 7 | 48 hex digits, `csv-`, `-` and a 10-character ticker fit S03's source pattern | `node -e 'console.log(/^[a-z0-9][a-z0-9-]{0,63}$/.test("csv-"+"a".repeat(48)+"-abcdefghij"))'` |
 | 8 | Each mutant the floor adds is killable by a criterion the spec states | Reading the mutation floor against AC2 to AC7 and AC10 |
 | 9 | `pnpm verify` exits 0 | `pnpm install --frozen-lockfile && pnpm verify` on Node 24.22.2 and 26.13.0 |
+
+## After the re-read
+
+Codex's re-read, [7175969685](https://github.com/BeniCheni/keel/pull/60#issuecomment-7175969685), read `89ea8dee2f16a9a5780dbf9af117aef4463b9858`, ran in a GPT-6.2 Sol sub-agent whose effort was not reported, and committed nothing. Its verdict is "not mergeable": F1 to F13 are fixed, and it raises F14 to F23, 2 High and 8 Medium (`gh api repos/BeniCheni/keel/issues/comments/7175969685 --jq .body | grep -c -E '^- \*\*F(1[4-9]|2[0-3]) (High|Medium) · open'` prints `10`). Sealed claim 8 failed, under F14. The PM reproduced all ten, accepts all ten, and fixes them in one more Claude commit, the one that adds this section. Under ruling 3, Codex re-reads that commit next.
+
+The probes ran on Node 24.15.0 (SQLite 3.51.3), under umask `0o022`, on synthetic files under `$TMPDIR` only.
+
+| Probe | Result |
+| --- | --- |
+| An importer that `SELECT`s for each row before writing, against Schema 1's insert trigger, with a plain `INSERT` and then with `INSERT OR REPLACE`, run twice each | the same rows and ids, and on the repeat `added` 0 and `duplicates` 2, for both verbs: the mutant is equivalent in behaviour |
+| The same importer without the `SELECT`, on the repeat | refused with `append-only`, so dropping the `SELECT` is killable |
+| A `0o600` database with existing empty `0o644` `-wal` and `-shm` files, opened and written with only the database narrowed | `600 600 600`, on the same inodes; with the modes reversed, `644 644 644`. SQLite gives side files the database's mode when it opens them |
+| A `-wal` or `-shm` file that is a symbolic link, then an open and a write | `unable to open database file` for each |
+| `node --check` and `node` on a file holding only `import "node:sqlite";` | exit 0 for each: a side-effect import loads the module |
+| `require("node:path").win32.isAbsolute` on `/tmp/kd`, `\\server\share\kd` and `C:/kd` | `true true true` |
+| `new TextDecoder("utf-8", { fatal: true })` on two byte-order marks and `A`; then with `ignoreBOM: true` | `feff 41`; `feff feff 41` |
+| A copy of the head's `pnpm-lock.yaml` with a `packages/store` importer added; then also a setting added above `importers:`; then also a dependency added to `packages/core`'s importer | AC12's old check, the tail from `packages:` onward, exits 0 on all three. The new check, the whole file with the store importer's block and its blank line removed, exits 0, 1 and 1 |
+| AC10's statement search, case-insensitive, on `"INSERT OR REPLACE INTO o"`, `"replace into o"`, an `or` and `ignore` split by a newline, `"on conflict do nothing"`, `ticker.replaceAll(".", "-")` and `SELECT RAISE(ABORT, 'append-only')` | fail, fail, fail, fail, pass, pass |
+
+| Re-read # | Severity | PM disposition | Reason | Fixed by |
+| --- | --- | --- | --- | --- |
+| F14 | High | accept | Reproduced: the two verbs behave alike, above, so a required mutant could not be killed by behaviour. | AC10 searches the store's source for `OR REPLACE`, `REPLACE INTO`, `OR IGNORE` and `ON CONFLICT`, with controls, which kills that mutant. The floor adds dropping the `SELECT`, which AC4's repeat import kills. |
+| F15 | Medium | accept | Reproduced by reading AC6 and the honesty test: no case put a link or a non-regular file at a side file's path, or an existing side file at `0o644`. | AC6: `store-file-unsafe` for a linked `-wal`, a hard-linked `-shm` and a directory at the database's or the `-wal`'s path; existing `0o644` side files are `0o600` after the open. The floor adds checking only the database file and accepting a non-regular file. SQLite already gives side files the database's mode, above, so skipping the store's narrowing of them is equivalent on this SQLite and the floor does not require it; AC6 pins the outcome. |
+| F16 | High | accept | Reproduced: a side-effect import loads `node:sqlite`, above, and AC10 did not list that form. | AC10 lists the side-effect `import "…"` form and adds `import "node:sqlite"` in a second file as a control that must fail. |
+| F17 | Medium | accept | Reproduced: `node:path` calls all three values absolute, above, and AC1 had no `win32` case for them. | AC1 adds `C:\kd`, `\\server\share\kd`, `C:/kd` and `/tmp/kd` on `win32`. The floor adds `node:path`'s `win32.isAbsolute`. |
+| F18 | Medium | accept | Reproduced: the old check passed a settings edit and another importer's edit, above. | AC12 compares the whole lockfile with the store importer's block removed. |
+| F19 | Medium | accept | Reproduced by reading the split flag's last sentence: "recomputes none" has no observable effect. | The clause is removed. A repeat import stores and returns no flag, which AC4 tests. |
+| F20 | Medium | accept | Reproduced by reading the result type against the sentence after it: a date of the file that already held differing values is listed too, so "only the changed date can be a conflict" was wrong. | The sentence says when only the changed date is a conflict, and that an earlier conflict on a date of the file is listed. AC4 adds that case. |
+| F21 | Medium | accept | Reproduced: the decoders differ, above, and AC2 decodes in the test, so the importer's decoder was untested on two marks. | AC4 imports the raw payloads of `bom-twice.csv` and `bom-crlf.csv`. AC2 decodes with the importer's options. |
+| F22 | Medium | accept | Reproduced by reading AC7: a second call of the hook would still see the lock. | AC7 asserts the import calls `afterBegin` exactly once. The floor adds calling it twice. |
+| F23 | Medium | accept | Reproduced by reading AC3 and the honesty test: the stored `detail` was checked for shape only. | AC3 checks the stored `detail` against the result's flag for `split-boundary.csv` (`3/2`) and two split files. The fixture's first close is exactly 1.5 times the walk's last close. The floor adds a stored `detail` that differs. |
+
+**Sealed claim 8.** It does not hold at `89ea8de`, as the re-read found: the plain-insert mutant could not be killed by behaviour. At the new head, each mutant the floor names has a killing criterion, and the one mutant found equivalent on SQLite 3.51.3, skipping the store's own narrowing of side files, is named here and left out of the floor.
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| The commit that adds this section and fixes F14 to F23 (`git log -1 --format='%h %an' -- docs/reviews/pr-60-pass-1.5.md`) | Claude | Codex, the second re-read |
+
+### Sealed appendix for the second re-read
+
+These are claims, not facts. Re-derive each one, and report any that do not reproduce.
+
+| # | Claim | Command the PM gave |
+| --- | --- | --- |
+| 1 | The new commit is Claude's, and changes only the spec, this brief and the spec's index row | `git log --format='%h %an' origin/main..HEAD`; `git diff --name-only 89ea8de HEAD` |
+| 2 | Still no sensitive path | the same command as claim 2 above, which prints nothing |
+| 3 | With a `SELECT` before each write, `INSERT` and `INSERT OR REPLACE` store the same rows under Schema 1's triggers, and without the `SELECT` a repeat import fails with `append-only` | a `node:sqlite` probe |
+| 4 | SQLite gives existing `-wal` and `-shm` files the database's mode when it opens them, and refuses a linked one | a probe under umask `0o022` |
+| 5 | AC12's new check passes a lockfile that gains only the store importer, and fails one that also edits a setting or another importer | AC12's command on three lockfile copies |
+| 6 | AC10's statement search fails each of its four phrases and passes `ticker.replaceAll(".", "-")` | the controls AC10 lists |
+| 7 | Each mutant the floor names has a criterion that kills it | reading the mutation floor against AC1 to AC7 and AC10 |
+| 8 | `pnpm verify` exits 0 | `pnpm install --frozen-lockfile && pnpm verify` on Node 24.22.2 and 26.13.0 |
