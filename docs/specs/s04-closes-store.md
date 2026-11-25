@@ -128,7 +128,7 @@ It returns `{ kind: "rejected", reasons }`, `{ kind: "error", code }` or:
   added: number;       // rows stored
   duplicates: number;  // rows equal to a stored row from the same source
   skipped: { line: number; code: "line-blank" | "close-empty" | "close-null" }[];
-  conflicts: { date: string; values: string[] }[]; // dates of this file that now hold two or more distinct values for the series, values in stored order
+  conflicts: { date: string; values: string[] }[]; // dates of this file that now hold two or more values for the series that differ as exact fractions, values in stored order
   flags: { date: string; from: string; fromValue: string; ratio: string }[];
   previous: { date: string; value: string } | { reason: "no-earlier-close" | "earlier-close-conflict" };
 }
