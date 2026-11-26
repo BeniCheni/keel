@@ -238,3 +238,40 @@ These are claims, not facts. Re-derive each one, and report any that do not repr
 | 5 | AC12's manifest command lists a forbidden dependency field when one is present | a manifest with `bundledDependencies` |
 | 6 | Each mutant the floor requires has a criterion that kills it, and each one it names as not required is equivalent under the insert trigger | reading the mutation floor against AC1 to AC7, AC10 and the honesty tests |
 | 7 | `pnpm verify` exits 0 | `pnpm install --frozen-lockfile && pnpm verify` on Node 24.22.2 and 26.13.0 |
+
+## After the fourth re-read
+
+Codex's fourth re-read, [7181413798](https://github.com/BeniCheni/keel/pull/60#issuecomment-7181413798), read `d6146a08c2fd31fd5b412505ba701dfc53d5047b`, ran in a GPT-6.2 Sol sub-agent, and committed nothing. Its verdict is "not mergeable": F25, F33 to F36 and F38 are fixed; F37 stays open, and it raises F39, a High (`gh api repos/BeniCheni/keel/issues/comments/7181413798 --jq .body | grep -c -E '^- \*\*F(37 Medium|39 High) · open'` prints `2`). The PM reproduced both, accepts both, and fixes them in one more Claude commit, the one that adds this section. Under ruling 3, Codex re-reads that commit next.
+
+The probe ran on Node 24.15.0 (SQLite 3.51.3) on Darwin, in memory.
+
+| Probe | Result |
+| --- | --- |
+| `STRICT` tables shaped like `sources` (a `TEXT` primary key) and `observation_flags` (a two-column primary key), each with an insert trigger on its declared key, then `INSERT OR REPLACE` naming `rowid` `1` and a new declared key | allowed on both: the stored row was replaced, with its declared key changed |
+| The same on a table shaped like `observations` (`INTEGER PRIMARY KEY`) | refused with `append-only`, since `rowid` is `id` there |
+| The first two tables declared `STRICT, WITHOUT ROWID`, then the same statement | refused on both, "has no column named rowid"; `pragma_table_list` gives `wr` `1` for both and `0` for the third |
+
+| Re-read # | Severity | PM disposition | Reason | Fixed by |
+| --- | --- | --- | --- | --- |
+| F39 | High | accept | Reproduced: a replace on the hidden `rowid` changed a stored row, above. | Schema 1 makes `sources` and `observation_flags` `WITHOUT ROWID`. The honesty test adds a raw `rowid` replace on each table, and checks `PRAGMA table_list`. The floor adds `STRICT` without `WITHOUT ROWID`. |
+| F37 | Medium | accept | Reproduced by reading AC6: the `beforeOpen` seam ran in `openStore`, not at the constructor, so moving the constructor ahead of it left every assertion green. No seam outside `sqlite.ts` can see the constructor. | The rule now asks for what a test can see: existing store files are narrowed before steps 4 and 5, and so before the store writes any close. The `beforeOpen` seam is removed, and AC6 checks the modes in an `afterBegin` during the held-connection import, which a narrowing moved past the import's begin fails. The floor names narrowing after SQLite opens the files, but before the import begins, as not required, with the reason: in that window the store has written no close. |
+
+The PM decided F37's route itself, as ruling 5 did for the statement check: a mutant no test can tell apart, whose window holds no close, is named rather than chased. If Beni or Codex disagrees, it goes to Beni.
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| The commit that adds this section and fixes F37 and F39 (`git log -1 --format='%h %an' -- docs/reviews/pr-60-pass-1.5.md`) | Claude | Codex, the fifth re-read |
+
+### Sealed appendix for the fifth re-read
+
+These are claims, not facts. Re-derive each one, and report any that do not reproduce.
+
+| # | Claim | Command the PM gave |
+| --- | --- | --- |
+| 1 | The new commit is Claude's, and changes only the spec, this brief and the spec's index row | `git log --format='%h %an' origin/main..HEAD`; `git diff --name-only d6146a0 HEAD` |
+| 2 | Still no sensitive path | the first appendix's claim 2 command, which prints nothing |
+| 3 | With `sources` and `observation_flags` `WITHOUT ROWID`, no insert of any spelling, on any key, hidden or declared, changes a stored row under Schema 1's triggers with `recursive_triggers` off | a probe |
+| 4 | A narrowing of existing files moved past the import's begin fails AC6's `afterBegin` check | a probe of the held-connection case |
+| 5 | The spec no longer names `beforeOpen` | `grep -c beforeOpen docs/specs/s04-closes-store.md` prints `0` |
+| 6 | Each mutant the floor requires has a criterion that kills it, and each it names as not required is equivalent, or, for the narrowing window, writes no close | reading the mutation floor against AC1 to AC7, AC10 and the honesty tests |
+| 7 | `pnpm verify` exits 0 | `pnpm install --frozen-lockfile && pnpm verify` on Node 24.22.2 and 26.13.0 |
