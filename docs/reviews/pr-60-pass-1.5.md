@@ -312,3 +312,36 @@ These are claims, not facts. Re-derive each one, and report any that do not repr
 | 5 | The spec no longer narrows an existing file or exempts a window | `grep -n -i 'narrow' docs/specs/s04-closes-store.md` prints three lines: the `win32` rule, the user's own fix after `store-file-mode`, and the floor's mutant |
 | 6 | Each mutant the floor requires has a criterion that kills it, and each it names as not required is equivalent | reading the mutation floor against AC1 to AC7, AC10 and the honesty tests |
 | 7 | `pnpm verify` exits 0 | `pnpm install --frozen-lockfile && pnpm verify` on Node 24.22.2 and 26.13.0 |
+
+## After the sixth re-read
+
+Codex's sixth re-read, [7198619968](https://github.com/BeniCheni/keel/pull/60#issuecomment-7198619968), read `097cd9182dfb09b04a5fb78a99b015e83729ddee`, ran in a GPT-6.2 Sol sub-agent, and committed nothing. Its verdict is "mergeable after fixes": F37 and F40 are fixed, and it raises F41 and F42, both Medium (`gh api repos/BeniCheni/keel/issues/comments/7198619968 --jq .body | grep -c -E '^- \*\*F4[12] Medium · open'` prints `2`). The PM reproduced both, accepts both, and fixes them in one more Claude commit, the one that adds this section. Under ruling 3, Codex re-reads that commit next.
+
+The probe ran on Node 24.15.0 (SQLite 3.51.3) on Darwin, under umask `0o022`, on synthetic files under `$TMPDIR` only.
+
+| Probe | Result |
+| --- | --- |
+| No database file and a `0o644` `-wal`; SQLite constructed and closed before any check | the database file was created |
+| `0o600` plus each single bit of `0o077`, tested against the mask `0o044` and against `0o077` | `0o044` misses `0o020`, `0o010`, `0o002` and `0o001`; `0o077` refuses all six |
+
+| Re-read # | Severity | PM disposition | Reason | Fixed by |
+| --- | --- | --- | --- | --- |
+| F41 | Medium | accept | Reproduced: constructing SQLite before the check created the missing database file, above, which no AC6 case could see. | Step 3 says the check runs before any file is created, even when only a side file exists. AC6 adds a `0o644` `-wal` with no database file, after which none exists. The floor adds creating the file or constructing SQLite before the check. |
+| F42 | Medium | accept | Reproduced: a read-bits mask passes every `0o644` case and misses four bits, above. | Step 3 names the mask `0o077`. AC6 adds each of its six bits, on the database file and on the `-wal`. The floor adds a narrower mask. |
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| The commit that adds this section and fixes F41 and F42 (`git log -1 --format='%h %an' -- docs/reviews/pr-60-pass-1.5.md`) | Claude | Codex, the seventh re-read |
+
+### Sealed appendix for the seventh re-read
+
+These are claims, not facts. Re-derive each one, and report any that do not reproduce.
+
+| # | Claim | Command the PM gave |
+| --- | --- | --- |
+| 1 | The new commit is Claude's, and changes only the spec, this brief and the spec's index row | `git log --format='%h %an' origin/main..HEAD`; `git diff --name-only 097cd91 HEAD` |
+| 2 | Still no sensitive path | the first appendix's claim 2 command, which prints nothing |
+| 3 | Constructing SQLite with no database file and a loose `-wal` creates the database file | the probe above |
+| 4 | AC6's single-bit cases fail a mask narrower than `0o077` | the probe above |
+| 5 | Each mutant the floor requires has a criterion that kills it | reading the mutation floor against AC6 |
+| 6 | `pnpm verify` exits 0 | `pnpm install --frozen-lockfile && pnpm verify` on Node 24.22.2 and 26.13.0 |
