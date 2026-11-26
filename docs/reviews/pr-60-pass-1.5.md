@@ -275,3 +275,40 @@ These are claims, not facts. Re-derive each one, and report any that do not repr
 | 5 | The spec no longer names `beforeOpen` | `grep -c beforeOpen docs/specs/s04-closes-store.md` prints `0` |
 | 6 | Each mutant the floor requires has a criterion that kills it, and each it names as not required is equivalent, or, for the narrowing window, writes no close | reading the mutation floor against AC1 to AC7, AC10 and the honesty tests |
 | 7 | `pnpm verify` exits 0 | `pnpm install --frozen-lockfile && pnpm verify` on Node 24.22.2 and 26.13.0 |
+
+## After the fifth re-read
+
+Codex's fifth re-read, [7197099118](https://github.com/BeniCheni/keel/pull/60#issuecomment-7197099118), read `205110021dd33a0f31d8e42167b2f6566b2c7be5` in a clone it recreated at Pass 1's path with Beni's approval, ran in a GPT-6.2 Sol sub-agent, and committed nothing. Its verdict is "not mergeable": F39 is fixed; F37 stays open, and it raises F40, a High that disagrees with the PM's exemption for the narrowing window (`gh api repos/BeniCheni/keel/issues/comments/7197099118 --jq .body | grep -c -E '^- \*\*F(37 Medium|40 High) · open'` prints `2`). The PM reproduced F40, accepts both, and put the disagreement to Beni. The fix is one more Claude commit, the one that adds this section, made in a fresh clone, since a restart had emptied the PM's earlier one. Under ruling 3, Codex re-reads that commit next.
+
+The probe ran on Node 24.15.0 (SQLite 3.51.3) on Darwin, under umask `0o022`, on synthetic files under `$TMPDIR` only.
+
+| Probe | Result |
+| --- | --- |
+| A database in WAL mode at `user_version` 2, whose one row, a synthetic marker, is only in its `-wal`; the database set to `0o644` and the `-wal` to `0o600`; then a connection that reads `PRAGMA user_version` and closes | before: the marker in the `-wal` only. After: the marker in the `0o644` database file, and the `-wal` removed |
+| The same fixture, with the modes checked before any open | a loose file found; the database and `-wal` bytes unchanged, and no `-shm` created |
+| The same fixture, opened and closed with no statement | bytes unchanged and the `-wal` still there: opening alone moves nothing, so the check has to come before the first statement |
+
+**Ruling 6.** "Refuse (Recommended)", given on 2026-11-26 at 11:18 EST in the PM's session, to how the store treats existing store files whose modes are too open: `openStore` returns `store-file-mode` before SQLite opens anything, and changes no file. The spec's Opening the store quotes it.
+
+| Re-read # | Severity | PM disposition | Reason | Fixed by |
+| --- | --- | --- | --- | --- |
+| F40 | High | accept | Reproduced: a pragma read and a close moved the `-wal`'s content into the `0o644` database file, above. The PM's exemption for that window was wrong. | By ruling 6, an existing store file with a group or other bit is `store-file-mode`, and no file is narrowed. AC6 tests the database, each side file, files held open by a second connection, and the `-wal` case above, each with modes and bytes unchanged, the `-wal` still present and no `-shm` created. The floor replaces the narrowing mutants with narrowing instead of refusing, checking after the first statement, and checking only the database file. The exemption is removed. |
+| F37 | Medium | accept | Reproduced by reading AC6: a narrowing moved between the begin and `afterBegin` passed. | By ruling 6 there is no narrowing to order, and AC6's `afterBegin` mode check is removed. |
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| The commit that adds this section and fixes F37 and F40 (`git log -1 --format='%h %an' -- docs/reviews/pr-60-pass-1.5.md`) | Claude | Codex, the sixth re-read |
+
+### Sealed appendix for the sixth re-read
+
+These are claims, not facts. Re-derive each one, and report any that do not reproduce.
+
+| # | Claim | Command the PM gave |
+| --- | --- | --- |
+| 1 | The new commit is Claude's, and changes only the spec, this brief and the spec's index row | `git log --format='%h %an' origin/main..HEAD`; `git diff --name-only 2051100 HEAD` |
+| 2 | Still no sensitive path | the first appendix's claim 2 command, which prints nothing |
+| 3 | A statement and a close move a `0o600` `-wal`'s content into the database file, and checking modes before any open leaves every byte as it was | the probe above |
+| 4 | Each AC6 `store-file-mode` case leaves modes and bytes unchanged, and a check moved after the first statement fails the `-wal` case | a probe of the five cases |
+| 5 | The spec no longer narrows an existing file or exempts a window | `grep -n -i 'narrow' docs/specs/s04-closes-store.md` prints three lines: the `win32` rule, the user's own fix after `store-file-mode`, and the floor's mutant |
+| 6 | Each mutant the floor requires has a criterion that kills it, and each it names as not required is equivalent | reading the mutation floor against AC1 to AC7, AC10 and the honesty tests |
+| 7 | `pnpm verify` exits 0 | `pnpm install --frozen-lockfile && pnpm verify` on Node 24.22.2 and 26.13.0 |
