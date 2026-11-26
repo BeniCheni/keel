@@ -143,3 +143,53 @@ These are claims, not facts. Re-derive each one, and report any that do not repr
 | 6 | AC10's statement search fails each of its four phrases and passes `ticker.replaceAll(".", "-")` | the controls AC10 lists |
 | 7 | Each mutant the floor names has a criterion that kills it | reading the mutation floor against AC1 to AC7 and AC10 |
 | 8 | `pnpm verify` exits 0 | `pnpm install --frozen-lockfile && pnpm verify` on Node 24.22.2 and 26.13.0 |
+
+## After the second re-read
+
+Codex's second re-read, [7179716670](https://github.com/BeniCheni/keel/pull/60#issuecomment-7179716670), read `91c87d286a86bcae7fa012d9df71b5f8038b924a`, ran in a GPT-6.2 Sol sub-agent whose effort was not reported, and committed nothing. Its verdict is "not mergeable": F14 to F23 are fixed, and it raises F24 to F32, 3 High and 6 Medium (`gh api repos/BeniCheni/keel/issues/comments/7179716670 --jq .body | grep -c -E '^- \*\*F(2[4-9]|3[0-2]) (High|Medium) · open'` prints `9`). The PM reproduced all nine, accepts all nine, found one more defect itself (PM1), and fixes all ten in one more Claude commit, the one that adds this section. Under ruling 3, Codex re-reads that commit next.
+
+Two statements in the section above were wrong, and this section corrects them. "SQLite refuses a linked one" holds for a symbolic link only: Codex found that SQLite accepts a hard-linked side file, which the store's own `lstat` check refuses. And skipping the store's narrowing of side files is not equivalent: it is equivalent only while no other connection holds them open (F24).
+
+The probes ran on Node 24.15.0 (SQLite 3.51.3) on Darwin, under umask `0o022`, on synthetic files under `$TMPDIR` only.
+
+| Probe | Result |
+| --- | --- |
+| A first connection holding a `0o644` database open in WAL mode after a write, then the database set to `0o600`, and a second connection opening, reading and writing it; then the same with the side files also set to `0o600` | database, `-wal`, `-shm`: `600 644 644`; then `600 600 600` |
+| `INSERT OR/**/REPLACE`, `INSERT OR -- c` with a line break before `REPLACE`, and `"INSERT OR " + "REPLACE"`, each on a stored unique key | each ran: one row, its `id` now `2` |
+| `UNIQUE ON CONFLICT REPLACE` on a column, then two plain `INSERT`s of one key | the second replaced the first; `sqlite_master` holds the clause |
+| A small tokenizer that drops `--` and `/* */` comments, keeps quoted text whole and reads words without case, on AC4's seven controls | the five that must fail fail; the two that must pass pass |
+| An ancestor check for `.git` without `realpath`, on a link to a directory holding `.git` and on a link to its subdirectory | link to the directory: found; link to the subdirectory: not found, and found through `realpath` |
+| A copy of the workspace's manifests and lockfile, with a `packages/store/package.json` whose `dependencies` hold `@keel/core` and whose `devDependencies` hold `@keel/plugin-mln` and `vitest` 5.0.5, then `CI=true pnpm install --no-frozen-lockfile --lockfile-only --offline` and the same with `--frozen-lockfile` | exit 0, then exit 0; the store importer is the block Scope now prints, and the rest of the file equals the head's |
+| AC12's new commands on that lockfile and manifest; then on the unchanged lockfile; then with a dependency added inside the store block | dependency fields as printed, one importer, the block byte for byte and the rest equal; the unchanged file has no importer (`grep -c` prints `0`); the added dependency fails the block comparison |
+
+| Re-read # | Severity | PM disposition | Reason | Fixed by |
+| --- | --- | --- | --- | --- |
+| F24 | High | accept | Reproduced: held-open side files stayed at `644`, above. | AC6 adds a second connection holding `0o644` side files open, after which `openStore` and an import leave all three files at `0o600`. The floor adds narrowing only the database file. |
+| F25 | High | accept | Reproduced: comment-separated and concatenated verbs ran, above, and a column's conflict clause turns a plain `INSERT` into a replace. A search of source text cannot see the SQL a program builds. | `openStore`'s `onSql` test seam: `sqlite.ts` passes it every statement it runs. AC4 tokenizes each, with comments dropped, and refuses the words `REPLACE`, `IGNORE` and `CONFLICT` and any `INSERT` not followed by `INTO`, with seven controls. AC10's text search is removed. |
+| F26 | Medium | accept | Reproduced: AC12 passed an unchanged lockfile and an added dependency inside the store block, above. | Scope prints the importer block that pnpm writes and the manifest's dependency fields. AC12 requires one importer, that block byte for byte, the rest equal to `origin/main`'s, and the manifest's fields exactly. |
+| F27 | Medium | accept | Reproduced by reading the sentence after the result type against Decision 8: `95.1` changed to `95.10` changes the bytes and makes no conflict. | The sentence and AC4's edited copy say the changed Close differs as an exact fraction. |
+| F28 | Medium | accept | Reproduced by reading Fixtures: the walk had no start and no ceiling, so 1.5 times its last close could leave S03's grammar. | The walk starts at `100.00` and is held between `1.00` and `10000.00`, so `split-boundary.csv`'s first close is at most `15000.000`. |
+| F29 | High | accept | Reproduced: a link to the directory holding `.git` is caught without `realpath`, above, so the control could not tell the two checks apart. | The honesty test and AC6 use a link to a subdirectory of the directory holding `.git`. |
+| F30 | Medium | accept | Reproduced by reading Fixtures: a reject file whose only data line is the defective one cannot catch a partial store. | Each reject file for a data-line reason has at least two valid lines before the defect, and the honesty test says so. The floor names the mutant. |
+| F31 | Medium | accept | Reproduced by reading AC3: with no stored close between the skipped and the accepted dates, both rules give the same `previous`. | AC3 fixes the dates: closes stored on `2026-03-02` and `2026-03-04`, `2026-03-03` skipped, `2026-03-05` accepted, `previous` from `2026-03-04`. |
+| F32 | Medium | accept | Reproduced by reading Decision 8 and the import rules: a new document always has a new source, so rows can repeat only in a repeat of the same bytes, and a lookup by hash finds that first. Dropping the row lookup alone is then equivalent. | Schema 1 names the lookup by hash. The floor's mutant is a repeat import that reaches an insert, by dropping whichever lookup finds the stored rows. |
+| PM1 | Medium | the PM's own | Reproduced by reading Scope against Decision 4: Scope listed `@keel/core` among development dependencies, though the package's source imports it, and pnpm writes it under `dependencies`, above. | Scope gives the exact dependency fields, which AC12 checks. |
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| The commit that adds this section and fixes F24 to F32 and PM1 (`git log -1 --format='%h %an' -- docs/reviews/pr-60-pass-1.5.md`) | Claude | Codex, the third re-read |
+
+### Sealed appendix for the third re-read
+
+These are claims, not facts. Re-derive each one, and report any that do not reproduce.
+
+| # | Claim | Command the PM gave |
+| --- | --- | --- |
+| 1 | The new commit is Claude's, and changes only the spec, this brief and the spec's index row | `git log --format='%h %an' origin/main..HEAD`; `git diff --name-only 91c87d2 HEAD` |
+| 2 | Still no sensitive path | the first appendix's claim 2 command, which prints nothing |
+| 3 | Side files held open by another connection keep `0o644` unless the store narrows them | a probe under umask `0o022` |
+| 4 | AC4's tokenizer, as specified, fails its five controls and passes its two | a tokenizer written to the criterion's words |
+| 5 | Scope's importer block is what pnpm writes for Scope's manifest, and AC12's commands pass it and fail the two controls above | the workspace probe above |
+| 6 | A link to a subdirectory of a directory holding `.git` defeats an ancestor check without `realpath` | a probe |
+| 7 | Each mutant the floor names has a criterion that kills it, and none is equivalent | reading the mutation floor against AC1 to AC7, AC10 and the honesty tests |
+| 8 | `pnpm verify` exits 0 | `pnpm install --frozen-lockfile && pnpm verify` on Node 24.22.2 and 26.13.0 |
