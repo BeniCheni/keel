@@ -193,3 +193,48 @@ These are claims, not facts. Re-derive each one, and report any that do not repr
 | 6 | A link to a subdirectory of a directory holding `.git` defeats an ancestor check without `realpath` | a probe |
 | 7 | Each mutant the floor names has a criterion that kills it, and none is equivalent | reading the mutation floor against AC1 to AC7, AC10 and the honesty tests |
 | 8 | `pnpm verify` exits 0 | `pnpm install --frozen-lockfile && pnpm verify` on Node 24.22.2 and 26.13.0 |
+
+## After the third re-read
+
+Codex's third re-read, [7180676695](https://github.com/BeniCheni/keel/pull/60#issuecomment-7180676695), read `b55759fb5a08a7fdfef123a4dd693d116720d401`, ran in a GPT-6.2 Sol sub-agent, and committed nothing. Its verdict is "not mergeable": F24 and F26 to F32 and PM1 are fixed; F25 stays open, and it raises F33 to F38, 2 High, 3 Medium and 1 Low (`gh api repos/BeniCheni/keel/issues/comments/7180676695 --jq .body | grep -c -E '^- \*\*(F25 High · open|F3[3-8] (High|Medium|Low) · open)'` prints `7`). The PM reproduced the seven, and accepts all seven. It fixes them in one more Claude commit, the one that adds this section. Under ruling 3, Codex re-reads that commit next.
+
+F25, F34 and F35 are the fourth round against one mutant: the importer writing with a replacing or ignoring statement. Each round's check of the statement text, then of the SQL the store runs, was passed by SQL written another way. The probe below shows why that check is not needed. The insert trigger refuses every such form, so the importer's choice of statement cannot change a stored row, and the mutant is equivalent in behaviour. The PM put that to Beni.
+
+**Ruling 5.** "Equivalent (Recommended)", given on 2026-11-25 at 21:49 EST in the PM's session, to whether the spec drops the `onSql` seam and AC4's statement check, and names those mutants as equivalent under the insert trigger, with the trigger and its two-connection honesty test as the guarantee. The spec's Schema 1 quotes it.
+
+The probes ran on Node 24.15.0 (SQLite 3.51.3) on Darwin, on synthetic files under `$TMPDIR` only.
+
+| Probe | Result |
+| --- | --- |
+| On a table with a unique key and no trigger, `WITH x AS (SELECT 1) INSERT OR REPLACE`, and `INSERT OR` with U+FEFF before `REPLACE`, each on a stored key | each ran, and the row's `id` changed from `1` to `2` |
+| With Schema 1's insert trigger: those two, `REPLACE INTO`, `INSERT OR IGNORE` and `INSERT … ON CONFLICT DO NOTHING`, each on a stored key | each refused with `append-only`; one row, `id` `1` |
+| `` grep -n '^```' docs/specs/s04-closes-store.md `` at `b55759f` | the closing fence of Scope's block, line 46, carried the next sentence, so it did not close the block |
+| AC12's manifest command at `b55759f`, then the new one, on a manifest with and without `bundledDependencies` | the old printed the same line for both; the new lists `bundledDependencies` among the keys |
+
+| Re-read # | Severity | PM disposition | Reason | Fixed by |
+| --- | --- | --- | --- | --- |
+| F25 | High | accept | Reproduced: U+FEFF before `REPLACE` ran, above. | By ruling 5, AC4's statement check and the `onSql` seam are removed. The honesty test runs each replacing and ignoring form against the trigger, on both connections. The floor names those mutants as equivalent, and still requires each missing insert trigger. |
+| F33 | Medium | accept | Reproduced: line 46, above. | The fence closes on its own line, and the sentence after it is its own paragraph. |
+| F34 | High | accept | Reproduced: the `WITH` form ran, above. | As F25, by ruling 5. The honesty test adds the `WITH` form. |
+| F35 | High | accept | Reproduced by reading AC4: the check required only an `INSERT INTO observations` among the traced statements, so a trace that skipped the schema passed. | As F25, by ruling 5: the seam is removed. |
+| F36 | Medium | accept | Reproduced: the old command could not see `bundledDependencies`, above. | Scope forbids every field whose name contains `dependenc`, and AC12's command prints the manifest's keys that match. |
+| F37 | Medium | accept | Reproduced by reading AC6: narrowing existing files after SQLite opens them leaves the same final modes. | A `beforeOpen` test seam, called once just before SQLite first opens the database; AC6 checks all three files are `0o600` inside it. The floor adds the mutant. |
+| F38 | Low | accept | Reproduced by reading the body: "neither fix" was written for two fix commits. | The body says "no fix". |
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| The commit that adds this section and fixes F25 and F33 to F37 (`git log -1 --format='%h %an' -- docs/reviews/pr-60-pass-1.5.md`) | Claude | Codex, the fourth re-read |
+
+### Sealed appendix for the fourth re-read
+
+These are claims, not facts. Re-derive each one, and report any that do not reproduce.
+
+| # | Claim | Command the PM gave |
+| --- | --- | --- |
+| 1 | The new commit is Claude's, and changes only the spec, this brief and the spec's index row | `git log --format='%h %an' origin/main..HEAD`; `git diff --name-only b55759f HEAD` |
+| 2 | Still no sensitive path | the first appendix's claim 2 command, which prints nothing |
+| 3 | Schema 1's insert trigger refuses every replacing or ignoring insert on a stored key, however it is spelled, on a connection with `recursive_triggers` off | a probe |
+| 4 | The spec no longer names `onSql`, and its two fences close on their own lines | `grep -c onSql docs/specs/s04-closes-store.md` prints `0`; `` grep -n '^```' docs/specs/s04-closes-store.md `` |
+| 5 | AC12's manifest command lists a forbidden dependency field when one is present | a manifest with `bundledDependencies` |
+| 6 | Each mutant the floor requires has a criterion that kills it, and each one it names as not required is equivalent under the insert trigger | reading the mutation floor against AC1 to AC7, AC10 and the honesty tests |
+| 7 | `pnpm verify` exits 0 | `pnpm install --frozen-lockfile && pnpm verify` on Node 24.22.2 and 26.13.0 |
