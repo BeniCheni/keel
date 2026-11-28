@@ -7,13 +7,24 @@ import { NESTED_RUN_TIMEOUT_MS, repoRoot, run } from "./helpers.mjs";
 const SHELL_TIMEOUT_MS = 10_000;
 const sentinel = "reached";
 const stubMktemp = 'mktemp() { printf "%s\n" "$TEST_MKTEMP_DIR"; return "$TEST_MKTEMP_STATUS"; }';
+const observeLsEnvironment = [
+  "export KEEL_DATA_DIR=synthetic",
+  'ls() { command env > "$TEST_LS_ENV" || return; command ls "$@"; }',
+].join("\n");
 const cases = [
   { name: "rejects a failed mktemp naming an existing directory", stubStatus: "1", status: 1 },
   { name: "preserves a failed mktemp status even for an empty directory", stubStatus: "1", stubDir: "empty", status: 1 },
   { name: "rejects a successful mktemp naming a nonempty directory", stubStatus: "0", status: 1 },
+  {
+    name: "rejects a directory whose only entry is named by a newline",
+    stubStatus: "0",
+    entryName: "\n",
+    status: 1,
+  },
   { name: "rejects a writable relative TMPDIR", parent: "relative", status: 1 },
   { name: "rejects a missing TMPDIR directory", parent: "missing", status: 1 },
   { name: "exports an absolute, empty directory on success", status: 0 },
+  { name: "keeps the new path unexported during the listing", checkExport: true, status: 0 },
 ];
 
 function hasZsh() {
@@ -42,11 +53,18 @@ for (const shell of ["bash", "zsh"]) {
       try {
         const full = join(root, "full");
         mkdirSync(full);
-        writeFileSync(join(full, "synthetic"), "");
+        writeFileSync(join(full, scenario.entryName ?? "synthetic"), "");
         mkdirSync(join(root, "empty"));
         mkdirSync(join(root, "relative"));
         const setup = scenario.stubStatus === undefined ? ":" : stubMktemp;
-        const script = [setup, readGuard(), 'printf "%s\n" reached', "printenv KEEL_DATA_DIR"].join("\n");
+        const lsEnvironment = join(root, "ls-env");
+        const script = [
+          setup,
+          scenario.checkExport ? observeLsEnvironment : ":",
+          readGuard(),
+          'printf "%s\n" reached',
+          "printenv KEEL_DATA_DIR",
+        ].join("\n");
         const startupFlags = shell === "bash" ? ["--noprofile", "--norc"] : ["-f"];
         const result = run(shell, [...startupFlags, "-c", script], {
           cwd: root,
@@ -55,10 +73,15 @@ for (const shell of ["bash", "zsh"]) {
             TMPDIR: scenario.parent === "relative" ? "relative" : join(root, scenario.parent ?? ""),
             TEST_MKTEMP_DIR: join(root, scenario.stubDir ?? "full"),
             TEST_MKTEMP_STATUS: scenario.stubStatus ?? "",
+            TEST_LS_ENV: lsEnvironment,
           },
           timeout: SHELL_TIMEOUT_MS,
         });
         expect(result.status, result.stderr).toBe(scenario.status);
+        if (scenario.checkExport) {
+          const lsDataDir = /^KEEL_DATA_DIR=(.*)$/m.exec(readFileSync(lsEnvironment, "utf8"))?.[1];
+          expect(isAbsolute(lsDataDir ?? "")).toBe(false);
+        }
         if (scenario.status === 0) {
           const [marker, dataDir] = result.stdout.trimEnd().split("\n");
           expect(marker).toBe(sentinel);
