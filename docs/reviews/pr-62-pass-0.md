@@ -46,7 +46,7 @@ Not allowed. `.claude/skills/**` is a sensitive path, and `AGENTS.md` bars fast-
 3. **`|| exit` in a seat's shell.** In the shells the seats run (Codex's, Claude Code's, Cursor's), does `exit` end only that invocation, as the seat prompts assume, and is the step's sentence ("go no further") clear about what a seat does next?
 4. **Every shell invocation.** The step now says to run the export in every shell invocation, as the seat prompts do, since a seat's shell may not keep state between calls. Is that consistent with the rest of the skill and with `pr-comment.md`'s line "`KEEL_DATA_DIR` pointed at an empty temp directory"?
 5. **Other unguarded forms.** Does any other file under `.claude/skills/**`, `.agents/skills/**`, `AGENTS.md` or `CLAUDE.md` set `KEEL_DATA_DIR` or make a data folder without the guard? (`.github/workflows/verify.yml:97` makes a work folder with `mktemp -d` under `set -e`; say whether that is in scope.)
-6. **S04's contract.** Does the guarded form give S04's `resolveDataDir` a value it accepts (absolute, defined, non-empty), and never one that falls back to the default folder?
+6. **S04's contract.** Does the guarded form give S04's `storePath` a value it accepts (absolute, defined, non-empty), and never one that falls back to the default folder?
 7. **The ideas move.** Is idea 97's row under "Taken up or ruled out" true to the change, and is the ranked table otherwise unchanged?
 
 Out of scope: any other idea, and any change to `AGENTS.md`. Findings there go in the comment for the PM to carry.
