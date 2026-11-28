@@ -17,7 +17,7 @@ Seats: Pass 1 is Claude Code, unless a Claude session wrote any line of the PR, 
 1. Read `AGENTS.md` in full. Run `TZ=America/New_York date` and use that date everywhere.
 2. Work in a fresh clone, never the main working copy:
    `gh repo clone <owner>/keel /tmp/keel-pr-<N> && cd /tmp/keel-pr-<N> && gh pr checkout <N>`
-3. Point the app's data folder at an empty temp directory for the whole session: `export KEEL_DATA_DIR="$(mktemp -d)"`. The user's real data folder must be unreachable.
+3. Point the app's data folder at an empty temp directory for the whole session, in every shell invocation: `export KEEL_DATA_DIR="$(mktemp -d "${TMPDIR:-/tmp}/keel-data.XXXXXX")" && test -d "$KEEL_DATA_DIR" || exit`. `export` succeeds even when `mktemp` fails, so the `test -d` is what stops the setup; if it fails, go no further. The user's real data folder must be unreachable.
 4. Before anything else, flag in your notes: a release; a new dependency; any sensitive path touched (list in `AGENTS.md`); any network call; any number in the PR body without a reproducing command.
 5. Seat conduct (`AGENTS.md`): write only inside your fresh clone and your own temporary folders, and commit and push nothing unless your prompt allows fix commits; open nothing your prompt does not name, the host's own logs and settings included, without asking Beni first; save no memory notes.
 
