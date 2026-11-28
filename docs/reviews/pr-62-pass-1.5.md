@@ -65,7 +65,7 @@ The PM reproduced F3 to F6 with Pass 2's own commands and accepts all four. They
 
 | # | Severity | PM disposition | Reason | Answer |
 | --- | --- | --- | --- | --- |
-| F3 | Medium | accept | Reproduced. With a synthetic folder holding only a file named by a newline, and `mktemp` stubbed to print that folder and return 0, the guard at `48a8f2f` reaches the next command in bash and zsh. The command substitution strips `ls -A`'s whole output, which is two newlines. | Step 3 lists with `ls -Aq`, which prints every non-printing character as `?`, so any entry leaves at least one visible character. In both shells the case now exits 1 before the next command, and so does a folder holding a file named by a space. |
+| F3 | Medium | accept | Reproduced. With a synthetic folder holding only a file named by a newline, and `mktemp` stubbed to print that folder and return 0, the guard at `48a8f2f` reaches the next command in bash and zsh. The command substitution strips `ls -A`'s whole output, which is two newlines. | Step 3 lists with `ls -Aq`, which prints every non-printing character as `?`, so any entry leaves at least one character other than a newline, which command substitution keeps. In both shells the case now exits 1 before the next command, and so does a folder holding a file named by a space. |
 | F4 | Medium | accept | Reproduced. With `KEEL_DATA_DIR` already exported, the plain assignment keeps the export attribute, so `ls` and every command before the final `export` see the new path in their environment, in bash and zsh. The skill said it was exported only after the checks. | Step 3 starts with `unset KEEL_DATA_DIR keel_entries`, which drops the attribute. Pass 2's `ls` stub now leaves no marker in either shell, and a read-only `KEEL_DATA_DIR` makes `unset` fail, so the guard exits 1. |
 | F5 | Medium | accept | Reproduced. Both briefs named S04's function `resolveDataDir`; S04's spec names it `storePath` (`docs/specs/s04-closes-store.md`, its file table and "Where the store lives"). The error codes the briefs cite are right. | Both briefs now name `storePath`, and so does the skill's explanation. Outside this section the old name is gone: `git grep -n resolveDataDir` prints only lines of this section. |
 | F6 | Low | accept | Reproduced. The index row said the PM fixed both of Pass 1's findings, but F1 closed only with Codex's test in `4734b32`. | The row credits the PM's fix and Codex's test, and names the re-read and Pass 2.5 next. The PR body's Review log does the same. |
@@ -167,4 +167,46 @@ Pass M stays N/A, and demo mode stays N/A under idea 50.
 | 1 | The guard on line 21 is the same at `13e8d4a` and at the head | `git diff -U0 13e8d4a HEAD -- .claude/skills/keel-pr-review/SKILL.md` shows one hunk, `@@ -22 +22 @@` |
 | 2 | With `set -a` on, the F4 probe still finds the path early in both shells; step 3 now tells seats to run it with `set -a` off | F4's probe with `set -a` first; `grep -c 'set -a' .claude/skills/keel-pr-review/SKILL.md` prints `1` |
 | 3 | Body v5's two commands give the same clean results | The body's sensitive-path and dependency rows |
+| 4 | Codex's regression test passes all sixteen cases at the head on both pinned Nodes | `pnpm test:tooling -- review-data-dir-guard.test.mjs` |
+
+## After Pass 2's second re-read
+
+Written by the PM on 2026-11-28 (America/New_York), after Codex's second re-read of Pass 2 ([issuecomment-7243855776](https://github.com/BeniCheni/keel/pull/62#issuecomment-7243855776), posted at 13:31:32 EST) at `99c38701e8e2e5cadc985d17ce75d9188bf2d090`. Where this section differs from the text above, it wins.
+
+The second re-read's verdict is "mergeable after fixes", with no commit. It found F1 to F9 fixed and one new Medium, F10. Its seat record validates against `schema/seat-record-1.1.json`, with ten finding ids, and GitHub lists no edit to the comment (`userContentEdits` gives a `totalCount` of 0). All six hosted checks passed at `99c3870`.
+
+The PM reproduced F10 with the seat's own commands and accepts it. It is fixed in one Claude commit, the one that adds this section (`git log -1 --format='%h %an' -- docs/reviews/pr-62-pass-1.5.md`). It sits in wording the PM wrote at `502a9cc`, in the skill and in this brief's F3 row.
+
+| # | Severity | PM disposition | Reason | Answer |
+| --- | --- | --- | --- | --- |
+| F10 | Medium | accept | Reproduced. For a folder holding only a file named by one space, `LC_ALL=C ls -Aq` prints bytes 32 and 10, a space and a newline, so the skill's "at least one visible character" was false. Command substitution keeps the space, `test -n` passes, and the guard exits 1 in bash and zsh, so the behavior was right and only the wording was wrong. | Step 3 now says that `ls -Aq` prints each non-printing character, a newline included, as `?`, so every entry leaves output that command substitution keeps. This brief's F3 row says the same. The guard on line 21 is unchanged, and `git grep -n -i 'visible character'` exits 1. |
+
+### Authorship record, extended
+
+| Commit | Authoring vendor | Cold read by |
+| --- | --- | --- |
+| The commit that adds this section, with F10's fix | Claude | Codex, Pass 2's third re-read |
+
+### Process notes
+
+- **The same chat, a new sub-agent.** The second re-read ran in a fresh sub-agent in the chat that gave Pass 2 and the re-read. Its record gives the session id, model and effort as "not reported".
+- **The PM's scratch folder was cleared again** between the push of `99c3870` and this section. Nothing pushed was lost. The PM re-cloned keel and rebuilt `tablecols.py` from `docs/reviews/pr-32-pass-2.5.md`, with a control that exits 1.
+
+### What Pass 2's third re-read does
+
+Codex, on GPT-6.2 Sol Extra High, in a fresh clone:
+
+1. Give the PM's commit its cold read (`git diff 99c3870 HEAD`). Does it fix F10 and change nothing else?
+2. Say with a command whether F10 closes at the head, and confirm that F1 to F9 stand as the second re-read left them.
+3. Commit nothing: F10's fix is wording, and the guard is unchanged.
+
+Pass M and mutations stay N/A, and demo mode stays N/A under idea 50.
+
+### Sealed appendix for Pass 2's third re-read
+
+| # | Claim (as the PM stated it) | Command the PM gave |
+| --- | --- | --- |
+| 1 | The guard on line 21 is the same at `99c3870` and at the head | `git diff -U0 99c3870 HEAD -- .claude/skills/keel-pr-review/SKILL.md` shows one hunk, `@@ -22 +22 @@` |
+| 2 | No file in the PR still claims a visible character | `git grep -n -i 'visible character'` exits 1 |
+| 3 | A folder holding only a space-named file stops the guard in both shells | F10's setup from the second re-read's record, with the guard read from line 21 |
 | 4 | Codex's regression test passes all sixteen cases at the head on both pinned Nodes | `pnpm test:tooling -- review-data-dir-guard.test.mjs` |
