@@ -54,6 +54,7 @@ export function run(command, args, opts = {}) {
     cwd: opts.cwd ?? repoRoot,
     env: opts.env ?? process.env,
     encoding: "utf8",
+    timeout: opts.timeout,
   });
   return {
     status: result.status,
